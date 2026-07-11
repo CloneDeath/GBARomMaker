@@ -2,6 +2,8 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GBARomMaker", "GBARomMaker\GBARomMaker.csproj", "{475392EC-E486-4D5F-9744-47DFD85E8EB5}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GBARomMaker.Test", "GBARomMaker.Test\GBARomMaker.Test.csproj", "{F5CC2988-A753-41E5-911B-678F94B8BA1C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -12,5 +14,9 @@ Global
 		{475392EC-E486-4D5F-9744-47DFD85E8EB5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{475392EC-E486-4D5F-9744-47DFD85E8EB5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{475392EC-E486-4D5F-9744-47DFD85E8EB5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F5CC2988-A753-41E5-911B-678F94B8BA1C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F5CC2988-A753-41E5-911B-678F94B8BA1C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F5CC2988-A753-41E5-911B-678F94B8BA1C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F5CC2988-A753-41E5-911B-678F94B8BA1C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
