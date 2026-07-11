@@ -4,5 +4,4 @@ public enum Instruction {
 
 	BL = 0b1011,
 	BranchLink = 0b1011,
-
 }
