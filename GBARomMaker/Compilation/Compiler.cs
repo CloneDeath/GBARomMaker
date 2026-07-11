@@ -1,12 +1,13 @@
 using GBARomMaker.Rom.Operations;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 
 namespace GBARomMaker.Compilation;
 
 public class Compiler {
-	public Operation GetOperationForLine(string line) {
+	public Operation[] GetOperationForLine(string line) {
 		line = line.Split('@', 2)[0].Trim();
 		string[] tokens = Regex
 			.Matches(line, @"[A-Za-z_][A-Za-z0-9_]*|0x[0-9A-Fa-f]+|\d+|[^\s]")
@@ -20,22 +21,51 @@ public class Compiler {
 				var seperator = tokens[2];
 				if (seperator != ",") throw new Exception("Expected a comma between arguments");
 				var source = tokens[3];
-				if (source == "=") { // This is actual a psudocommand for MOV
+				if (source == "=") { // This is actual a psudocommand for MOV/ORRs
 					var value = tokens[4];
 					uint immediate = value.StartsWith("0x", StringComparison.OrdinalIgnoreCase)
 						? Convert.ToUInt32(value[2..], 16)
 						: Convert.ToUInt32(value, 10);
-					return new Move {
+					if (immediate == 0) {
+						return [new Move {
+							DestinationRegister = (byte)destinationRegister,
+							ImmediateValue = 0
+						}];
+					}
+					// Find all bytes we need to store...
+					var bytes = new List<uint>();
+					for (var i = 0; i <= 24; i += 8) {
+						var section = (immediate >> i) & 0xFF;
+						if (section == 0) continue;
+
+						bytes.Add(section << i);
+					}
+					if (bytes.Count == 1) {
+						return [
+							new Move {
+								DestinationRegister = (byte)destinationRegister,
+								ImmediateValue = immediate
+							}
+						];
+					}
+
+					return new Operation[] {
+						new Move {
+							DestinationRegister = (byte)destinationRegister,
+							ImmediateValue = bytes[0]
+						}
+					}.Concat(bytes[1..].Select(b => new Or {
 						DestinationRegister = (byte)destinationRegister,
-						ImmediateValue = immediate
-					};
+						FirstOperandRegister = (byte)destinationRegister,
+						ImmediateValue = b
+					})).ToArray();
 				}
 				if (tokens.Length >= 4) throw new Exception("Command not recognized, too many arguments...");
-				throw new NotImplementedException();
+				throw new NotImplementedException(line);
 			}
 
 		}
 		
-		throw new NotImplementedException();
+		throw new NotImplementedException(line);
 	}
 }
