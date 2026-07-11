@@ -20,14 +20,15 @@ public class Compiler {
 				var seperator = tokens[2];
 				if (seperator != ",") throw new Exception("Expected a comma between arguments");
 				var source = tokens[3];
-				if (source == "=") {
-					// This is actual a psudocommand for MOV
+				if (source == "=") { // This is actual a psudocommand for MOV
 					var value = tokens[4];
+					uint immediate = value.StartsWith("0x", StringComparison.OrdinalIgnoreCase)
+						? Convert.ToUInt32(value[2..], 16)
+						: Convert.ToUInt32(value, 10);
 					return new Move {
-						Register = destinationRegister,
-						Value = value
+						DestinationRegister = (byte)destinationRegister,
+						ImmediateValue = immediate
 					};
-
 				}
 				if (tokens.Length >= 4) throw new Exception("Command not recognized, too many arguments...");
 				throw new NotImplementedException();

@@ -1,3 +1,5 @@
+using System.Linq;
+
 namespace GBARomMaker.Rom;
 
 public class RomFile {
@@ -16,6 +18,6 @@ public class RomFile {
 	public byte[] Content;
 	
 	public byte[] ToBytes(bool calculateChecksum = true) {
-		return Header.ToBytes(calculateChecksum);
+		return Header.ToBytes(calculateChecksum).Concat(Content).ToArray();
 	}
 }

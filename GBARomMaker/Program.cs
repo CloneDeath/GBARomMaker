@@ -12,18 +12,16 @@ public static class Program {
 		newFile.Header.GameTitle = "red pixel";
 
 		var compiler = new Compiler();
-		compiler.GetOperationForLine("ldr r0, =0x04000000 @ DCR");
 
-		newFile.Content = [
-			
-			// ldr r0, =0x04000000     @ Display control register
+		newFile.Content = 
+			compiler.GetOperationForLine("ldr r0, =0x04000000     @ Display control register").ToBytes();
 			// ldr r1, =0x0403         @ Mode 3 + BG2 enabled
 			// strh r1, [r0]
 			// ldr r0, =0x06000000     @ Top-left pixel in VRAM
 			// mov r1, #0x1F           @ Red
 			// strh r1, [r0]
 
-		];
+
 
 
 		File.WriteAllBytes("../../homebrew/just-header.gba", newFile.ToBytes());
