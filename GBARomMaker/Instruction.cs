@@ -1,7 +1,12 @@
 public enum Instruction {
-	B = 0b1010,
-	Branch = 0b1010,
+	// Branch
+	B = 1,
+	Branch = 1,
 
-	BL = 0b1011,
-	BranchLink = 0b1011,
+	BL = 2,
+	BranchLink = 2,
+
+	// ALU
+	MOV = 3,
+	Move = 3
 }

@@ -1,5 +1,6 @@
 ﻿using System.IO;
 using GBARomMaker.Rom;
+using GBARomMaker.Compilation;
 
 namespace GBARomMaker;
 public static class Program {
@@ -10,13 +11,21 @@ public static class Program {
 		var newFile = new RomFile();
 		newFile.Header.GameTitle = "red pixel";
 
+		var compiler = new Compiler();
+		compiler.GetOperationForLine("ldr r0, =0x04000000 @ DCR");
 
-		// ldr r0, =0x04000000     @ Display control register
-        // ldr r1, =0x0403         @ Mode 3 + BG2 enabled
-        // strh r1, [r0]
-        // ldr r0, =0x06000000     @ Top-left pixel in VRAM
-        // mov r1, #0x1F           @ Red
-        // strh r1, [r0]
+		newFile.Content = [
+			
+			// ldr r0, =0x04000000     @ Display control register
+			// ldr r1, =0x0403         @ Mode 3 + BG2 enabled
+			// strh r1, [r0]
+			// ldr r0, =0x06000000     @ Top-left pixel in VRAM
+			// mov r1, #0x1F           @ Red
+			// strh r1, [r0]
+
+		];
+
+
 		File.WriteAllBytes("../../homebrew/just-header.gba", newFile.ToBytes());
 	}
 }
