@@ -83,10 +83,22 @@ public class Compiler {
 					BaseOperation = BaseOperation.Add,
 					WriteBack = false
 				}];
+			};
+			case "mov": {
+				var destinationRegister = int.Parse(tokens[1].Substring(1));
+				if (tokens[2] != ",") throw new Exception("Expected a comma between arguments");
+				if (tokens[3] != "#") throw new Exception("Expected a # for A Literal");
+				uint immediate = tokens[4].StartsWith("0x", StringComparison.OrdinalIgnoreCase)
+					? Convert.ToUInt32(tokens[4][2..], 16)
+					: Convert.ToUInt32(tokens[4], 10);
+				if (tokens.Count() > 5) throw new Exception("Too many args passed in...");
+				return [new Move {
+					DestinationRegister = (byte)destinationRegister,
+					Immediate = true,
+					ImmediateValue = immediate
+				}];
 			}
-
 		}
-		
 		throw new NotImplementedException(line);
 	}
 }
