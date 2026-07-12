@@ -8,5 +8,9 @@ public enum Instruction {
 
 	// ALU
 	MOV = 3,
-	Move = 3
+	Move = 3,
+
+	// Memory Halfword/DoubleWord/Signed
+	STRH = 4,
+	StoreHalf = 4,
 }
