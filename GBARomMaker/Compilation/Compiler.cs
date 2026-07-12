@@ -16,8 +16,7 @@ public class Compiler {
 		var operation = tokens[0];
 		switch (operation.ToLower()) {
 			case "ldr": {
-				var dest = tokens[1];
-				var destinationRegister = int.Parse(dest[1].ToString());
+				var destinationRegister = int.Parse(tokens[1].Substring(1));
 				var seperator = tokens[2];
 				if (seperator != ",") throw new Exception("Expected a comma between arguments");
 				var source = tokens[3];
@@ -62,6 +61,28 @@ public class Compiler {
 				}
 				if (tokens.Length >= 4) throw new Exception("Command not recognized, too many arguments...");
 				throw new NotImplementedException(line);
+			};
+			case "strh": {
+				var destinationRegister = int.Parse(tokens[1].Substring(1));
+				if (tokens[2] != ",") throw new Exception("Expected a comma between arguments");
+				if (tokens[3] != "[") throw new Exception("Expected a [ for Address specified");
+				var baseRegister = int.Parse(tokens[4].Substring(1));
+
+				var addressNext = tokens[5];
+				
+				if (addressNext != "]") throw new NotImplementedException("Not implemented complex addresses yet...");
+				if (tokens.Count() > 6) throw new NotImplementedException("Post Index Addressing not implemented");
+
+				return [new MemoryHalf {
+					OpCode = HOpCode.STRH,
+					DestinationRegister = (byte)destinationRegister,
+					BaseRegister = (byte)baseRegister,
+					AddOffset = AddOffset.PreTransfer,
+					ImmediateOffset = 0,
+					ImmediateOffsetFlag = true,
+					BaseOperation = BaseOperation.Add,
+					WriteBack = false
+				}];
 			}
 
 		}
