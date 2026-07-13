@@ -40,7 +40,6 @@ public static class Program {
 		
 		Directory.CreateDirectory(Path.GetDirectoryName(outputRom)!);
 		File.WriteAllBytes(outputRom, newFile.ToBytes());
-		Console.WriteLine("Hello Red");
 		Console.WriteLine(inputAssembly);
 		Console.WriteLine(outputRom);
 
@@ -58,13 +57,8 @@ public static class Program {
 		var entrypoint = DetectEntryPoint(peReader, metadata);
 
 		Console.WriteLine($"Entrypoint: {entrypoint.Namespace}.{entrypoint.Class}.{entrypoint.Name}");
-		Console.WriteLine(string.Join(" ", entrypoint.BodyBytes.Select(b => $"{b:X2}")));
-		try {
-			PrintCIL(entrypoint.BodyBytes);
-		}
-		catch (Exception ex) {
-			Console.Error.WriteLine(ex.Message);
-		}
+		Console.WriteLine(string.Join(" ", entrypoint.BodyBytes.Select(b => $"0x{b:X2}")));
+		PrintCIL(entrypoint.BodyBytes);
 		//foreach (TypeDefinitionHandle typeHandle in metadata.TypeDefinitions)
 		//{
 		//	TypeDefinition type = metadata.GetTypeDefinition(typeHandle);
@@ -110,12 +104,42 @@ public static class Program {
 			var op = data[i];
 			switch (op) {
 				case 0x00:
-					Console.WriteLine("0x00 NOP");
+					Console.WriteLine("nop");
 					break;
-				case 0x20:
-					var value = BitConverter.ToInt32(data[(i+1)..(i+4)]);
+				case 0x06:
+					Console.WriteLine("ldloc.0");
+					break;
+				case 0x07:
+					Console.WriteLine("ldloc.1");
+					break;
+				case 0x0A:
+					Console.WriteLine("stloc.0");
+					break;
+				case 0x0B:
+					Console.WriteLine("stloc.1");
+					break;
+				case 0x1F: {
+					var value = data[i+1];
+					i += 1;
+					Console.WriteLine($"ldc.i4.s 0x{value:X2}");
+					break;
+				}
+				case 0x20: {
+					var args = data[(i+1)..(i+5)];
+					var value = BitConverter.ToInt32(args);
 					i += 4;
-					Console.WriteLine($"0x20 ldc.i4 0x{value:X8}");
+					Console.WriteLine($"ldc.i4 0x{value:X8}");
+					break;
+				}
+				case 0x2A: {
+					Console.WriteLine("ret");
+					break;
+				}
+				case 0x53:
+					Console.WriteLine("stind.i2");
+					break;
+				case 0xD3:
+					Console.WriteLine("conv.i");
 					break;
 				default: throw new NotImplementedException($"0x{op:X2}");
 			}

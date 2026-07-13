@@ -9,7 +9,7 @@
     <GbaOutputPath>$(TargetDir)$(AssemblyName).gba</GbaOutputPath>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 	</PropertyGroup>
-	<Target
+  <!--<Target
 		Name="CompileGba"
 		AfterTargets="Build"
 		>
@@ -17,5 +17,5 @@
 			ConsoleToMSBuild="true"
 			StandardOutputImportance="High"
 			StandardErrorImportance="High" />
-	</Target>
+  </Target>-->
 </Project>

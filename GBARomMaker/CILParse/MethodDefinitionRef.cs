@@ -18,5 +18,5 @@ public class MethodDefinitionRef {
 	public string Class => metadata.GetString(parent.Name);
 	public string Name => metadata.GetString(method.Name);
 
-	public byte[] BodyBytes => peReader.GetMethodBody(method.RelativeVirtualAddress).GetILBytes();
+	public byte[] BodyBytes => peReader.GetMethodBody(method.RelativeVirtualAddress)?.GetILBytes() ?? [];
 }
