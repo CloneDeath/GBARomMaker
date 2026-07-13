@@ -1,13 +1,20 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Linq;
 using GBARomMaker.Rom;
 using GBARomMaker.Compilation;
 
 namespace GBARomMaker;
 public static class Program {
-	public static void Main() {
-		var data = File.ReadAllBytes("../../homebrew/pliko_013b.gba");
-		var file = new RomFile(data);
+	public static int Main(string[] args) {
+		if (args.Length != 2)
+		{
+			Console.Error.WriteLine("Usage: GbaCompiler <input.dll> <output.gba>");
+			return 1;
+		}
+
+		string inputAssembly = Path.GetFullPath(args[0]);
+		string outputRom = Path.GetFullPath(args[1]);
 
 		var newFile = new RomFile();
 		newFile.Header.GameTitle = "red pixel";
@@ -26,7 +33,12 @@ public static class Program {
 		newFile.Content = assembly.SelectMany(a => compiler.GetOperationForLine(a))
 			.SelectMany(op => op.ToBytes())
 			.ToArray();
-
-		File.WriteAllBytes("../../homebrew/just-header.gba", newFile.ToBytes());
+		
+		Directory.CreateDirectory(Path.GetDirectoryName(outputRom)!);
+		File.WriteAllBytes(outputRom, newFile.ToBytes());
+		Console.WriteLine("Hello Red");
+		Console.WriteLine(inputAssembly);
+		Console.WriteLine(outputRom);
+		return 0;
 	}
 }
