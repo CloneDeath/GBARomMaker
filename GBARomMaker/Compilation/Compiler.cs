@@ -16,7 +16,7 @@ public class Compiler {
 		var operation = tokens[0];
 		switch (operation.ToLower()) {
 			case "ldr": {
-				var destinationRegister = int.Parse(tokens[1].Substring(1));
+				var destinationRegister = ParseRegister(tokens[1]);
 				var seperator = tokens[2];
 				if (seperator != ",") throw new Exception("Expected a comma between arguments");
 				var source = tokens[3];
@@ -27,7 +27,7 @@ public class Compiler {
 						: Convert.ToUInt32(value, 10);
 					if (immediate == 0) {
 						return [new Move {
-							DestinationRegister = (byte)destinationRegister,
+							DestinationRegister = destinationRegister,
 							ImmediateValue = 0
 						}];
 					}
@@ -42,7 +42,7 @@ public class Compiler {
 					if (bytes.Count == 1) {
 						return [
 							new Move {
-								DestinationRegister = (byte)destinationRegister,
+								DestinationRegister = destinationRegister,
 								ImmediateValue = immediate
 							}
 						];
@@ -50,12 +50,12 @@ public class Compiler {
 
 					return new Operation[] {
 						new Move {
-							DestinationRegister = (byte)destinationRegister,
+							DestinationRegister = destinationRegister,
 							ImmediateValue = bytes[0]
 						}
 					}.Concat(bytes[1..].Select(b => new Or {
-						DestinationRegister = (byte)destinationRegister,
-						FirstOperandRegister = (byte)destinationRegister,
+						DestinationRegister = destinationRegister,
+						FirstOperandRegister = destinationRegister,
 						ImmediateValue = b
 					})).ToArray();
 				}
@@ -63,10 +63,10 @@ public class Compiler {
 				throw new NotImplementedException(line);
 			};
 			case "strh": {
-				var destinationRegister = int.Parse(tokens[1].Substring(1));
+				var destinationRegister = ParseRegister(tokens[1]);
 				if (tokens[2] != ",") throw new Exception("Expected a comma between arguments");
 				if (tokens[3] != "[") throw new Exception("Expected a [ for Address specified");
-				var baseRegister = int.Parse(tokens[4].Substring(1));
+				var baseRegister = ParseRegister(tokens[4]);
 
 				var addressNext = tokens[5];
 				
@@ -75,8 +75,8 @@ public class Compiler {
 
 				return [new MemoryHalf {
 					OpCode = HOpCode.STRH,
-					DestinationRegister = (byte)destinationRegister,
-					BaseRegister = (byte)baseRegister,
+					DestinationRegister = destinationRegister,
+					BaseRegister = baseRegister,
 					AddOffset = AddOffset.PreTransfer,
 					ImmediateOffset = 0,
 					ImmediateOffsetFlag = true,
@@ -85,7 +85,7 @@ public class Compiler {
 				}];
 			};
 			case "mov": {
-				var destinationRegister = int.Parse(tokens[1].Substring(1));
+				var destinationRegister = ParseRegister(tokens[1]);
 				if (tokens[2] != ",") throw new Exception("Expected a comma between arguments");
 				if (tokens[3] != "#") throw new Exception("Expected a # for A Literal");
 				uint immediate = tokens[4].StartsWith("0x", StringComparison.OrdinalIgnoreCase)
@@ -93,12 +93,56 @@ public class Compiler {
 					: Convert.ToUInt32(tokens[4], 10);
 				if (tokens.Count() > 5) throw new Exception("Too many args passed in...");
 				return [new Move {
-					DestinationRegister = (byte)destinationRegister,
+					DestinationRegister = destinationRegister,
 					Immediate = true,
 					ImmediateValue = immediate
 				}];
 			}
+			case "stmia": {
+				var tokenList = new Queue<string>(tokens.Skip(1).ToList());
+				var baseRegister = ParseRegister(tokenList.Dequeue());
+				var next = tokenList.Dequeue();
+				bool writeback = false;
+				if (next == "!") {
+					writeback = true;
+					next = tokenList.Dequeue();
+				}
+				if (next != ",") {
+				 	throw new Exception("Unexpected token: " + next);
+				}
+				
+				next = tokenList.Dequeue();
+				if (next != "{") {
+					throw new Exception("Unexpected token: " + next);
+				}
+
+				ushort registerList = 0;
+				while (next != "}") {
+					next = tokenList.Dequeue();
+					if (next == "}") break;
+					var register = ParseRegister(next);
+					registerList |= (ushort)(0b1 << register);
+				}
+				if (tokenList.Any()) throw new Exception("Got more tokens than expected");
+				return [new BlockDataTransfer {
+					RegisterList = registerList,
+					BaseRegister = baseRegister,
+					LoadStore = LoadStore.Store,
+					PrePost = PrePost.Post,
+					UpDown = UpDown.Up,
+					WriteBack = writeback
+				}];
+			}
 		}
 		throw new NotImplementedException(line);
+	}
+
+	public static byte ParseRegister(string register) {
+		return register switch {
+			"sp" => 13,
+			"lr" => 14,
+			"pc" => 15,
+			_ => byte.TryParse(register.Substring(1), out var r) ? r : throw new Exception("Failed to parse " + register)
+		};
 	}
 }

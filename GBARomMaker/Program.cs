@@ -103,7 +103,7 @@ public static class Program {
 		//};
 
 		var assembly = new List<string> {
-			"ldr sp, =0x030000000 @ CIL stack pointer -- WRAM Internal"
+			"ldr sp, =0x03000000 @ CIL stack pointer -- WRAM Internal"
 		};
 
 		foreach (var instruction in instructions) {
@@ -113,18 +113,18 @@ public static class Program {
 				case "ldc.i4": {
 					var ldc = (GBARomMaker.CILParse.Instructions.LDC_I4)instruction;
 					assembly.Add($"ldr r0, =0x{ldc.Data:X8}");
-					assembly.Add("stmia sp, { r0 }");
+					assembly.Add("stmia sp!, { r0 }");
 					break;
 				}
 				case "ldc.i4.s": {
 					var ldc = (GBARomMaker.CILParse.Instructions.LDC_I4_S)instruction;
 					assembly.Add($"ldr r0, =0x{ldc.Data:X2}");
-					assembly.Add("stmia sp, { r0 }");
+					assembly.Add("stmia sp!, { r0 }");
 					break;
 				}
 				case "conv.i": continue;
 				case "stind.i2": {
-					assembly.Add("ldmdb sp, { r0, r1 }");
+					assembly.Add("ldmdb sp!, { r0, r1 }");
 					assembly.Add("strh r1, [r0]");
 					break;
 				}

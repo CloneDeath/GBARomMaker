@@ -9,6 +9,7 @@ public abstract class Move_test {
 	public class Move_RollRight_test : Move_test {
 		[TestCase(0, 0b1010, 0b1010)]
 		[TestCase(6, 0b0001, 0x04000000)]
+		[TestCase(8, 0b0011, 0x03000000)]
 		public void RollRightWorks(int ror, int nn, int expected) {
 			var move = new Move();
 
