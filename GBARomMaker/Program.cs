@@ -4,9 +4,10 @@ using System.Linq;
 using GBARomMaker.Rom;
 using GBARomMaker.Compilation;
 using System.Reflection.Metadata;
-using System.Reflection.Emit;
 using System.Reflection.PortableExecutable;
 using System.Reflection.Metadata.Ecma335;
+using GBARomMaker.CILParse;
+using System.Collections.Generic;
 
 namespace GBARomMaker;
 public static class Program {
@@ -17,38 +18,11 @@ public static class Program {
 			return 1;
 		}
 
-		string inputAssembly = Path.GetFullPath(args[0]);
-		string outputRom = Path.GetFullPath(args[1]);
-
-		var newFile = new RomFile();
-		newFile.Header.GameTitle = "red pixel";
-
-		var compiler = new Compiler();
-
-		var assembly = new string[]{
-			"ldr r0, =0x04000000     @ Display control register",
-			"ldr r1, =0x0403         @ Mode 3 + BG2 enabled",
-			"strh r1, [r0]",
-			"ldr r0, =0x06000000     @ Top-left pixel in VRAM",
-			"mov r1, #0x1F           @ Red",
-			"strh r1, [r0]"
-		};
-
-		newFile.Content = assembly.SelectMany(a => compiler.GetOperationForLine(a))
-			.SelectMany(op => op.ToBytes())
-			.ToArray();
+		var inputAssembly = Path.GetFullPath(args[0]);
+		var outputRom = Path.GetFullPath(args[1]);
 		
-		Directory.CreateDirectory(Path.GetDirectoryName(outputRom)!);
-		File.WriteAllBytes(outputRom, newFile.ToBytes());
 		Console.WriteLine(inputAssembly);
 		Console.WriteLine(outputRom);
-
-		var OpCodesByValue =
-		    typeof(OpCodes)
-        	.GetFields()
-	        .Where(f => f.FieldType == typeof(OpCode))
-	        .Select(f => (OpCode)f.GetValue(null)!)
-	        .ToDictionary(op => unchecked((ushort)op.Value));
 
 		using var stream = File.OpenRead(inputAssembly);
 		using var peReader = new PEReader(stream);
@@ -58,7 +32,21 @@ public static class Program {
 
 		Console.WriteLine($"Entrypoint: {entrypoint.Namespace}.{entrypoint.Class}.{entrypoint.Name}");
 		Console.WriteLine(string.Join(" ", entrypoint.BodyBytes.Select(b => $"0x{b:X2}")));
-		PrintCIL(entrypoint.BodyBytes);
+
+		var parser = new CILParser();
+		var instructions = parser.GetInstructions(entrypoint.BodyBytes);
+		PrintCIL(instructions);
+		var assembly = GetASMFromInstructions(instructions);
+
+		var newFile = new RomFile();
+		newFile.Header.GameTitle = "red pixel";
+		var compiler = new Compiler();
+		newFile.Content = assembly.SelectMany(a => compiler.GetOperationForLine(a))
+			.SelectMany(op => op.ToBytes())
+			.ToArray();
+		Directory.CreateDirectory(Path.GetDirectoryName(outputRom)!);
+		File.WriteAllBytes(outputRom, newFile.ToBytes());
+
 		//foreach (TypeDefinitionHandle typeHandle in metadata.TypeDefinitions)
 		//{
 		//	TypeDefinition type = metadata.GetTypeDefinition(typeHandle);
@@ -98,51 +86,56 @@ public static class Program {
 		return new MethodDefinitionRef(peReader, metadata, method);
 	}
 
-	public static void PrintCIL(byte[] data) {
-		// https://www.ecma-international.org/wp-content/uploads/ECMA-335_6th_edition_june_2012.pdf
-		for (var i = 0; i < data.Count(); i++) {
-			var op = data[i];
-			switch (op) {
-				case 0x00:
-					Console.WriteLine("nop");
-					break;
-				case 0x06:
-					Console.WriteLine("ldloc.0");
-					break;
-				case 0x07:
-					Console.WriteLine("ldloc.1");
-					break;
-				case 0x0A:
-					Console.WriteLine("stloc.0");
-					break;
-				case 0x0B:
-					Console.WriteLine("stloc.1");
-					break;
-				case 0x1F: {
-					var value = data[i+1];
-					i += 1;
-					Console.WriteLine($"ldc.i4.s 0x{value:X2}");
-					break;
-				}
-				case 0x20: {
-					var args = data[(i+1)..(i+5)];
-					var value = BitConverter.ToInt32(args);
-					i += 4;
-					Console.WriteLine($"ldc.i4 0x{value:X8}");
+	public static void PrintCIL(CILInstruction[] instructions) {
+		foreach (var instruction in instructions) {
+			Console.WriteLine(instruction.GetCIL());
+		}
+	}
+
+	public static string[] GetASMFromInstructions(CILInstruction[] instructions) {
+		//var assembly = new string[]{
+		//	"ldr r0, =0x04000000     @ Display control register",
+		//	"ldr r1, =0x0403         @ Mode 3 + BG2 enabled",
+		//	"strh r1, [r0]",
+		//	"ldr r0, =0x06000000     @ Top-left pixel in VRAM",
+		//	"mov r1, #0x1F           @ Red",
+		//	"strh r1, [r0]"
+		//};
+
+		var assembly = new List<string> {
+			"ldr sp, =0x030000000 @ CIL stack pointer -- WRAM Internal"
+		};
+
+		foreach (var instruction in instructions) {
+			var opcode = instruction.OpCode.Name;
+			switch (opcode) {
+				case "nop": continue;
+				case "ldc.i4": {
+					var ldc = (GBARomMaker.CILParse.Instructions.LDC_I4)instruction;
+					assembly.Add($"ldr r0, =0x{ldc.Data:X8}");
+					assembly.Add("stmia sp, { r0 }");
 					break;
 				}
-				case 0x2A: {
-					Console.WriteLine("ret");
+				case "ldc.i4.s": {
+					var ldc = (GBARomMaker.CILParse.Instructions.LDC_I4_S)instruction;
+					assembly.Add($"ldr r0, =0x{ldc.Data:X2}");
+					assembly.Add("stmia sp, { r0 }");
 					break;
 				}
-				case 0x53:
-					Console.WriteLine("stind.i2");
+				case "conv.i": continue;
+				case "stind.i2": {
+					assembly.Add("ldmdb sp, { r0, r1 }");
+					assembly.Add("strh r1, [r0]");
 					break;
-				case 0xD3:
-					Console.WriteLine("conv.i");
+				}
+				case "ret": {
+					assembly.Add("bx lr");
 					break;
-				default: throw new NotImplementedException($"0x{op:X2}");
+				}
+				default: throw new Exception("Couldn't convert instruction to ARM7 ASM: " + opcode);
 			}
 		}
+
+		return assembly.ToArray();
 	}
 }
