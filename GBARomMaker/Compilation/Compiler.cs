@@ -98,43 +98,82 @@ public class Compiler {
 					ImmediateValue = immediate
 				}];
 			}
-			case "stmia": {
-				var tokenList = new Queue<string>(tokens.Skip(1).ToList());
-				var baseRegister = ParseRegister(tokenList.Dequeue());
-				var next = tokenList.Dequeue();
-				bool writeback = false;
-				if (next == "!") {
-					writeback = true;
-					next = tokenList.Dequeue();
-				}
-				if (next != ",") {
-				 	throw new Exception("Unexpected token: " + next);
-				}
-				
-				next = tokenList.Dequeue();
-				if (next != "{") {
-					throw new Exception("Unexpected token: " + next);
-				}
-
-				ushort registerList = 0;
-				while (next != "}") {
-					next = tokenList.Dequeue();
-					if (next == "}") break;
-					var register = ParseRegister(next);
-					registerList |= (ushort)(0b1 << register);
-				}
-				if (tokenList.Any()) throw new Exception("Got more tokens than expected");
-				return [new BlockDataTransfer {
-					RegisterList = registerList,
-					BaseRegister = baseRegister,
-					LoadStore = LoadStore.Store,
-					PrePost = PrePost.Post,
-					UpDown = UpDown.Up,
-					WriteBack = writeback
+			case "stmia":
+			case "stmib":
+			case "stmdb":
+			case "stmda":
+			case "ldmia":
+			case "ldmib":
+			case "ldmdb":
+			case "ldmda": {
+				return LoadBlockDataTransfer(tokens);
+			}
+			case "bx": {
+				if (tokens.Length > 2) throw new Exception("Too many arguments for bx operation " + line);
+				var register = ParseRegister(tokens[1]);
+				return [new BranchExchange {
+					OpCode = BranchExchangeOpCode.BX,
+					Register = register
 				}];
 			}
 		}
 		throw new NotImplementedException(line);
+	}
+
+	public static Operation[] LoadBlockDataTransfer(string[] tokens) {//ldmdb sp!, { r0, r1 }
+		var tokenList = new Queue<string>(tokens.Skip(1).ToList());
+		var baseRegister = ParseRegister(tokenList.Dequeue());
+		var next = tokenList.Dequeue();
+		bool writeback = false;
+		if (next == "!") {
+			writeback = true;
+			next = tokenList.Dequeue();
+		}
+		if (next != ",") {
+			throw new Exception("Unexpected token: " + next);
+		}
+
+		next = tokenList.Dequeue();
+		if (next != "{") {
+			throw new Exception("Unexpected token: " + next);
+		}
+
+		ushort registerList = 0;
+		while (true) {
+			next = tokenList.Dequeue();
+			var register = ParseRegister(next);
+			registerList |= (ushort)(0b1 << register);
+			next = tokenList.Dequeue();
+			if (next == ",") continue;
+			if (next == "}") break;
+			throw new Exception("Unexpected token when reading list of registers: " + next);
+		}
+		if (tokenList.Any()) throw new Exception("Got more tokens than expected");
+
+		var operation = tokens[0];
+		var loadStore = operation.Substring(0, 3) switch {
+			"ldm" => LoadStore.Load,
+			"stm" => LoadStore.Store,
+			_ => throw new NotSupportedException($"Could not interpret Load/Store bit for Block Data Transfer command: {operation}, got {operation.Substring(0, 3)}")
+		};
+		var upDown = operation[3] switch {
+			'i' => UpDown.Up,
+			'd' => UpDown.Down,
+			_ => throw new NotSupportedException($"Could not interpret Up/Down bit for Block Data Transfer command: {operation}, got {operation[4]}")
+		};
+		var prePost = operation[4] switch {
+			'b' => PrePost.Pre,
+			'a' => PrePost.Post,
+			_ => throw new NotSupportedException($"Could not interpret Pre/Post bit for Block Data Transfer command: {operation}, got {operation[5]}")
+		};
+		return [new BlockDataTransfer {
+			RegisterList = registerList,
+			BaseRegister = baseRegister,
+			LoadStore = loadStore,
+			PrePost = prePost,
+			UpDown = upDown,
+			WriteBack = writeback
+		}];
 	}
 
 	public static byte ParseRegister(string register) {

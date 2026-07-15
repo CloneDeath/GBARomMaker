@@ -14,7 +14,7 @@ public abstract class Compiler_test {
 		[TestCase("ldr sp, =0x03000000 @ CIL stack pointer -- WRAM Internal", new byte[] { 0x03, 0xD4, 0xA0, 0xE3 })]
 		[TestCase("stmia sp!, { r0 }", new byte[] { 0x01, 0x00, 0xAD, 0xE8 })]
 		[TestCase("ldmdb sp!, { r0, r1 }", new byte[] { 0x03, 0x00, 0x3D, 0xE9 })]
-		//[TestCase("bx lr", new byte[] { }]
+		[TestCase("bx lr", new byte[] { 0x1E, 0xFF, 0x2F, 0xE1 })]
 		public void CompiledAssemblyIsCorrect(string line, byte[] expectedData) {
 			var compiler = new Compiler();
 
