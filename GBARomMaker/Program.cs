@@ -7,7 +7,6 @@ using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
 using System.Reflection.Metadata.Ecma335;
 using GBARomMaker.CILParse;
-using System.Collections.Generic;
 
 namespace GBARomMaker;
 public static class Program {
@@ -36,7 +35,7 @@ public static class Program {
 		var parser = new CILParser();
 		var instructions = parser.GetInstructions(entrypoint.BodyBytes);
 		PrintCIL(instructions);
-		var assembly = GetASMFromInstructions(instructions);
+		var assembly = CILToArm.CILToArm.Translate(instructions);
 
 		var newFile = new RomFile();
 		newFile.Header.GameTitle = "red pixel";
@@ -92,66 +91,5 @@ public static class Program {
 			Console.WriteLine($"{offset:D4}: {instruction.GetCIL()}");
 			offset += instruction.GetBytes().Length;
 		}
-	}
-
-	public static string[] GetASMFromInstructions(CILInstruction[] instructions) {
-		var assembly = new List<string> {
-			"ldr sp, =0x03000000 @ CIL stack pointer -- WRAM Internal"
-		};
-
-		foreach (var instruction in instructions) {
-			var opcode = instruction.OpCode.Name;
-			switch (opcode) {
-				case "nop": continue;
-				case "ldc.i4.0": {
-					assembly.Add("ldr r0, =0");
-					assembly.Add("stmia sp!, { r0 }");
-					break;
-				}
-				case "ldc.i4": {
-					var ldc = (GBARomMaker.CILParse.Instructions.LDC_I4)instruction;
-					assembly.Add($"ldr r0, =0x{ldc.Data:X8}");
-					assembly.Add("stmia sp!, { r0 }");
-					break;
-				}
-				case "ldc.i4.s": {
-					var ldc = (GBARomMaker.CILParse.Instructions.LDC_I4_S)instruction;
-					assembly.Add($"ldr r0, =0x{ldc.Data:X2}");
-					assembly.Add("stmia sp!, { r0 }");
-					break;
-				}
-				case "stloc.0":
-				case "stloc.1":
-				case "stloc.2":
-				case "stloc.3": {
-					var location = int.Parse(opcode[6].ToString()); // stloc.X
-					var register = location + 9;
-					assembly.Add($"ldmdb sp!, {{ r{register} }}");
-					break;
-				}
-				case "ldloc.0":
-				case "ldloc.1":
-				case "ldloc.2":
-				case "ldloc.3": {
-					var location = int.Parse(opcode[6].ToString()); // ldloc.X
-					var register = location + 9;
-					assembly.Add($"stmia sp!, {{ r{register} }}");
-					break;
-				}
-				case "conv.i": continue;
-				case "stind.i2": {
-					assembly.Add("ldmdb sp!, { r0, r1 }");
-					assembly.Add("strh r1, [r0]");
-					break;
-				}
-				case "ret": {
-					assembly.Add("bx lr");
-					break;
-				}
-				default: throw new Exception("Couldn't convert instruction to ARM7 ASM: " + opcode);
-			}
-		}
-
-		return assembly.ToArray();
 	}
 }
