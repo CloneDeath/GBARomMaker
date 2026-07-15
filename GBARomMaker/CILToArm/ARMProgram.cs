@@ -10,14 +10,14 @@ public class ARMProgram : List<ARMLine> {
 		var existing = this.Where(l => l.CilOffset == Offset);
 		var maxOrder = existing.Any() ? existing.Max(l => l.Order) + 1 : 0;
 		for (var i = 0; i < lines.Length; i++) {
-			this.Add(new ARMLine(Offset, maxOrder + i, lines[i]));
+			this.Add(new ARMLine(Offset, maxOrder + i, "\t" + lines[i]));
 		}
 		Offset += size;
 	}
 
 	public void AddLabel(int target, string line) {
-		var existing = this.Where(l => l.CilOffset == Offset);
-		var minOrder = existing.Any() ? existing.Min(l => l.Order) + 1 : 0;
+		var existing = this.Where(l => l.CilOffset == target);
+		var minOrder = existing.Any() ? existing.Min(l => l.Order) - 1 : 0;
 		this.Add(new ARMLine(target, minOrder, line));
 	}
 

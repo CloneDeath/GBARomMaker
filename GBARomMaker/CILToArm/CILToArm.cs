@@ -14,8 +14,13 @@ public class CILToArm {
 		foreach (var instruction in instructions) {
 			var opcode = instruction.OpCode.Name;
 			switch (opcode) {
-				case "nop": continue;
-				case "conv.i": continue;
+				case "nop":
+				case "conv.i": {
+					assembly.Add(instruction.GetBytes().Length, [
+						"nop"
+					]);
+					break;
+				}
 				case "ldc.i4.m1":
 				case "ldc.i4.0":
 				case "ldc.i4.1":
@@ -84,13 +89,35 @@ public class CILToArm {
 					]);
 					break;
 				}
+				case "clt": {
+					assembly.Add(instruction.GetBytes().Length, [
+						"ldmdb sp!, { r0, r1 }",
+						"cmp r0, r1",
+						"movlt r0, #1",
+						"movge r0, #0",
+						"stmia sp!, { r0 }"
+					]);
+					break;
+				}
 				case "br.s": {
-					var ldc = (GBARomMaker.CILParse.Instructions.BR_S)instruction;
+					var brs = (GBARomMaker.CILParse.Instructions.BR_S)instruction;
 					var label = $"jump_{jump_count++}";
 					assembly.Add(instruction.GetBytes().Length, [
 						$"b {label}"
 					]);
-					var target = assembly.Offset + ldc.Target;
+					var target = assembly.Offset + brs.Target;
+					assembly.AddLabel(target, $"{label}:");
+					break;
+				}
+				case "brtrue.s": {
+					var brt = (GBARomMaker.CILParse.Instructions.BRTRUE_S)instruction;
+					var label = $"jump_{jump_count++}";
+					assembly.Add(instruction.GetBytes().Length, [
+						"ldmdb sp!, { r0 }",
+						"cmp r0, #0",
+						$"bne {label}"
+					]);
+					var target = assembly.Offset + brt.Target;
 					assembly.AddLabel(target, $"{label}:");
 					break;
 				}

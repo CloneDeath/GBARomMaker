@@ -35,7 +35,10 @@ public static class Program {
 		var parser = new CILParser();
 		var instructions = parser.GetInstructions(entrypoint.BodyBytes);
 		PrintCIL(instructions);
+		Console.WriteLine();
+
 		var assembly = CILToArm.CILToArm.Translate(instructions);
+		PrintAsm(assembly);
 
 		var newFile = new RomFile();
 		newFile.Header.GameTitle = "red pixel";
@@ -90,6 +93,12 @@ public static class Program {
 		foreach (var instruction in instructions) {
 			Console.WriteLine($"{offset:D4}: {instruction.GetCIL()}");
 			offset += instruction.GetBytes().Length;
+		}
+	}
+
+	public static void PrintAsm(string[] instructions) {
+		foreach (var line in instructions) {
+			Console.WriteLine(line);
 		}
 	}
 }
