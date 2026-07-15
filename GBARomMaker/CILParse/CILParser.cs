@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using System.Collections.Generic;
 using GBARomMaker.CILParse.Instructions;
+using GBARomMaker.CILParse.FEInstructions;
 
 namespace GBARomMaker.CILParse;
 
@@ -10,30 +11,55 @@ public class CILParser {
 	public CILParser() {}
 
 	public static readonly List<CILInstructionDefinition> Instructions = new CILInstructionDefinition[][] {
+		[ADD.Definition],
+		BR.Definitions,
+		BRTRUE.Definitions,
 		[CONV.Definition],
 		LDC.Definitions,
 		LDLOC.Definitions,
+		[MUL.Definition],
 		[NOP.Definition],
 		[RET.Definition],
 		[STIND.Definition],
 		STLOC.Definitions,
+	}.SelectMany(d => d).ToList();
+	
+	public static readonly List<CILInstructionDefinition> FEInstructions = new CILInstructionDefinition[][] {
+		[CLT.Definition],
 	}.SelectMany(d => d).ToList();
 
 	public CILInstruction[] GetInstructions(byte[] data) {
 		var result = new List<CILInstruction>();
 		for (var i = 0; i < data.Length; i++) {
 			var op = data[i];
-			var instructionDef = Instructions.Find(i => i.OpCode == op);
-			if (instructionDef == null) {
-				throw new NotImplementedException($"0x{op:X2}");
-			}
-			var args = instructionDef.ArgumentCount > 0
-				? data[(i+1) .. (i + 1 + instructionDef.ArgumentCount)]
-				: [];
-			i += instructionDef.ArgumentCount;
+			if (op == 0xFE) { // 2-byte op-codes
+				i++;
+				op = data[i];
+				
+				var instructionDef = FEInstructions.Find(i => i.OpCode == op);
+				if (instructionDef == null) {
+					throw new NotImplementedException($"No CIL Instruction Definition Found for 0xFE 0x{op:X2}");
+				}
+				var args = instructionDef.ArgumentCount > 0
+					? data[(i+1) .. (i + 1 + instructionDef.ArgumentCount)]
+					: [];
+				i += instructionDef.ArgumentCount;
 
-			var instruction = instructionDef.Factory(args);
-			result.Add(instruction);
+				var instruction = instructionDef.Factory(args);
+				result.Add(instruction);
+			} else {
+				var instructionDef = Instructions.Find(i => i.OpCode == op);
+				if (instructionDef == null) {
+					throw new NotImplementedException($"No CIL Instruction Definition Found for 0x{op:X2}");
+				}
+				var args = instructionDef.ArgumentCount > 0
+					? data[(i+1) .. (i + 1 + instructionDef.ArgumentCount)]
+					: [];
+				i += instructionDef.ArgumentCount;
+
+				var instruction = instructionDef.Factory(args);
+				result.Add(instruction);
+			}
 		}
 		return result.ToArray();
 	}

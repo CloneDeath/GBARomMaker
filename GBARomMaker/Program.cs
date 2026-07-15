@@ -87,8 +87,10 @@ public static class Program {
 	}
 
 	public static void PrintCIL(CILInstruction[] instructions) {
+		var offset = 0;
 		foreach (var instruction in instructions) {
-			Console.WriteLine(instruction.GetCIL());
+			Console.WriteLine($"{offset:D4}: {instruction.GetCIL()}");
+			offset += instruction.GetBytes().Length;
 		}
 	}
 
@@ -101,6 +103,11 @@ public static class Program {
 			var opcode = instruction.OpCode.Name;
 			switch (opcode) {
 				case "nop": continue;
+				case "ldc.i4.0": {
+					assembly.Add("ldr r0, =0");
+					assembly.Add("stmia sp!, { r0 }");
+					break;
+				}
 				case "ldc.i4": {
 					var ldc = (GBARomMaker.CILParse.Instructions.LDC_I4)instruction;
 					assembly.Add($"ldr r0, =0x{ldc.Data:X8}");
