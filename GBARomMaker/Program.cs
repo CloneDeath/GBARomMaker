@@ -93,15 +93,6 @@ public static class Program {
 	}
 
 	public static string[] GetASMFromInstructions(CILInstruction[] instructions) {
-		//var assembly = new string[]{
-		//	"ldr r0, =0x04000000     @ Display control register",
-		//	"ldr r1, =0x0403         @ Mode 3 + BG2 enabled",
-		//	"strh r1, [r0]",
-		//	"ldr r0, =0x06000000     @ Top-left pixel in VRAM",
-		//	"mov r1, #0x1F           @ Red",
-		//	"strh r1, [r0]"
-		//};
-
 		var assembly = new List<string> {
 			"ldr sp, =0x03000000 @ CIL stack pointer -- WRAM Internal"
 		};
@@ -120,6 +111,24 @@ public static class Program {
 					var ldc = (GBARomMaker.CILParse.Instructions.LDC_I4_S)instruction;
 					assembly.Add($"ldr r0, =0x{ldc.Data:X2}");
 					assembly.Add("stmia sp!, { r0 }");
+					break;
+				}
+				case "stloc.0":
+				case "stloc.1":
+				case "stloc.2":
+				case "stloc.3": {
+					var location = int.Parse(opcode[6].ToString()); // stloc.X
+					var register = location + 9;
+					assembly.Add($"ldmdb sp!, {{ r{register} }}");
+					break;
+				}
+				case "ldloc.0":
+				case "ldloc.1":
+				case "ldloc.2":
+				case "ldloc.3": {
+					var location = int.Parse(opcode[6].ToString()); // ldloc.X
+					var register = location + 9;
+					assembly.Add($"stmia sp!, {{ r{register} }}");
 					break;
 				}
 				case "conv.i": continue;
