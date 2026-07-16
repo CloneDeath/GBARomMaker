@@ -1,4 +1,5 @@
 using GBARomMaker.Rom.Operations;
+using GBARomMaker.Rom.Operations.ALU;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,6 +16,12 @@ public class Compiler {
 			.ToArray();
 		var operation = tokens[0];
 		switch (operation.ToLower()) {
+			case "nop": {
+				return [new Move {
+					DestinationRegister = 0,
+					Op2 = new Register(0)
+				}];
+			}
 			case "ldr": {
 				var destinationRegister = ParseRegister(tokens[1]);
 				var seperator = tokens[2];
@@ -28,7 +35,7 @@ public class Compiler {
 					if (immediate == 0) {
 						return [new Move {
 							DestinationRegister = destinationRegister,
-							ImmediateValue = 0
+							Op2 = new Immediate(0)
 						}];
 					}
 					// Find all bytes we need to store...
@@ -43,7 +50,7 @@ public class Compiler {
 						return [
 							new Move {
 								DestinationRegister = destinationRegister,
-								ImmediateValue = immediate
+								Op2 = new Immediate(immediate)
 							}
 						];
 					}
@@ -51,7 +58,7 @@ public class Compiler {
 					return new Operation[] {
 						new Move {
 							DestinationRegister = destinationRegister,
-							ImmediateValue = bytes[0]
+							Op2 = new Immediate(bytes[0])
 						}
 					}.Concat(bytes[1..].Select(b => new Or {
 						DestinationRegister = destinationRegister,
@@ -94,8 +101,7 @@ public class Compiler {
 				if (tokens.Count() > 5) throw new Exception("Too many args passed in...");
 				return [new Move {
 					DestinationRegister = destinationRegister,
-					Immediate = true,
-					ImmediateValue = immediate
+					Op2 = new Immediate(immediate)
 				}];
 			}
 			case "stmia":
