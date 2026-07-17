@@ -8,125 +8,152 @@ using System.Text.RegularExpressions;
 namespace GBARomMaker.Compilation;
 
 public class Compiler {
-	public Operation[] GetOperationForLine(string line) {
-		line = line.Split('@', 2)[0].Trim();
-		string[] tokens = Regex
-			.Matches(line, @"[A-Za-z_][A-Za-z0-9_]*|0x[0-9A-Fa-f]+|\d+|[^\s]")
-			.Select(match => match.Value)
-			.ToArray();
-		var operation = tokens[0];
-		switch (operation.ToLower()) {
-			case "nop": {
-				return [new Move {
-					DestinationRegister = 0,
-					Op2 = new Register(0)
-				}];
-			}
-			case "ldr": {
-				var destinationRegister = ParseRegister(tokens[1]);
-				var seperator = tokens[2];
-				if (seperator != ",") throw new Exception("Expected a comma between arguments");
-				var source = tokens[3];
-				if (source == "=") { // This is actual a psudocommand for MOV/ORRs
-					var value = tokens[4];
-					uint immediate = value.StartsWith("0x", StringComparison.OrdinalIgnoreCase)
-						? Convert.ToUInt32(value[2..], 16)
-						: Convert.ToUInt32(value, 10);
-					if (immediate == 0) {
-						return [new Move {
-							DestinationRegister = destinationRegister,
-							Op2 = new Immediate(0)
-						}];
-					}
-					// Find all bytes we need to store...
-					var bytes = new List<uint>();
-					for (var i = 0; i <= 24; i += 8) {
-						var section = (immediate >> i) & 0xFF;
-						if (section == 0) continue;
-
-						bytes.Add(section << i);
-					}
-					if (bytes.Count == 1) {
-						return [
-							new Move {
-								DestinationRegister = destinationRegister,
-								Op2 = new Immediate(immediate)
-							}
-						];
-					}
-
-					return new Operation[] {
-						new Move {
-							DestinationRegister = destinationRegister,
-							Op2 = new Immediate(bytes[0])
-						}
-					}.Concat(bytes[1..].Select(b => new Or {
-						DestinationRegister = destinationRegister,
-						FirstOperandRegister = destinationRegister,
-						ImmediateValue = b
-					})).ToArray();
-				}
-				if (tokens.Length >= 4) throw new Exception("Command not recognized, too many arguments...");
-				throw new NotImplementedException(line);
-			};
-			case "strh": {
-				var destinationRegister = ParseRegister(tokens[1]);
-				if (tokens[2] != ",") throw new Exception("Expected a comma between arguments");
-				if (tokens[3] != "[") throw new Exception("Expected a [ for Address specified");
-				var baseRegister = ParseRegister(tokens[4]);
-
-				var addressNext = tokens[5];
-				
-				if (addressNext != "]") throw new NotImplementedException("Not implemented complex addresses yet...");
-				if (tokens.Count() > 6) throw new NotImplementedException("Post Index Addressing not implemented");
-
-				return [new MemoryHalf {
-					OpCode = HOpCode.STRH,
-					DestinationRegister = destinationRegister,
-					BaseRegister = baseRegister,
-					AddOffset = AddOffset.PreTransfer,
-					ImmediateOffset = 0,
-					ImmediateOffsetFlag = true,
-					BaseOperation = BaseOperation.Add,
-					WriteBack = false
-				}];
-			};
-			case "mov": {
-				var destinationRegister = ParseRegister(tokens[1]);
-				if (tokens[2] != ",") throw new Exception("Expected a comma between arguments");
-				if (tokens[3] != "#") throw new Exception("Expected a # for A Literal");
-				uint immediate = tokens[4].StartsWith("0x", StringComparison.OrdinalIgnoreCase)
-					? Convert.ToUInt32(tokens[4][2..], 16)
-					: Convert.ToUInt32(tokens[4], 10);
-				if (tokens.Count() > 5) throw new Exception("Too many args passed in...");
-				return [new Move {
-					DestinationRegister = destinationRegister,
-					Op2 = new Immediate(immediate)
-				}];
-			}
-			case "stmia":
-			case "stmib":
-			case "stmdb":
-			case "stmda":
-			case "ldmia":
-			case "ldmib":
-			case "ldmdb":
-			case "ldmda": {
-				return LoadBlockDataTransfer(tokens);
-			}
-			case "bx": {
-				if (tokens.Length > 2) throw new Exception("Too many arguments for bx operation " + line);
-				var register = ParseRegister(tokens[1]);
-				return [new BranchExchange {
-					OpCode = BranchExchangeOpCode.BX,
-					Register = register
-				}];
-			}
+	public ARMMachineCode GetOperationsForAssembly(params string[] lines) {
+		var code = new ARMMachineCode();
+		foreach (var line in lines) {
+			AddOperationsForAssembly(line, code);
 		}
-		throw new NotImplementedException(line);
+		return code;
 	}
 
-	public static Operation[] LoadBlockDataTransfer(string[] tokens) {//ldmdb sp!, { r0, r1 }
+	public void AddOperationsForAssembly(string line, ARMMachineCode code) {
+		line = line.Split('@', 2)[0].Trim();
+		string[] tokens = Regex
+			.Matches(line, @"[\w]+|[^\s]")
+			.Select(match => match.Value)
+			.ToArray();
+
+		if (tokens.Length == 2 && tokens[1] == ":") {
+			var label = tokens[0];
+			code.AddLabel(label);
+			return;
+		}
+		
+		var operation = tokens[0];
+		foreach (var handler in _operationMap) {
+			if (operation.StartsWith(handler.Key)) {
+				handler.Value(tokens, code);
+				return;
+			}
+		}
+		throw new NotImplementedException($"No Handler found for Operation '{operation}'. Line: '{line}'");
+	}
+
+	private delegate void AddOperations(string[] tokens, ARMMachineCode code);
+
+	private Dictionary<string, AddOperations> _operationMap = new() {
+		{ "nop", (string[] tokens, ARMMachineCode code) => {
+			code.Add(new Move {
+				DestinationRegister = 0,
+				Op2 = new Register(0)
+			});
+		}},
+		{ "ldr", (string[] tokens, ARMMachineCode code) => {
+			var destinationRegister = ParseRegister(tokens[1]);
+			var seperator = tokens[2];
+			if (seperator != ",") throw new Exception("Expected a comma between arguments");
+			var source = tokens[3];
+			if (source == "=") { // This is actual a psudocommand for MOV/ORRs
+				var value = tokens[4];
+				uint immediate = value.StartsWith("0x", StringComparison.OrdinalIgnoreCase)
+					? Convert.ToUInt32(value[2..], 16)
+					: Convert.ToUInt32(value, 10);
+				if (immediate == 0) {
+					return [new Move {
+						DestinationRegister = destinationRegister,
+						Op2 = new Immediate(0)
+					}];
+				}
+				// Find all bytes we need to store...
+				var bytes = new List<uint>();
+				for (var i = 0; i <= 24; i += 8) {
+					var section = (immediate >> i) & 0xFF;
+					if (section == 0) continue;
+
+					bytes.Add(section << i);
+				}
+				if (bytes.Count == 1) {
+					return [
+						new Move {
+							DestinationRegister = destinationRegister,
+							Op2 = new Immediate(immediate)
+						}
+					];
+				}
+
+				return new Operation[] {
+					new Move {
+						DestinationRegister = destinationRegister,
+						Op2 = new Immediate(bytes[0])
+					}
+				}.Concat(bytes[1..].Select(b => new Or {
+					DestinationRegister = destinationRegister,
+					FirstOperandRegister = destinationRegister,
+					ImmediateValue = b
+				})).ToArray();
+			}
+			if (tokens.Length >= 4) throw new Exception("Command not recognized, too many arguments...");
+			throw new NotImplementedException(line);
+		}},
+		{ "strh", (string[] tokens, ARMMachineCode code) => {
+			var destinationRegister = ParseRegister(tokens[1]);
+			if (tokens[2] != ",") throw new Exception("Expected a comma between arguments");
+			if (tokens[3] != "[") throw new Exception("Expected a [ for Address specified");
+			var baseRegister = ParseRegister(tokens[4]);
+
+			var addressNext = tokens[5];
+			
+			if (addressNext != "]") throw new NotImplementedException("Not implemented complex addresses yet...");
+			if (tokens.Count() > 6) throw new NotImplementedException("Post Index Addressing not implemented");
+
+			return [new MemoryHalf {
+				OpCode = HOpCode.STRH,
+				DestinationRegister = destinationRegister,
+				BaseRegister = baseRegister,
+				AddOffset = AddOffset.PreTransfer,
+				ImmediateOffset = 0,
+				ImmediateOffsetFlag = true,
+				BaseOperation = BaseOperation.Add,
+				WriteBack = false
+			}];
+		}},
+		{ "mov", (string[] tokens, ARMMachineCode code) => {
+			var destinationRegister = ParseRegister(tokens[1]);
+			if (tokens[2] != ",") throw new Exception("Expected a comma between arguments");
+			if (tokens[3] != "#") throw new Exception("Expected a # for A Literal");
+			uint immediate = tokens[4].StartsWith("0x", StringComparison.OrdinalIgnoreCase)
+				? Convert.ToUInt32(tokens[4][2..], 16)
+				: Convert.ToUInt32(tokens[4], 10);
+			if (tokens.Count() > 5) throw new Exception("Too many args passed in...");
+			return [new Move {
+				DestinationRegister = destinationRegister,
+				Op2 = new Immediate(immediate)
+			}];
+		}},
+		{ "stm", (string[] tokens, ARMMachineCode code) => {
+			return LoadBlockDataTransfer(tokens);
+		}},
+		{ "ldm", (string[] tokens, ARMMachineCode code) => {
+			return LoadBlockDataTransfer(tokens);
+		}},
+		{ "b", (string[] tokens, ARMMachineCode code) => {
+			var branchTarget = tokens[1];
+			if (tokens.Length > 2) throw new Exception("Too many arguments for b operation " + line);
+			return [new Branch {
+				Instruction = Instruction.B
+			}];
+		}},
+		{ "bx", (string[] tokens, ARMMachineCode code) => {
+			if (tokens.Length > 2) throw new Exception("Too many arguments for bx operation " + line);
+			var register = ParseRegister(tokens[1]);
+			return [new BranchExchange {
+				OpCode = BranchExchangeOpCode.BX,
+				Register = register
+			}];
+		}},
+	};
+
+	public static IOperation[] LoadBlockDataTransfer(string[] tokens) {//ldmdb sp!, { r0, r1 }
 		var tokenList = new Queue<string>(tokens.Skip(1).ToList());
 		var baseRegister = ParseRegister(tokenList.Dequeue());
 		var next = tokenList.Dequeue();

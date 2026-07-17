@@ -2,7 +2,7 @@ using System;
 
 namespace GBARomMaker.Rom.Operations;
 
-public class Branch : Operation {
+public class Branch : IOperation {
 	public Branch() {
 		Condition = Condition.Always;
 		Instruction = Instruction.Branch;
@@ -22,21 +22,21 @@ public class Branch : Operation {
 		// Sign-extend bit 23 through the upper 8 bits.
 		if ((offset & 0x0080_0000) != 0)
 			offset |= unchecked((int)0xFF00_0000);
-		Offset = offset * 4;
+		Offset = (offset * 4)+8;
 	}
 
 	public Condition Condition { get; set; }
 	public Instruction Instruction { get; set; }
 	public int Offset { get; set; }
 
-	public override byte[] ToBytes() {
+	public byte[] ToBytes() {
 		var data = new byte[4] { 0, 0, 0, 0 };
 		data[3] |= (byte)(((byte)Condition << 4) & 0b11110000);
 		data[3] |= (byte)(Instruction == Instruction.Branch 
 			? 0b1010
 			: 0b1011);
 
-		var offset = Offset / 4;
+		var offset = (Offset - 8) / 4;
 		data[0] = (byte)(offset & 0xFF);
 		data[1] = (byte)((offset >> 8) & 0xFF);
 		data[2] = (byte)((offset >> 16) & 0xFF);

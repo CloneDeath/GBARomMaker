@@ -8,7 +8,7 @@ namespace GBARomMaker.Rom;
 public class Header {
 	public Header() {
 		this.EntryPoint = new Branch {
-			Offset = 0xB8
+			Offset = 0xC0
 		};
 		this.NintendoLogo = new byte[156] {
 			0x24, 0xFF, 0xAE, 0x51, 0x69, 0x9A, 0xA2, 0x21, 0x3D, 0x84, 0x82, 0x0A, 0x84, 0xE4, 0x09, 0xAD,
@@ -49,7 +49,7 @@ public class Header {
 		this.ReservedArea2 = data[0xBE..(0xBE + 2)];
 	}
 
-	public Operation EntryPoint { get; set; }
+	public IOperation EntryPoint { get; set; }
 	public byte[] NintendoLogo { get; set; }
 	public string GameTitle { get; set; }
 	public string GameCode { get; set; }

@@ -9,7 +9,7 @@ public class RORNN {
 }
 
 // https://problemkaputt.de/gbatek-arm-opcodes-data-processing-alu.htm
-public class Move : Operation {
+public class Move : IOperation {
 	public Move() {
 		Condition = Condition.Always;
 		SetConditionCodes = false;
