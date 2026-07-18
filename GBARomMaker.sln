@@ -4,9 +4,9 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GBARomMaker", "GBARomMaker\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GBARomMaker.Test", "GBARomMaker.Test\GBARomMaker.Test.csproj", "{F5CC2988-A753-41E5-911B-678F94B8BA1C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RedPixel", "RedPixel\RedPixel.csproj", "{CD87C11F-B841-4168-ABFA-DDE5C2C10008}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Examples", "Examples", "{E8BD9518-B631-4626-B31E-226BAD71623F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RedPixel", "Examples\RedPixel\RedPixel.csproj", "{1437EFB7-8768-477A-8DD8-6E01459FE569}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -22,12 +22,12 @@ Global
 		{F5CC2988-A753-41E5-911B-678F94B8BA1C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F5CC2988-A753-41E5-911B-678F94B8BA1C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F5CC2988-A753-41E5-911B-678F94B8BA1C}.Release|Any CPU.Build.0 = Release|Any CPU
-		{CD87C11F-B841-4168-ABFA-DDE5C2C10008}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{CD87C11F-B841-4168-ABFA-DDE5C2C10008}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{CD87C11F-B841-4168-ABFA-DDE5C2C10008}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{CD87C11F-B841-4168-ABFA-DDE5C2C10008}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1437EFB7-8768-477A-8DD8-6E01459FE569}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1437EFB7-8768-477A-8DD8-6E01459FE569}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1437EFB7-8768-477A-8DD8-6E01459FE569}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1437EFB7-8768-477A-8DD8-6E01459FE569}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
-		{CD87C11F-B841-4168-ABFA-DDE5C2C10008} = {E8BD9518-B631-4626-B31E-226BAD71623F}
+		{1437EFB7-8768-477A-8DD8-6E01459FE569} = {E8BD9518-B631-4626-B31E-226BAD71623F}
 	EndGlobalSection
 EndGlobal
