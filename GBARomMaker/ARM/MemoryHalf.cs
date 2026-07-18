@@ -118,6 +118,7 @@ public class MemoryHalf : IInstruction {
 		data[0] |= (byte)((Reserved1 ? 1 : 0) << 7);
 		data[0] |= (byte)((OpCode switch {
 			HOpCode.Reserved => 0,
+			HOpCode.SWP => 0,
 			HOpCode.STRH => 1,
 			HOpCode.LDRH => 1,
 			HOpCode.LDRD => 2,
@@ -128,7 +129,7 @@ public class MemoryHalf : IInstruction {
 		}) << 5);
 		data[0] |= (byte)((Reserved2 ? 1 : 0) << 4);
 
-		data[0] |= ImmediateOffsetFlag 
+		data[0] |= ImmediateOffsetFlag
 			? (byte)(ImmediateOffset & 0b1111)
 			: (byte)(OffsetRegister & 0b1111);
 		return data;
