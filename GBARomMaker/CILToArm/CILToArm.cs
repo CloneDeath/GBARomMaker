@@ -125,7 +125,7 @@ public class CILToArm {
 					assembly.Add(instruction.GetBytes().Length, [
 						"ldmdb sp!, { r1, r2 }",
 						"add r0,r1,r2",
-						"stmia sp!, r0"
+						"stmia sp!, { r0 }"
 					]);
 					break;
 				}
@@ -133,7 +133,7 @@ public class CILToArm {
 					assembly.Add(instruction.GetBytes().Length, [
 						"ldmdb sp!, { r1, r2 }",
 						"mul r0,r1,r2",
-						"stmia sp!, r0"
+						"stmia sp!, { r0 }"
 					]);
 					break;
 				}

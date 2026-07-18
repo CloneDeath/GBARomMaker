@@ -15,6 +15,9 @@ public abstract class Compiler_test {
 		[TestCase("stmia sp!, { r0 }", new byte[] { 0x01, 0x00, 0xAD, 0xE8 })]
 		[TestCase("ldmdb sp!, { r0, r1 }", new byte[] { 0x03, 0x00, 0x3D, 0xE9 })]
 		[TestCase("bx lr", new byte[] { 0x1E, 0xFF, 0x2F, 0xE1 })]
+		[TestCase("mul r0,r1,r2", new byte[] { 0x91, 0x02, 0x00, 0xE0 })]
+		[TestCase("cmp r0, r1", new byte[] { 0x01, 0x00, 0x50, 0xE1 })]
+		[TestCase("cmp r0, #10", new byte[] { 0x0A, 0x00, 0x50, 0xE3 })]
 		public void CompiledAssemblyIsCorrect(string line, byte[] expectedData) {
 			var compiler = new Compiler();
 

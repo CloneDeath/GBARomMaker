@@ -141,10 +141,32 @@ public class Compiler {
 			});
 		}},
 		{ "stm", (string line, string[] tokens, ARMMachineCode code) => {
-			LoadBlockDataTransfer(tokens, code);
+			LoadBlockDataTransfer(line, tokens, code);
 		}},
 		{ "ldm", (string line, string[] tokens, ARMMachineCode code) => {
-			LoadBlockDataTransfer(tokens, code);
+			LoadBlockDataTransfer(line, tokens, code);
+		}},
+		{ "cmp", (string line, string[] tokens, ARMMachineCode code) => {
+			var tokenList = new Queue<string>(tokens.Skip(1).ToList());
+			var op1 = ParseRegister(tokenList.Dequeue());
+			if (tokenList.Dequeue() != ",") throw new Exception("Expected a comma between arguments");
+			var next = tokenList.Dequeue();
+			ALUOp2 op2;
+			if (next == "#") {
+				var immediate = ParseImmediate(tokenList.Dequeue());
+				op2 = new Immediate(immediate);
+			} else {
+				var op2Register = ParseRegister(next);
+				op2 = new Register(op2Register);
+			}
+			if (tokenList.Any()) throw new Exception("Too many arguments for cmp operation " + line);
+
+			code.Add(new DataProcessing {
+				Operation = ALUOperation.CMP,
+				SetConditionCodes = true,
+				Op1Register = op1,
+				Op2 = op2
+			});
 		}},
 		{ "bx", (string line, string[] tokens, ARMMachineCode code) => {
 			var tokenList = new Queue<string>(tokens.Skip(1).ToList());
@@ -165,12 +187,39 @@ public class Compiler {
 		}},
 		{ "mul", (string line, string[] tokens, ARMMachineCode code) => {
 			var tokenList = new Queue<string>(tokens.Skip(1).ToList());
-			throw new NotImplementedException();
+			var destinationRegister = ParseRegister(tokenList.Dequeue());
+			if (tokenList.Dequeue() != ",") throw new Exception("Expected a comma between arguments");
+			var op1 = ParseRegister(tokenList.Dequeue());
+			if (tokenList.Dequeue() != ",") throw new Exception("Expected a comma between arguments");
+			var op2 = ParseRegister(tokenList.Dequeue());
+			if (tokenList.Any()) throw new Exception("Too many arguments for mul operation " + line);
 
+			code.Add(new Multiply {
+				Opcode = MULOperation.MUL,
+				DestinationRegister = destinationRegister,
+				Op1Register = op1,
+				Op2Register = op2
+			});
+		}},
+		{ "add", (string line, string[] tokens, ARMMachineCode code) => {
+			var tokenList = new Queue<string>(tokens.Skip(1).ToList());
+			var destinationRegister = ParseRegister(tokenList.Dequeue());
+			if (tokenList.Dequeue() != ",") throw new Exception("Expected a comma between arguments");
+			var op1 = ParseRegister(tokenList.Dequeue());
+			if (tokenList.Dequeue() != ",") throw new Exception("Expected a comma between arguments");
+			var op2 = ParseRegister(tokenList.Dequeue());
+			if (tokenList.Any()) throw new Exception("Too many arguments for mul operation " + line);
+
+			code.Add(new DataProcessing {
+				Operation = ALUOperation.ADD,
+				DestinationRegister = destinationRegister,
+				Op1Register = op1,
+				Op2 = new Register(op2)
+			});
 		}},
 	};
 
-	public static void LoadBlockDataTransfer(string[] tokens, ARMMachineCode code) {//ldmdb sp!, { r0, r1 }
+	public static void LoadBlockDataTransfer(string line, string[] tokens, ARMMachineCode code) {//ldmdb sp!, { r0, r1 }
 		var tokenList = new Queue<string>(tokens.Skip(1).ToList());
 		var baseRegister = ParseRegister(tokenList.Dequeue());
 		var next = tokenList.Dequeue();
@@ -180,12 +229,12 @@ public class Compiler {
 			next = tokenList.Dequeue();
 		}
 		if (next != ",") {
-			throw new Exception("Unexpected token: " + next);
+			throw new Exception($"Unexpected token: '{next}' in '{line}'");
 		}
 
 		next = tokenList.Dequeue();
 		if (next != "{") {
-			throw new Exception("Unexpected token: " + next);
+			throw new Exception($"Unexpected token: '{next}' in '{line}'. Expected register list, ie '{{ r0, r1 }}'");
 		}
 
 		ushort registerList = 0;
@@ -231,7 +280,13 @@ public class Compiler {
 			"sp" => 13,
 			"lr" => 14,
 			"pc" => 15,
-			_ => byte.TryParse(register.Substring(1), out var r) ? r : throw new Exception("Failed to parse " + register)
+			_ => byte.TryParse(register.Substring(1), out var r) ? r : throw new Exception($"Failed to parse {register} as a register")
 		};
+	}
+
+	public static uint ParseImmediate(string immediate) {
+		return (uint)(immediate.StartsWith("0x", StringComparison.OrdinalIgnoreCase)
+			? Convert.ToInt32(immediate[2..], 16)
+			: Convert.ToInt32(immediate, 10));
 	}
 }

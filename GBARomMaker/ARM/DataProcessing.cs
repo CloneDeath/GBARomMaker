@@ -66,7 +66,13 @@ public class DataProcessing: IInstruction {
 	public ALUOp2 Op2 { get; set; }
 
 	public byte[] ToBytes() {
+		var isCompareOp = Operation == ALUOperation.TST
+			|| Operation == ALUOperation.TEQ
+			|| Operation == ALUOperation.CMP
+			|| Operation == ALUOperation.CMN;
+
 		if (Op1Register != 0b0000 && (Operation == ALUOperation.MOV || Operation == ALUOperation.MVN)) throw new Exception("Expected 1st operand to be 0");
+		if (DestinationRegister != 0 && isCompareOp) throw new Exception("Destination Register must be 0 for Operation " + Operation);
 
 		var data = new byte[4] { 0, 0, 0, 0 };
 		data[3] |= (byte)(((byte)Condition << 4) & 0b11110000);
@@ -76,6 +82,8 @@ public class DataProcessing: IInstruction {
 		data[3] |= (byte)(((byte)Operation >> 3) & 0b1);
 		data[2] |= (byte)(((byte)Operation & 0b111) << 5);
 
+		// must be true for any of these operations
+		var setConditionCodes = SetConditionCodes || isCompareOp ;
 		data[2] |= (byte)((SetConditionCodes ? 1 : 0) << 4);
 		data[2] |= (byte)(Op1Register & 0b1111);
 		data[1] |= (byte)(DestinationRegister << 4);
