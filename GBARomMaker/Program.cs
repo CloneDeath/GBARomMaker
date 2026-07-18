@@ -11,17 +11,18 @@ using GBARomMaker.CILParse;
 namespace GBARomMaker;
 public static class Program {
 	public static int Main(string[] args) {
-		if (args.Length != 2)
-		{
-			Console.Error.WriteLine("Usage: GbaCompiler <input.dll> <output.gba>");
+		if (args.Length < 2) {
+			Console.Error.WriteLine("Usage: GbaCompiler input.dll output.gba <args>");
 			return 1;
 		}
+
+		var showCil = args.Any(a => a == "--show-cil");
+		var showArm = args.Any(a => a == "--show-arm");
 
 		var inputAssembly = Path.GetFullPath(args[0]);
 		var outputRom = Path.GetFullPath(args[1]);
 		
-		Console.WriteLine(inputAssembly);
-		Console.WriteLine(outputRom);
+		Console.WriteLine(inputAssembly + " -> " + outputRom);
 
 		using var stream = File.OpenRead(inputAssembly);
 		using var peReader = new PEReader(stream);
@@ -29,16 +30,23 @@ public static class Program {
 
 		var entrypoint = DetectEntryPoint(peReader, metadata);
 
-		Console.WriteLine($"Entrypoint: {entrypoint.Namespace}.{entrypoint.Class}.{entrypoint.Name}");
-		Console.WriteLine(string.Join(" ", entrypoint.BodyBytes.Select(b => $"0x{b:X2}")));
+		if (showCil) {
+			Console.WriteLine($"Entrypoint: {entrypoint.Namespace}.{entrypoint.Class}.{entrypoint.Name}");
+			Console.WriteLine(string.Join(" ", entrypoint.BodyBytes.Select(b => $"0x{b:X2}")));
+		}
 
 		var parser = new CILParser();
 		var instructions = parser.GetInstructions(entrypoint.BodyBytes);
-		PrintCIL(instructions);
-		Console.WriteLine();
+
+		if (showCil) {
+			PrintCIL(instructions);
+			Console.WriteLine();
+		}
 
 		var assembly = CILToArm.CILToArm.Translate(instructions);
-		PrintAsm(assembly);
+		if (showArm) {
+			PrintAsm(assembly);
+		}
 
 		var newFile = new RomFile();
 		newFile.Header.GameTitle = "red pixel";
