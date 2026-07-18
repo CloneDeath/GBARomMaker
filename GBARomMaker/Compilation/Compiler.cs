@@ -31,7 +31,7 @@ public class Compiler {
 		
 		var operation = tokens[0];
 		foreach (var handler in _operationMap) {
-			if (operation.StartsWith(handler.Key)) {
+			if (operation.ToLower().StartsWith(handler.Key)) {
 				handler.Value(line, tokens, code);
 				return;
 			}
@@ -43,6 +43,7 @@ public class Compiler {
 
 	private Dictionary<string, AddOperations> _operationMap = new() {
 		{ "nop", (string line, string[] tokens, ARMMachineCode code) => {
+			AssertLength(line, tokens[0], 3);
 			code.Add(new DataProcessing {
 				Operation = ALUOperation.MOV,
 				DestinationRegister = 0,
@@ -50,6 +51,7 @@ public class Compiler {
 			});
 		}},
 		{ "ldr", (string line, string[] tokens, ARMMachineCode code) => {
+			AssertLength(line, tokens[0], 3);
 			var tokenList = new Queue<string>(tokens.Skip(1).ToList());
 			var destinationRegister = ParseRegister(tokenList.Dequeue());
 			var seperator = tokenList.Dequeue();
@@ -102,6 +104,7 @@ public class Compiler {
 			throw new NotImplementedException(line);
 		}},
 		{ "strh", (string line, string[] tokens, ARMMachineCode code) => {
+			AssertLength(line, tokens[0], 4);
 			var tokenList = new Queue<string>(tokens.Skip(1).ToList());
 			var destinationRegister = ParseRegister(tokenList.Dequeue());
 			if (tokenList.Dequeue() != ",") throw new Exception("Expected a comma between arguments");
@@ -125,6 +128,13 @@ public class Compiler {
 			});
 		}},
 		{ "mov", (string line, string[] tokens, ARMMachineCode code) => {
+			Condition condition;
+			if (tokens[0].Length == 5) {
+				condition = ParseCondition(tokens[0][3..]);
+			} else {
+				AssertLength(line, tokens[0], 3);
+				condition = Condition.AL;
+			}
 			var tokenList = new Queue<string>(tokens.Skip(1).ToList());
 			var destinationRegister = ParseRegister(tokenList.Dequeue());
 			if (tokenList.Dequeue() != ",") throw new Exception("Expected a comma between arguments");
@@ -137,16 +147,20 @@ public class Compiler {
 			code.Add(new DataProcessing {
 				Operation = ALUOperation.MOV,
 				DestinationRegister = destinationRegister,
-				Op2 = new Immediate(immediate)
+				Op2 = new Immediate(immediate),
+				Condition = condition
 			});
 		}},
 		{ "stm", (string line, string[] tokens, ARMMachineCode code) => {
+			AssertLength(line, tokens[0], 5);
 			LoadBlockDataTransfer(line, tokens, code);
 		}},
 		{ "ldm", (string line, string[] tokens, ARMMachineCode code) => {
+			AssertLength(line, tokens[0], 5);
 			LoadBlockDataTransfer(line, tokens, code);
 		}},
 		{ "cmp", (string line, string[] tokens, ARMMachineCode code) => {
+			AssertLength(line, tokens[0], 3);
 			var tokenList = new Queue<string>(tokens.Skip(1).ToList());
 			var op1 = ParseRegister(tokenList.Dequeue());
 			if (tokenList.Dequeue() != ",") throw new Exception("Expected a comma between arguments");
@@ -169,6 +183,7 @@ public class Compiler {
 			});
 		}},
 		{ "bx", (string line, string[] tokens, ARMMachineCode code) => {
+			AssertLength(line, tokens[0], 2);
 			var tokenList = new Queue<string>(tokens.Skip(1).ToList());
 			var register = ParseRegister(tokenList.Dequeue());
 			if (tokenList.Any()) throw new Exception("Too many arguments for bx operation " + line);
@@ -178,14 +193,23 @@ public class Compiler {
 			});
 		}},
 		{ "b", (string line, string[] tokens, ARMMachineCode code) => {
+			Condition condition;
+			if (tokens[0].Length == 3) {
+				condition = ParseCondition(tokens[0][1..]);
+			} else {
+				AssertLength(line, tokens[0], 1);
+				condition = Condition.AL;
+			}
 			var tokenList = new Queue<string>(tokens.Skip(1).ToList());
 			var branchTarget = tokenList.Dequeue();
 			if (tokenList.Any()) throw new Exception("Too many arguments for b operation " + line);
 			code.AddNeedsLabel(new Branch {
-				Instruction = Instruction.B
+				Instruction = Instruction.B,
+				Condition = condition
 			}, branchTarget);
 		}},
 		{ "mul", (string line, string[] tokens, ARMMachineCode code) => {
+			AssertLength(line, tokens[0], 3);
 			var tokenList = new Queue<string>(tokens.Skip(1).ToList());
 			var destinationRegister = ParseRegister(tokenList.Dequeue());
 			if (tokenList.Dequeue() != ",") throw new Exception("Expected a comma between arguments");
@@ -202,6 +226,7 @@ public class Compiler {
 			});
 		}},
 		{ "add", (string line, string[] tokens, ARMMachineCode code) => {
+			AssertLength(line, tokens[0], 3);
 			var tokenList = new Queue<string>(tokens.Skip(1).ToList());
 			var destinationRegister = ParseRegister(tokenList.Dequeue());
 			if (tokenList.Dequeue() != ",") throw new Exception("Expected a comma between arguments");
@@ -289,4 +314,35 @@ public class Compiler {
 			? Convert.ToInt32(immediate[2..], 16)
 			: Convert.ToInt32(immediate, 10));
 	}
-}
+
+	public static void AssertLength(string line, string op, int length) {
+		if (op.Length != length) throw new Exception($"Unexpected opcode '{op}'. Line '{line}'");
+	}
+
+	public static Condition ParseCondition(string condition) {
+		return condition.ToUpper() switch {
+			"EQ" => Condition.EQ,
+			"NE" => Condition.NE,
+			
+			"CS" => Condition.CS,
+			"HS" => Condition.CS,
+			
+			"CC" => Condition.CC,
+			"LO" => Condition.CC,
+			
+			"MI" => Condition.MI,
+			"PL" => Condition.PL,
+			"VS" => Condition.VS,
+			"VC" => Condition.VC,
+			"HI" => Condition.HI,
+			"LS" => Condition.LS,
+			"GE" => Condition.GE,
+			"LT" => Condition.LT,
+			"GT" => Condition.GT,
+			"LE" => Condition.LE,
+			"AL" => Condition.AL,
+			"NV" => Condition.NV,
+			_ => throw new Exception("Unrecognized Condition " + condition)
+		};
+	}
+} 
