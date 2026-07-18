@@ -3,7 +3,7 @@ using System;
 namespace GBARomMaker.ARM;
 
 // https://problemkaputt.de/gbatek-arm-opcodes-branch-and-branch-with-link-b-bl-bx-blx-swi-bkpt.htm
-public class Branch : IInstruction {
+public class Branch : ILabeledInstruction {
 	public Branch() {
 		Condition = Condition.Always;
 		Instruction = Instruction.Branch;
@@ -29,6 +29,10 @@ public class Branch : IInstruction {
 	public Condition Condition { get; set; }
 	public Instruction Instruction { get; set; }
 	public int Offset { get; set; }
+
+	public void SetOffset(int offset) {
+		Offset = offset;
+	}
 
 	public byte[] ToBytes() {
 		var data = new byte[4] { 0, 0, 0, 0 };

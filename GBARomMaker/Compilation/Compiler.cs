@@ -181,9 +181,9 @@ public class Compiler {
 			var tokenList = new Queue<string>(tokens.Skip(1).ToList());
 			var branchTarget = tokenList.Dequeue();
 			if (tokenList.Any()) throw new Exception("Too many arguments for b operation " + line);
-			code.Add(new Branch {
+			code.AddNeedsLabel(new Branch {
 				Instruction = Instruction.B
-			});
+			}, branchTarget);
 		}},
 		{ "mul", (string line, string[] tokens, ARMMachineCode code) => {
 			var tokenList = new Queue<string>(tokens.Skip(1).ToList());

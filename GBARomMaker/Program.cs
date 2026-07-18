@@ -44,6 +44,7 @@ public static class Program {
 		newFile.Header.GameTitle = "red pixel";
 		var compiler = new Compiler();
 		var machineCode = compiler.GetOperationsForAssembly(assembly);
+		if (machineCode.LabelsAreMissing) throw new Exception("Missing labels when compiling to ARM!");
 		newFile.Content = machineCode.ToBytes();
 		Directory.CreateDirectory(Path.GetDirectoryName(outputRom)!);
 		File.WriteAllBytes(outputRom, newFile.ToBytes());

@@ -18,6 +18,7 @@ public abstract class Compiler_test {
 		[TestCase("mul r0,r1,r2", new byte[] { 0x91, 0x02, 0x00, 0xE0 })]
 		[TestCase("cmp r0, r1", new byte[] { 0x01, 0x00, 0x50, 0xE1 })]
 		[TestCase("cmp r0, #10", new byte[] { 0x0A, 0x00, 0x50, 0xE3 })]
+		[TestCase("nop", new byte[] { 0x00, 0x00, 0xA0, 0xE1 })]
 		public void CompiledAssemblyIsCorrect(string line, byte[] expectedData) {
 			var compiler = new Compiler();
 
@@ -25,6 +26,52 @@ public abstract class Compiler_test {
 			
 			var compiledData = result.ToBytes();
 			compiledData.ShouldBe(expectedData);
+		}
+
+		[Test]
+		public void JumpsBackAreCalculatedCorrectly() {
+			var compiler = new Compiler();
+			var assembly = new string[]{
+				"nop",
+				"target:",
+				"nop",
+				"nop",
+				"b target"
+			};
+
+			var result = compiler.GetOperationsForAssembly(assembly);
+
+			result.LabelsAreMissing.ShouldBe(false);
+			var compiledData = result.ToBytes();
+			compiledData.ShouldBe(new byte[] {
+				0x00, 0x00, 0xA0, 0xE1, // nop
+				0x00, 0x00, 0xA0, 0xE1, // target: nop
+				0x00, 0x00, 0xA0, 0xE1, // nop
+				0xFC, 0xFF, 0xFF, 0xEA  // b target
+			});
+		}
+		
+		[Test]
+		public void JumpsForwardAreCalculatedCorrectly() {
+			var compiler = new Compiler();
+			var assembly = new string[]{
+				"b target",
+				"nop",
+				"nop",
+				"target:",
+				"nop",
+			};
+
+			var result = compiler.GetOperationsForAssembly(assembly);
+
+			result.LabelsAreMissing.ShouldBe(false);
+			var compiledData = result.ToBytes();
+			compiledData.ShouldBe(new byte[] {
+				0x01, 0x00, 0x00, 0xEA, // b target
+				0x00, 0x00, 0xA0, 0xE1, // nop
+				0x00, 0x00, 0xA0, 0xE1, // nop
+				0x00, 0x00, 0xA0, 0xE1  // target: nop
+			});
 		}
 	}
 

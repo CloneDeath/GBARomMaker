@@ -23,7 +23,13 @@ public class ARMMachineCode : List<ARMLine> {
 	}
 
 	public void AddNeedsLabel(ILabeledInstruction instruction, string label) {
-		_needsLabels.Add(new NeedsLabel(offset, instruction, label));
+		var labelLocation = _labels.FirstOrDefault(l => l.Label == label);
+		if (labelLocation == null) {
+			_needsLabels.Add(new NeedsLabel(offset, instruction, label));
+		} else {
+			var delta = labelLocation.Offset - offset;
+			instruction.SetOffset(delta);
+		}
 		Add(instruction);
 	}
 
@@ -38,6 +44,8 @@ public class ARMMachineCode : List<ARMLine> {
 			need.Instruction.SetOffset(delta);
 		}
 	}
+
+	public bool LabelsAreMissing => _needsLabels.Any();
 
     public byte[] ToBytes() {
 		return this.SelectMany(l => l.Instruction.ToBytes()).ToArray();
