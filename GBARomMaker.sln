@@ -8,6 +8,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Examples", "Examples", "{E8
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RedPixel", "Examples\RedPixel\RedPixel.csproj", "{1437EFB7-8768-477A-8DD8-6E01459FE569}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RedLine", "Examples\RedLine\RedLine.csproj", "{6A1093E5-9111-4A67-A782-D1BD455175BC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -26,8 +28,13 @@ Global
 		{1437EFB7-8768-477A-8DD8-6E01459FE569}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1437EFB7-8768-477A-8DD8-6E01459FE569}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1437EFB7-8768-477A-8DD8-6E01459FE569}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6A1093E5-9111-4A67-A782-D1BD455175BC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6A1093E5-9111-4A67-A782-D1BD455175BC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6A1093E5-9111-4A67-A782-D1BD455175BC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6A1093E5-9111-4A67-A782-D1BD455175BC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{1437EFB7-8768-477A-8DD8-6E01459FE569} = {E8BD9518-B631-4626-B31E-226BAD71623F}
+		{6A1093E5-9111-4A67-A782-D1BD455175BC} = {E8BD9518-B631-4626-B31E-226BAD71623F}
 	EndGlobalSection
 EndGlobal
