@@ -1,6 +1,6 @@
 using System;
 
-namespace GBARomMaker.Rom.Operations;
+namespace GBARomMaker.ARM;
 
 public enum AddOffset {
 	PreTransfer = 1,
@@ -31,7 +31,7 @@ public enum HOpCode {
 }
 
 // https://problemkaputt.de/gbatek-arm-opcodes-memory-halfword-doubleword-and-signed-data-transfer.htm
-public class MemoryHalf : Operation {
+public class MemoryHalf : IInstruction {
 	public MemoryHalf() {
 		Condition = Condition.Always;
 		AddOffset = AddOffset.PreTransfer;
@@ -86,7 +86,7 @@ public class MemoryHalf : Operation {
 	public bool Reserved2 { get; set; }
 	public byte OffsetRegister { get; set; }
 
-	public override byte[] ToBytes() {
+	public byte[] ToBytes() {
 		if (AddOffset == AddOffset.PostTransfer && WriteBack) {
 			throw new Exception("Writeback was set, but add offset was set to post transfer...");
 		}

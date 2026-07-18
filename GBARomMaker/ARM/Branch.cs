@@ -1,8 +1,9 @@
 using System;
 
-namespace GBARomMaker.Rom.Operations;
+namespace GBARomMaker.ARM;
 
-public class Branch : IOperation {
+// https://problemkaputt.de/gbatek-arm-opcodes-branch-and-branch-with-link-b-bl-bx-blx-swi-bkpt.htm
+public class Branch : IInstruction {
 	public Branch() {
 		Condition = Condition.Always;
 		Instruction = Instruction.Branch;

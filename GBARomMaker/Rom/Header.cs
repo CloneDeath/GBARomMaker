@@ -1,6 +1,6 @@
 using System.Text;
 using System.Linq;
-using GBARomMaker.Rom.Operations;
+using GBARomMaker.ARM;
 using System;
 
 namespace GBARomMaker.Rom;
@@ -49,7 +49,7 @@ public class Header {
 		this.ReservedArea2 = data[0xBE..(0xBE + 2)];
 	}
 
-	public IOperation EntryPoint { get; set; }
+	public IInstruction EntryPoint { get; set; }
 	public byte[] NintendoLogo { get; set; }
 	public string GameTitle { get; set; }
 	public string GameCode { get; set; }

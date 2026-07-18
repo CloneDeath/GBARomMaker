@@ -1,6 +1,6 @@
 using System;
 
-namespace GBARomMaker.Rom.Operations.ALU;
+namespace GBARomMaker.ARM.ALU;
 
 public enum ShiftType {
 	LSL = 0,

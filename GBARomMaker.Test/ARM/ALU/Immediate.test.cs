@@ -1,7 +1,7 @@
-using GBARomMaker.Rom.Operations.ALU;
+using GBARomMaker.ARM.ALU;
 using Shouldly;
 
-namespace GBARomMaker.Test.Rom.Operations.ALU;
+namespace GBARomMaker.Test.ARM.ALU;
 
 [TestFixture]
 public abstract class Immediate_test {

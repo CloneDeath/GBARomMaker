@@ -43,9 +43,8 @@ public static class Program {
 		var newFile = new RomFile();
 		newFile.Header.GameTitle = "red pixel";
 		var compiler = new Compiler();
-		newFile.Content = assembly.SelectMany(a => compiler.GetOperationForLine(a))
-			.SelectMany(op => op.ToBytes())
-			.ToArray();
+		var machineCode = compiler.GetOperationsForAssembly(assembly);
+		newFile.Content = machineCode.ToBytes();
 		Directory.CreateDirectory(Path.GetDirectoryName(outputRom)!);
 		File.WriteAllBytes(outputRom, newFile.ToBytes());
 

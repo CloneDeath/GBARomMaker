@@ -1,4 +1,4 @@
-namespace GBARomMaker.Rom.Operations.ALU;
+namespace GBARomMaker.ARM.ALU;
 
 public abstract class ALUOp2 {
 	public abstract bool IsImmediate { get; }

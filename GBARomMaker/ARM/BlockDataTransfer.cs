@@ -1,4 +1,4 @@
-namespace GBARomMaker.Rom.Operations;
+namespace GBARomMaker.ARM;
 
 public enum PrePost {
 	Pre = 1,
@@ -11,7 +11,7 @@ public enum UpDown {
 }
 
 // https://problemkaputt.de/gbatek-arm-opcodes-memory-block-data-transfer-ldm-stm.htm
-public class BlockDataTransfer : Operation {
+public class BlockDataTransfer : IInstruction {
 	public BlockDataTransfer() {
 		Condition = Condition.Always;
 		PrePost = PrePost.Post;
@@ -32,7 +32,7 @@ public class BlockDataTransfer : Operation {
 	public byte BaseRegister { get; set; }
 	public ushort RegisterList { get; set; }
 
-	public override byte[] ToBytes() {
+	public byte[] ToBytes() {
 		var data = new byte[4] { 0, 0, 0, 0 };
 		data[3] |= (byte)(((byte)Condition << 4) & 0b11110000);
 		data[3] |= 0b100 << 1; // instruction

@@ -1,4 +1,4 @@
-namespace GBARomMaker.Rom.Operations;
+namespace GBARomMaker.ARM;
 
 public enum BranchExchangeOpCode {
 	BX = 0b0001,
@@ -7,7 +7,7 @@ public enum BranchExchangeOpCode {
 }
 
 // https://problemkaputt.de/gbatek-arm-opcodes-branch-and-branch-with-link-b-bl-bx-blx-swi-bkpt.htm
-public class BranchExchange : Operation {
+public class BranchExchange : IInstruction {
 	public BranchExchange() {
 		Condition = Condition.Always;
 		OpCode = BranchExchangeOpCode.BX;
@@ -18,7 +18,7 @@ public class BranchExchange : Operation {
 	public BranchExchangeOpCode OpCode { get; set; }
 	public byte Register { get; set; }
 
-    public override byte[] ToBytes() {
+    public byte[] ToBytes() {
 		var data = new byte[4] { 0, 0, 0, 0 };
 		data[3] |= (byte)(((byte)Condition << 4) & 0b11110000);
 		data[3] |= 0b0001; 

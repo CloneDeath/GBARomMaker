@@ -1,11 +1,11 @@
-using GBARomMaker.Rom.Operations;
+using GBARomMaker.ARM;
 using System.Collections.Generic;
 using System.Linq;
 
 namespace GBARomMaker.Compilation;
 
-public record ARMLine(int Offset, IOperation Instruction);
-public record NeedsLabel(int Offset, ILabeledOperation Instruction, string Label);
+public record ARMLine(int Offset, IInstruction Instruction);
+public record NeedsLabel(int Offset, ILabeledInstruction Instruction, string Label);
 public record LabelLocation(string Label, int Offset);
 
 public class ARMMachineCode : List<ARMLine> {
@@ -14,7 +14,7 @@ public class ARMMachineCode : List<ARMLine> {
 
 	private int offset = 0;
 
-	public void Add(params IOperation[] instructions) {
+	public void Add(params IInstruction[] instructions) {
 		foreach (var instruction in instructions) {		
 			var line = new ARMLine(offset, instruction);
 			Add(line);
@@ -22,7 +22,7 @@ public class ARMMachineCode : List<ARMLine> {
 		}
 	}
 
-	public void AddNeedsLabel(ILabeledOperation instruction, string label) {
+	public void AddNeedsLabel(ILabeledInstruction instruction, string label) {
 		_needsLabels.Add(new NeedsLabel(offset, instruction, label));
 		Add(instruction);
 	}
@@ -38,4 +38,8 @@ public class ARMMachineCode : List<ARMLine> {
 			need.Instruction.SetOffset(delta);
 		}
 	}
+
+    public byte[] ToBytes() {
+		return this.SelectMany(l => l.Instruction.ToBytes()).ToArray();
+    }
 }
