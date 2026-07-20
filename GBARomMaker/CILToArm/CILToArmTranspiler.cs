@@ -201,6 +201,9 @@ public class CILToArmTranspiler {
 
 	private void DeclareMethod(ARMProgram assembly, MethodDefinitionRef method) {
 		assembly.AddLabel(GetLabelForMethod(method));
+		assembly.Add(0, [
+			"stmia sp!, { lr }"
+		]);
 	}
 
 	private void HandleCallInstruction(CILInstruction instruction, ARMProgram assembly) {
