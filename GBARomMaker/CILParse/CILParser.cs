@@ -16,6 +16,7 @@ public class CILParser {
 		BRTRUE.Definitions,
 		[CALL.Definition],
 		[CONV.Definition],
+		LDARG.Definitions,
 		LDC.Definitions,
 		LDLOC.Definitions,
 		[MUL.Definition],
