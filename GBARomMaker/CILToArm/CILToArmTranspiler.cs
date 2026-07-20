@@ -23,11 +23,16 @@ public class CILToArmTranspiler {
 
 	public string[] Transpile() {
 		var assembly = new ARMProgram {
-			new ARMLine(0, 0, "ldr sp, =0x03000000 @ CIL stack pointer -- WRAM Internal")
+			new ARMLine(-1, 0, "ldr sp, =0x03000000 @ CIL stack pointer -- WRAM Internal")
 		};
 
 		var entrypoint = DetectEntryPoint();
 		ConvertCILToASM(assembly, entrypoint);
+
+		while (assembly.MethodsToTranspile.Any()) {
+			var method = assembly.MethodsToTranspile.Dequeue();
+			ConvertCILToASM(assembly, method);
+		}
 
 		return assembly.GetArm7Assembly();
 	}
@@ -43,6 +48,8 @@ public class CILToArmTranspiler {
 	}
 
 	public void ConvertCILToASM(ARMProgram assembly, MethodDefinitionRef method) {
+		if (assembly.MethodsTranspiled.Contains(method.FullName)) return;
+
 		var parser = new CILParser();
 		var instructions = parser.GetInstructions(method.BodyBytes);
 
@@ -204,7 +211,7 @@ public class CILToArmTranspiler {
 				var method = _metadata.GetMethodDefinition((MethodDefinitionHandle)handle);
 
 				var methodRef = new MethodDefinitionRef(_peReader, _metadata, method);
-				assembly.MethodsToTranspile.Add(methodRef);
+				assembly.MethodsToTranspile.Enqueue(methodRef);
 
 				var target = GetLabelForMethod(methodRef);
 				assembly.Add(instruction.GetBytes().Length, [
