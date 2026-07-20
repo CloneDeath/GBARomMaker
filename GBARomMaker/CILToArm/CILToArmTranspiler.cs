@@ -219,7 +219,7 @@ public class CILToArmTranspiler {
 	}
 
 	private string GetLabelForMethod(MethodDefinitionRef method) {
-		return $"method_{method.FullName}";
+		return $"method_{method.FullName}".Replace(".", "_").Replace("<", "_").Replace(">", "_").Replace("$", "_");
 	}
 	
 	public static void PrintCIL(CILInstruction[] instructions) {

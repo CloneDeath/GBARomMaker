@@ -192,6 +192,22 @@ public class Compiler {
 				Register = register
 			});
 		}},
+		{ "bl", (string line, string[] tokens, ARMMachineCode code) => {
+			Condition condition;
+			if (tokens[0].Length == 4) {
+				condition = ParseCondition(tokens[0][2..]);
+			} else {
+				AssertLength(line, tokens[0], 2);
+				condition = Condition.AL;
+			}
+			var tokenList = new Queue<string>(tokens.Skip(1).ToList());
+			var branchTarget = tokenList.Dequeue();
+			if (tokenList.Any()) throw new Exception("Too many arguments for b operation " + line);
+			code.AddNeedsLabel(new Branch {
+				Instruction = Instruction.BL,
+				Condition = condition
+			}, branchTarget);
+		}},
 		{ "b", (string line, string[] tokens, ARMMachineCode code) => {
 			Condition condition;
 			if (tokens[0].Length == 3) {

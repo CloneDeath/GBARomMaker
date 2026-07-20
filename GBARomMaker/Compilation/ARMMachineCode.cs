@@ -46,6 +46,7 @@ public class ARMMachineCode : List<ARMLine> {
 	}
 
 	public bool LabelsAreMissing => _needsLabels.Any();
+	public IReadOnlyList<string> MissingLabels => _labels.Select(l => l.Label).ToList();
 
     public byte[] ToBytes() {
 		return this.SelectMany(l => l.Instruction.ToBytes()).ToArray();
