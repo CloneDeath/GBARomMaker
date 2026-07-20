@@ -26,6 +26,8 @@ public class CILParser {
 	}.SelectMany(d => d).ToList();
 	
 	public static readonly List<CILInstructionDefinition> FEInstructions = new CILInstructionDefinition[][] {
+		[CEQ.Definition],
+		[CGT.Definition],
 		[CLT.Definition],
 	}.SelectMany(d => d).ToList();
 

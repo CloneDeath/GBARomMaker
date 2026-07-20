@@ -141,6 +141,26 @@ public class CILToArmTranspiler {
 					]);
 					break;
 				}
+				case "ceq": {
+					assembly.Add(instruction.GetBytes().Length, [
+						"ldmdb sp!, { r0, r1 }",
+						"cmp r0, r1",
+						"moveq r0, #1",
+						"movne r0, #0",
+						"stmia sp!, { r0 }"
+					]);
+					break;
+				}
+				case "cgt": {
+					assembly.Add(instruction.GetBytes().Length, [
+						"ldmdb sp!, { r0, r1 }",
+						"cmp r0, r1",
+						"movgt r0, #1",
+						"movle r0, #0",
+						"stmia sp!, { r0 }"
+					]);
+					break;
+				}
 				case "clt": {
 					assembly.Add(instruction.GetBytes().Length, [
 						"ldmdb sp!, { r0, r1 }",
