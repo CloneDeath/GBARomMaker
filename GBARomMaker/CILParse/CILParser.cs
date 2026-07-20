@@ -14,6 +14,7 @@ public class CILParser {
 		[ADD.Definition],
 		BR.Definitions,
 		BRTRUE.Definitions,
+		[CALL.Definition],
 		[CONV.Definition],
 		LDC.Definitions,
 		LDLOC.Definitions,

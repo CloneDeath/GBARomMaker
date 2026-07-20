@@ -4,7 +4,11 @@ using System.Linq;
 namespace GBARomMaker.CILToArm;
 
 public class ARMProgram : List<ARMLine> {
+	public int JumpCount = 0;
 	public int Offset { get; private set; } = 0;
+
+	public List<MethodDefinitionRef> MethodsToTranspile { get; } = new();
+	public List<string> MethodsTranspiled { get; } = new();
 
 	public void Add(int size, params string[] lines) {
 		var existing = this.Where(l => l.CilOffset == Offset);
@@ -15,10 +19,14 @@ public class ARMProgram : List<ARMLine> {
 		Offset += size;
 	}
 
-	public void AddLabel(int target, string line) {
+	public void AddLabel(int target, string label) {
 		var existing = this.Where(l => l.CilOffset == target);
 		var minOrder = existing.Any() ? existing.Min(l => l.Order) - 1 : 0;
-		this.Add(new ARMLine(target, minOrder, line));
+		this.Add(new ARMLine(target, minOrder, $"{label}:"));
+	}
+
+	public void AddLabel(string label) {
+		AddLabel(Offset, label);
 	}
 
 	public string[] GetArm7Assembly() {

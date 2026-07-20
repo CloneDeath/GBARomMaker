@@ -5,8 +5,7 @@ using GBARomMaker.Rom;
 using GBARomMaker.Compilation;
 using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
-using System.Reflection.Metadata.Ecma335;
-using GBARomMaker.CILParse;
+using GBARomMaker.CILToArm;
 
 namespace GBARomMaker;
 public static class Program {
@@ -28,22 +27,8 @@ public static class Program {
 		using var peReader = new PEReader(stream);
 		var metadata = peReader.GetMetadataReader();
 
-		var entrypoint = DetectEntryPoint(peReader, metadata);
-
-		if (showCil) {
-			Console.WriteLine($"Entrypoint: {entrypoint.Namespace}.{entrypoint.Class}.{entrypoint.Name}");
-			Console.WriteLine(string.Join(" ", entrypoint.BodyBytes.Select(b => $"0x{b:X2}")));
-		}
-
-		var parser = new CILParser();
-		var instructions = parser.GetInstructions(entrypoint.BodyBytes);
-
-		if (showCil) {
-			PrintCIL(instructions);
-			Console.WriteLine();
-		}
-
-		var assembly = CILToArm.CILToArm.Translate(instructions);
+		var transpiler = new CILToArmTranspiler(peReader, metadata, showCil);
+		var assembly = transpiler.Transpile();
 		if (showArm) {
 			PrintAsm(assembly);
 		}
@@ -83,25 +68,6 @@ public static class Program {
 		//}
 
 		return 0;
-	}
-
-	public static MethodDefinitionRef DetectEntryPoint(PEReader peReader, MetadataReader metadata) {
-		var corHeader = peReader.PEHeaders.CorHeader ?? throw new InvalidDataException("Not a managed assembly.");
-		var entryPointToken = corHeader.EntryPointTokenOrRelativeVirtualAddress;
-		var entryPointHandle = MetadataTokens.EntityHandle(entryPointToken);
-		if (entryPointHandle.Kind != HandleKind.MethodDefinition) throw new InvalidDataException("Entry point is not a managed method.");
-
-		var methodHandle = (MethodDefinitionHandle)entryPointHandle;
-		var method = metadata.GetMethodDefinition(methodHandle);
-		return new MethodDefinitionRef(peReader, metadata, method);
-	}
-
-	public static void PrintCIL(CILInstruction[] instructions) {
-		var offset = 0;
-		foreach (var instruction in instructions) {
-			Console.WriteLine($"{offset:D4}: {instruction.GetCIL()}");
-			offset += instruction.GetBytes().Length;
-		}
 	}
 
 	public static void PrintAsm(string[] instructions) {
