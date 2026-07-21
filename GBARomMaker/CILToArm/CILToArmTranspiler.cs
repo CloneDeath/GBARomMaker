@@ -23,7 +23,7 @@ public class CILToArmTranspiler {
 
 	public string[] Transpile() {
 		var assembly = new ARMProgram {
-			new ARMLine(-1, 0, "ldr sp, =0x03000000 @ CIL stack pointer -- WRAM Internal")
+			new ARMLine(-1, 0, "ldr sp, =0x03008000 @ CIL stack pointer -- WRAM Internal")
 		};
 
 		var entrypoint = DetectEntryPoint();
@@ -97,7 +97,7 @@ public class CILToArmTranspiler {
 					var ldc = (GBARomMaker.CILParse.Instructions.LDC_I4_X)instruction;
 					assembly.Add(instruction.GetBytes().Length, [
 						$"ldr r0, =0x{ldc.Data:X2}",
-						"stmia sp!, { r0 }"
+						"push sp!, { r0 }"
 					]);
 					break;
 				}
@@ -105,7 +105,7 @@ public class CILToArmTranspiler {
 					var ldc = (GBARomMaker.CILParse.Instructions.LDC_I4)instruction;
 					assembly.Add(instruction.GetBytes().Length, [
 						$"ldr r0, =0x{ldc.Data:X8}",
-						"stmia sp!, { r0 }"
+						"push sp!, { r0 }"
 					]);
 					break;
 				}
@@ -113,7 +113,7 @@ public class CILToArmTranspiler {
 					var ldc = (GBARomMaker.CILParse.Instructions.LDC_I4_S)instruction;
 					assembly.Add(instruction.GetBytes().Length, [
 						$"ldr r0, =0x{ldc.Data:X2}",
-						"stmia sp!, { r0 }"
+						"push sp!, { r0 }"
 					]);
 					break;
 				}
@@ -124,7 +124,7 @@ public class CILToArmTranspiler {
 					var ldarg = (GBARomMaker.CILParse.Instructions.LDARG)instruction;
 					assembly.Add(instruction.GetBytes().Length, [
 						$"ldr r0, [r3, #-{(method.ArgumentCount - ldarg.Argument) * 4}]",
-						"stmia sp!, { r0 }"
+						"push sp!, { r0 }"
 					]);
 					break;
 				}
@@ -135,7 +135,7 @@ public class CILToArmTranspiler {
 					var location = int.Parse(opcode[6].ToString()); // stloc.X
 					var register = location + 9;
 					assembly.Add(instruction.GetBytes().Length, [
-						$"ldmdb sp!, {{ r{register} }}"
+						$"pop sp!, {{ r{register} }}"
 					]);;
 					break;
 				}
@@ -146,13 +146,13 @@ public class CILToArmTranspiler {
 					var location = int.Parse(opcode[6].ToString()); // ldloc.X
 					var register = location + 9;
 					assembly.Add(instruction.GetBytes().Length, [
-						$"stmia sp!, {{ r{register} }}"
+						$"push sp!, {{ r{register} }}"
 					]);
 					break;
 				}
 				case "stind.i2": {
 					assembly.Add(instruction.GetBytes().Length, [
-						"ldmdb sp!, { r0, r1 }",
+						"pop sp!, { r0, r1 }",
 						"strh r1, [r0]"
 					]);
 					break;
@@ -160,43 +160,47 @@ public class CILToArmTranspiler {
 				case "ret": {
 					assembly.Add(instruction.GetBytes().Length, [
 						"mov sp, r3",
-						"ldm sp, { r0, r1, r2, r3, r9, r10, r11, r12, lr }",
+						"pop sp, { r0, r1, r2, r3, r9, r10, r11, r12, lr }",
 						"bx lr"
 					]);
 					break;
 				}
 				case "ceq": {
 					assembly.Add(instruction.GetBytes().Length, [
-						"ldmdb sp!, { r0, r1 }",
+						"pop sp!, { r0, r1 }",
 						"cmp r0, r1",
 						"moveq r0, #1",
 						"movne r0, #0",
-						"stmia sp!, { r0 }"
+						"push sp!, { r0 }"
 					]);
 					break;
 				}
 				case "cgt": {
 					assembly.Add(instruction.GetBytes().Length, [
-						"ldmdb sp!, { r0, r1 }",
+						"pop sp!, { r0, r1 }",
 						"cmp r0, r1",
 						"movgt r0, #1",
 						"movle r0, #0",
-						"stmia sp!, { r0 }"
+						"push sp!, { r0 }"
 					]);
 					break;
 				}
 				case "clt": {
 					assembly.Add(instruction.GetBytes().Length, [
-						"ldmdb sp!, { r0, r1 }",
+						"pop sp!, { r0, r1 }",
 						"cmp r0, r1",
 						"movlt r0, #1",
 						"movge r0, #0",
-						"stmia sp!, { r0 }"
+						"push sp!, { r0 }"
 					]);
 					break;
 				}
 				case "call": {
 					HandleCallInstruction(instruction, assembly);
+					break;
+				}
+				case "newobj": {
+					HandleNewObjInstruction(instruction, assembly);
 					break;
 				}
 				case "br.s": {
@@ -213,7 +217,7 @@ public class CILToArmTranspiler {
 					var brt = (GBARomMaker.CILParse.Instructions.BRTRUE_S)instruction;
 					var label = $"jump_{assembly.JumpCount++}";
 					assembly.Add(instruction.GetBytes().Length, [
-						"ldmdb sp!, { r0 }",
+						"pop sp!, { r0 }",
 						"cmp r0, #0",
 						$"bne {label}"
 					]);
@@ -223,17 +227,17 @@ public class CILToArmTranspiler {
 				}
 				case "add": {
 					assembly.Add(instruction.GetBytes().Length, [
-						"ldmdb sp!, { r1, r2 }",
+						"pop sp!, { r1, r2 }",
 						"add r0,r1,r2",
-						"stmia sp!, { r0 }"
+						"push sp!, { r0 }"
 					]);
 					break;
 				}
 				case "mul": {
 					assembly.Add(instruction.GetBytes().Length, [
-						"ldmdb sp!, { r1, r2 }",
+						"pop sp!, { r1, r2 }",
 						"mul r0,r1,r2",
-						"stmia sp!, { r0 }"
+						"push sp!, { r0 }"
 					]);
 					break;
 				}
@@ -246,7 +250,7 @@ public class CILToArmTranspiler {
 	private void DeclareMethod(ARMProgram assembly, MethodDefinitionRef method) {
 		assembly.AddLabel(GetLabelForMethod(method));
 		assembly.Add(0, [
-			"stmia sp!, { r0, r1, r2, r3, r9, r10, r11, r12, lr }",
+			"push sp!, { r0, r1, r2, r3, r9, r10, r11, r12, lr }",
 			$"sub r3, sp, #{9 * 4}"
 		]);
 	}
@@ -269,6 +273,26 @@ public class CILToArmTranspiler {
 			}
 			default: {
 				throw new NotImplementedException("Calls to " + handle.Kind + " not yet implemented");
+			}
+		}
+	}
+
+	private void HandleNewObjInstruction(CILInstruction instruction, ARMProgram assembly) {
+		var newobj = (GBARomMaker.CILParse.Instructions.NEWOBJ)instruction;
+		var handle = MetadataTokens.EntityHandle(newobj.MetadataToken);
+		switch (handle.Kind) {
+			case HandleKind.MethodDefinition: {
+				var method = _metadata.GetMethodDefinition((MethodDefinitionHandle)handle);
+				var methodRef = new MethodDefinitionRef(_peReader, _metadata, method);
+				if (methodRef.Name != ".ctor") {
+					throw new Exception("Tried to initialize an object with something that isn't a contructor: " + methodRef.FullName);
+				}
+
+				assembly.MethodsToTranspile.Enqueue(methodRef);
+				throw new Exception("Not done");
+			}
+			default: {
+				throw new NotImplementedException($"New Objects for {handle.Kind} constructors not yet implemented");
 			}
 		}
 	}
