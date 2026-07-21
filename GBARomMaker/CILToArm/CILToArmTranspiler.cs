@@ -178,7 +178,7 @@ public class CILToArmTranspiler {
 				case "cgt": {
 					assembly.Add(instruction.GetBytes().Length, [
 						"pop sp!, { r0, r1 }",
-						"cmp r0, r1",
+						"cmp r1, r0",
 						"movgt r0, #1",
 						"movle r0, #0",
 						"push sp!, { r0 }"
@@ -188,7 +188,7 @@ public class CILToArmTranspiler {
 				case "clt": {
 					assembly.Add(instruction.GetBytes().Length, [
 						"pop sp!, { r0, r1 }",
-						"cmp r0, r1",
+						"cmp r1, r0",
 						"movlt r0, #1",
 						"movge r0, #0",
 						"push sp!, { r0 }"
