@@ -11,7 +11,7 @@ public class LDLOC : CILInstruction {
 		new(0x09, 0, (_) => new LDLOC(3)), // ldloc.3
 	];
 
-	public override OpCode OpCode {
+	public OpCode OpCode {
 		get {
 			return Location switch {
 				0 => OpCodes.Ldloc_0,
@@ -32,12 +32,12 @@ public class LDLOC : CILInstruction {
 		this.Location = location;
 	}
 
-    public override byte[] GetBytes() {
+    public byte[] GetBytes() {
 		var opcode = (byte)(0x06 + Location);
 		return [opcode];
     }
 
-    public override string GetCIL() {
+    public string GetCIL() {
 		return "ldloc." + Location;
     }
 }

@@ -11,7 +11,7 @@ public class STLOC : CILInstruction {
 		new(0x0D, 0, (_) => new STLOC(3)), // stloc.3
 	];
 
-	public override OpCode OpCode {
+	public OpCode OpCode {
 		get {
 			return Location switch {
 				0 => OpCodes.Stloc_0,
@@ -32,12 +32,12 @@ public class STLOC : CILInstruction {
 		this.Location = location;
 	}
 
-    public override byte[] GetBytes() {
+    public byte[] GetBytes() {
 		var opcode = (byte)(0x0A + Location);
 		return [opcode];
     }
 
-    public override string GetCIL() {
+    public string GetCIL() {
 		return "stloc." + Location;
     }
 }

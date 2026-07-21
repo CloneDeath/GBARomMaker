@@ -17,7 +17,7 @@ public class LDARG : CILInstruction {
 		Argument = argument;
 	}
 
-	public override OpCode OpCode => Argument switch {
+	public OpCode OpCode => Argument switch {
 		0 => OpCodes.Ldarg_0,
 		1 => OpCodes.Ldarg_1,
 		2 => OpCodes.Ldarg_2,
@@ -25,7 +25,7 @@ public class LDARG : CILInstruction {
 		_ => throw new InvalidOperationException()
 	};
 
-    public override byte[] GetBytes() {
+    public byte[] GetBytes() {
 		return [Argument switch {
 			0 => 0x02,
 			1 => 0x03,
@@ -35,7 +35,7 @@ public class LDARG : CILInstruction {
 		}];
     }
 
-    public override string GetCIL() {
+    public string GetCIL() {
 		return "ldarg." + Argument;
     }
 }

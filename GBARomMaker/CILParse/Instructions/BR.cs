@@ -16,13 +16,13 @@ public class BR : CILInstruction {
 		Target = target;
 	}
 
-	public override OpCode OpCode => OpCodes.Br;
+	public OpCode OpCode => OpCodes.Br;
 
-    public override byte[] GetBytes() {
+    public byte[] GetBytes() {
 		return new byte[]{0x38}.Concat(BitConverter.GetBytes(Target)).ToArray();
     }
 
-    public override string GetCIL() {
+    public string GetCIL() {
 		return "br " + Target;
     }
 }
@@ -34,13 +34,13 @@ public class BR_S : CILInstruction {
 		Target = target;
 	}
 
-	public override OpCode OpCode => OpCodes.Br_S;
+	public OpCode OpCode => OpCodes.Br_S;
 
-    public override byte[] GetBytes() {
+    public byte[] GetBytes() {
 		return new byte[]{ 0x2B, (byte)Target };
     }
 
-    public override string GetCIL() {
+    public string GetCIL() {
 		return "br.s " + Target;
     }
 }

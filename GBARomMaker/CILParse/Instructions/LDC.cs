@@ -25,13 +25,13 @@ public class LDC_I4 : CILInstruction {
 	public int Data { get; }
 	public LDC_I4(int data) { this.Data = data; }
 
-	public override OpCode OpCode => OpCodes.Ldc_I4;
+	public OpCode OpCode => OpCodes.Ldc_I4;
 
-	public override byte[] GetBytes() {
+	public byte[] GetBytes() {
 		return new byte[] { 0x20 }.Concat(BitConverter.GetBytes(Data)).ToArray();
 	}
 
-	public override string GetCIL() {
+	public string GetCIL() {
 		return $"ldc.i4 0x{Data:X8}";
 	}
 }
@@ -45,7 +45,7 @@ public class LDC_I4_X : CILInstruction {
 		this.Data = data;
 	}
 
-	public override OpCode OpCode {
+	public OpCode OpCode {
 		get {
 			return Data switch {
 				-1 => OpCodes.Ldc_I4_M1,
@@ -63,7 +63,7 @@ public class LDC_I4_X : CILInstruction {
 		}
 	}
 
-	public override byte[] GetBytes() {
+	public byte[] GetBytes() {
 		return [Data switch {
 			-1 => 0x15,
 			0 => 0x16,
@@ -79,7 +79,7 @@ public class LDC_I4_X : CILInstruction {
 		}];
 	}
 
-	public override string GetCIL() {
+	public string GetCIL() {
 		var sign = Data == -1 ? "m1" : Data.ToString();
 		return $"ldc.i4.{sign}";
 	}
@@ -89,13 +89,13 @@ public class LDC_I4_S : CILInstruction {
 	public byte Data { get; }
 	public LDC_I4_S(byte data) { this.Data = data; }
 	
-	public override OpCode OpCode => OpCodes.Ldc_I4_S;
+	public OpCode OpCode => OpCodes.Ldc_I4_S;
 
-	public override byte[] GetBytes() {
+	public byte[] GetBytes() {
 		return [0x1F, Data];
 	}
 
-	public override string GetCIL() {
+	public string GetCIL() {
 		return $"ldc.i4.s 0x{Data:X2}";
 	}
 }

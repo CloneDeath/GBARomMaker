@@ -5,13 +5,13 @@ namespace GBARomMaker.CILParse.Instructions;
 public class NOP : CILInstruction {
 	public static CILInstructionDefinition Definition = new(0x00, 0, (_) => new NOP());
 
-	public override OpCode OpCode => OpCodes.Nop;
+	public OpCode OpCode => OpCodes.Nop;
 
-    public override byte[] GetBytes() {
+    public byte[] GetBytes() {
 		return [0x00];
     }
 
-    public override string GetCIL() {
+    public string GetCIL() {
 		return "nop";
     }
 }

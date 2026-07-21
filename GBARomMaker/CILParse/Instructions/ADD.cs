@@ -5,13 +5,13 @@ namespace GBARomMaker.CILParse.Instructions;
 public class ADD : CILInstruction {
 	public static CILInstructionDefinition Definition = new(0x58, 0, (_) => new ADD());
 
-	public override OpCode OpCode => OpCodes.Add;
+	public OpCode OpCode => OpCodes.Add;
 
-    public override byte[] GetBytes() {
+    public byte[] GetBytes() {
 		return [0x58];
     }
 
-    public override string GetCIL() {
+    public string GetCIL() {
 		return "add";
     }
 }

@@ -5,13 +5,13 @@ namespace GBARomMaker.CILParse.FEInstructions;
 public class CGT : CILInstruction {
 	public static CILInstructionDefinition Definition = new(0x02, 0, (_) => new CGT());
 
-	public override OpCode OpCode => OpCodes.Cgt;
+	public OpCode OpCode => OpCodes.Cgt;
 
-    public override byte[] GetBytes() {
+    public byte[] GetBytes() {
 		return [0xFE, 0x02];
     }
 
-    public override string GetCIL() {
+    public string GetCIL() {
 		return "cgt";
     }
 }
