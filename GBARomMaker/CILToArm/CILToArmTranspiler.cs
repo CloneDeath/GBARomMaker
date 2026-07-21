@@ -23,7 +23,8 @@ public class CILToArmTranspiler {
 
 	public string[] Transpile() {
 		var assembly = new ARMProgram {
-			new ARMLine(-1, 0, "ldr sp, =0x03008000 @ CIL stack pointer -- WRAM Internal")
+			new ARMLine(-1, 0, "ldr sp, =0x03008000 @ CIL stack pointer -- WRAM Internal"),
+			new ARMLine(-1, 1, "ldr r4, =0x02000000 @ Heap Start -- WRAM External")
 		};
 
 		var entrypoint = DetectEntryPoint();
@@ -66,6 +67,7 @@ public class CILToArmTranspiler {
 		// Free Register 2 = r1
 		// Free Register 3 = r2
 		// Function Stack  = r3
+		// Heap Pointer    = r4 <- Temporary until we implement malloc/free
 		// Local 0         = r9
 		// Local 1         = r10
 		// Local 2         = r11
@@ -81,6 +83,13 @@ public class CILToArmTranspiler {
 				case "conv.i": {
 					assembly.Add(instruction.GetBytes().Length, [
 						"nop"
+					]);
+					break;
+				}
+				case "dup": {
+					assembly.Add(instruction.GetBytes().Length, [
+						"ldr r0, [sp]",
+						"push sp!, { r0 }"
 					]);
 					break;
 				}
@@ -157,10 +166,23 @@ public class CILToArmTranspiler {
 					]);
 					break;
 				}
+				case "stfld": {
+					HandleStoreFieldInstruction(instruction, assembly);
+					break;
+				}
 				case "ret": {
 					assembly.Add(instruction.GetBytes().Length, [
 						$"sub sp, r3, #{9 * 4}",
 						"pop sp!, { r0, r1, r2, r3, r9, r10, r11, r12, lr }",
+					]);
+					// pop any method arguments, including "this"
+					if (method.IsInstanceMethod || method.ArgumentCount > 0) {
+						var count = (method.IsInstanceMethod ? 1 : 0) + method.ArgumentCount;
+						assembly.Add(0, [
+							$"add sp, sp, #{count * 4}"
+						]);
+					}
+					assembly.Add(0, [
 						"bx lr"
 					]);
 					break;
@@ -255,6 +277,26 @@ public class CILToArmTranspiler {
 		]);
 	}
 
+	private void HandleStoreFieldInstruction(CILInstruction instruction, ARMProgram assembly) {
+		var stfld = (GBARomMaker.CILParse.Instructions.STFLD)instruction;
+		var handle = MetadataTokens.EntityHandle(stfld.MetadataToken);
+		switch (handle.Kind) {
+			case HandleKind.FieldDefinition: {
+				var field = _metadata.GetFieldDefinition((FieldDefinitionHandle)handle);
+
+				var fieldRef = new FieldDefinitionRef(_peReader, _metadata, field);
+				assembly.Add(instruction.GetBytes().Length, [
+					"pop sp!, { r0, r1 } @ value, obj",
+					$"str r0, [r1, #{0}] @ {fieldRef.Name}" // todo, figure out offset...
+				]);
+				return;
+			}
+			default: {
+				throw new NotImplementedException("Calls to " + handle.Kind + " not yet implemented");
+			}
+		}
+	}
+
 	private void HandleCallInstruction(CILInstruction instruction, ARMProgram assembly) {
 		var call = (GBARomMaker.CILParse.Instructions.CALL)instruction;
 		var handle = MetadataTokens.EntityHandle(call.MetadataToken);
@@ -288,8 +330,16 @@ public class CILToArmTranspiler {
 					throw new Exception("Tried to initialize an object with something that isn't a contructor: " + methodRef.FullName);
 				}
 
+				var target = GetLabelForMethod(methodRef);
+				assembly.Add(instruction.GetBytes().Length, [
+					"push sp! { r4 } @ push object ref onto the stack...",
+					"push sp! { r4 } @ push it again for the 'this' param of the constructor",
+					$"add r4, r4, #{methodRef.Class.FieldCount * 4}",
+					$"bl {target}"
+				]);
+
 				assembly.MethodsToTranspile.Enqueue(methodRef);
-				throw new Exception("Not done");
+				return;
 			}
 			default: {
 				throw new NotImplementedException($"New Objects for {handle.Kind} constructors not yet implemented");

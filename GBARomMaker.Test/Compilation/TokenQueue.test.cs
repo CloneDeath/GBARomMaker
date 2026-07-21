@@ -12,7 +12,7 @@ public abstract class TokenQueue_test {
 		[TestCase("lr", 14)]
 		[TestCase("pc", 15)]
 		public void RegisterIsMappedCorrectly(string registerName, byte expectedRegister) {
-			var register = TokenQueue.ParseRegister(registerName);
+			var register = new TokenQueue([], "").ParseRegister(registerName);
 
 			register.ShouldBe(expectedRegister);
 		}

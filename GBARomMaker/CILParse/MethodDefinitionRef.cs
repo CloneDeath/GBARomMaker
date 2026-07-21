@@ -3,12 +3,14 @@ using System.Linq;
 using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
 
+namespace GBARomMaker.CILParse;
+
 public class MethodDefinitionRef {
 	private readonly PEReader peReader;
 	private readonly MetadataReader metadata;
 	private readonly MethodDefinition method;
 	
-	private TypeDefinition parent => metadata.GetTypeDefinition(method.GetDeclaringType());
+	public TypeDefinitionRef Class => new(peReader, metadata, metadata.GetTypeDefinition(method.GetDeclaringType()));
 
 	public MethodDefinitionRef(PEReader peReader, MetadataReader metadata, MethodDefinition method) {
 		this.peReader = peReader;
@@ -16,10 +18,9 @@ public class MethodDefinitionRef {
 		this.method = method;
 	}
 
-	public string Namespace => metadata.GetString(parent.Namespace);
-	public string Class => metadata.GetString(parent.Name);
+	public string Namespace => Class.Namespace;
 	public string Name => metadata.GetString(method.Name);
-	public string FullName => $"{Namespace}.{Class}.{Name}";
+	public string FullName => $"{Namespace}.{Class.Name}.{Name}";
 
 	public byte[] BodyBytes => peReader.GetMethodBody(method.RelativeVirtualAddress)?.GetILBytes() ?? [];
 
@@ -27,6 +28,12 @@ public class MethodDefinitionRef {
 		get {
 			var parameters = method.GetParameters().Select(p => metadata.GetParameter(p));
 			return parameters.Where(p => p.SequenceNumber > 0).Count();
+		}
+	}
+
+	public bool IsInstanceMethod {
+		get {
+			return method.GetParameters().Select(p => metadata.GetParameter(p)).Any(p => p.SequenceNumber == 0);
 		}
 	}
 }

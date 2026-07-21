@@ -33,12 +33,12 @@ public class TokenQueue : IEnumerable<string> {
 		return ParseRegister(Dequeue());
 	}
 
-	public static byte ParseRegister(string register) {
+	public byte ParseRegister(string register) {
 		return register switch {
 			"sp" => 13,
 			"lr" => 14,
 			"pc" => 15,
-			_ => byte.TryParse(register.Substring(1), out var r) ? r : throw new Exception($"Failed to parse {register} as a register")
+			_ => byte.TryParse(register.Substring(1), out var r) ? r : throw new Exception($"Failed to parse {register} as a register. Line '{_line}'")
 		};
 	}
 
