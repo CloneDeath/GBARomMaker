@@ -123,7 +123,7 @@ public class CILToArmTranspiler {
 				case "ldarg.3": {
 					var ldarg = (GBARomMaker.CILParse.Instructions.LDARG)instruction;
 					assembly.Add(instruction.GetBytes().Length, [
-						$"ldr r0, [r3, #-{(method.ArgumentCount - ldarg.Argument) * 4}]",
+						$"ldr r0, [r3, #{ldarg.Argument * 4}]",
 						"push sp!, { r0 }"
 					]);
 					break;
