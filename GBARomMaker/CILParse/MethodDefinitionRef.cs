@@ -1,3 +1,5 @@
+using System;
+using System.Linq;
 using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
 
@@ -20,4 +22,11 @@ public class MethodDefinitionRef {
 	public string FullName => $"{Namespace}.{Class}.{Name}";
 
 	public byte[] BodyBytes => peReader.GetMethodBody(method.RelativeVirtualAddress)?.GetILBytes() ?? [];
+
+	public int ArgumentCount {
+		get {
+			var parameters = method.GetParameters().Select(p => metadata.GetParameter(p));
+			return parameters.Where(p => p.SequenceNumber > 0).Count();
+		}
+	}
 }

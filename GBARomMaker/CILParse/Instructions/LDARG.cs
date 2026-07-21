@@ -1,7 +1,7 @@
 using System;
 using System.Reflection.Emit;
 
-namespace GBARomMaker.CILParse.FEInstructions;
+namespace GBARomMaker.CILParse.Instructions;
 
 public class LDARG : CILInstruction {
 	public static CILInstructionDefinition[] Definitions = [

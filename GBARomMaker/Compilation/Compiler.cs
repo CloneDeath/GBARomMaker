@@ -29,39 +29,35 @@ public class Compiler {
 			return;
 		}
 		
-		var operation = tokens[0];
+		var tokenQueue = new TokenQueue(tokens, line);
+		var operation = tokenQueue.Dequeue();
 		foreach (var handler in _operationMap) {
 			if (operation.ToLower().StartsWith(handler.Key)) {
-				handler.Value(line, tokens, code);
+				handler.Value(line, tokenQueue, code);
 				return;
 			}
 		}
 		throw new NotImplementedException($"No Handler found for Operation '{operation}'. Line: '{line}'");
 	}
 
-	private delegate void AddOperations(string line, string[] tokens, ARMMachineCode code);
+	private delegate void AddOperations(string line, TokenQueue tokens, ARMMachineCode code);
 
 	private Dictionary<string, AddOperations> _operationMap = new() {
-		{ "nop", (string line, string[] tokens, ARMMachineCode code) => {
-			AssertLength(line, tokens[0], 3);
+		{ "nop", (string line, TokenQueue tokens, ARMMachineCode code) => {
+			tokens.AssertOperationLength(3);
 			code.Add(new DataProcessing {
 				Operation = ALUOperation.MOV,
 				DestinationRegister = 0,
 				Op2 = new Register(0)
 			});
 		}},
-		{ "ldr", (string line, string[] tokens, ARMMachineCode code) => {
-			AssertLength(line, tokens[0], 3);
-			var tokenList = new Queue<string>(tokens.Skip(1).ToList());
-			var destinationRegister = ParseRegister(tokenList.Dequeue());
-			var seperator = tokenList.Dequeue();
-			if (seperator != ",") throw new Exception("Expected a comma between arguments");
-			var source = tokenList.Dequeue();
+		{ "ldr", (string line, TokenQueue tokens, ARMMachineCode code) => {
+			tokens.AssertOperationLength(3);
+			var destinationRegister = tokens.DequeueRegister();
+			tokens.DequeueComma();
+			var source = tokens.Dequeue();
 			if (source == "=") { // This is actual a psudocommand for MOV/ORs
-				var value = tokenList.Dequeue();
-				uint immediate = value.StartsWith("0x", StringComparison.OrdinalIgnoreCase)
-					? Convert.ToUInt32(value[2..], 16)
-					: Convert.ToUInt32(value, 10);
+				var immediate = tokens.DequeueImmediate();
 				if (immediate == 0) {
 					code.Add(new DataProcessing {
 						Operation = ALUOperation.MOV,
@@ -98,14 +94,14 @@ public class Compiler {
 					Op1Register = destinationRegister,
 					Op2 = new Immediate(b)
 				}).ToArray());
+
+				tokens.AssertEmpty();
 				return;
 			}
-			if (tokenList.Any()) throw new Exception("Command not recognized, too many arguments...");
 			throw new NotImplementedException(line);
 		}},
-		{ "strh", (string line, string[] tokens, ARMMachineCode code) => {
-			AssertLength(line, tokens[0], 4);
-			var tokenList = new Queue<string>(tokens.Skip(1).ToList());
+		{ "strh", (string line, TokenQueue tokens, ARMMachineCode code) => {
+			tokens.AssertOperationLength(4);
 			var destinationRegister = ParseRegister(tokenList.Dequeue());
 			if (tokenList.Dequeue() != ",") throw new Exception("Expected a comma between arguments");
 			if (tokenList.Dequeue() != "[") throw new Exception("Expected a [ for Address specified");
@@ -127,64 +123,14 @@ public class Compiler {
 				WriteBack = false
 			});
 		}},
-		{ "mov", (string line, string[] tokens, ARMMachineCode code) => {
-			Condition condition;
-			if (tokens[0].Length == 5) {
-				condition = ParseCondition(tokens[0][3..]);
-			} else {
-				AssertLength(line, tokens[0], 3);
-				condition = Condition.AL;
-			}
-			var tokenList = new Queue<string>(tokens.Skip(1).ToList());
-			var destinationRegister = ParseRegister(tokenList.Dequeue());
-			if (tokenList.Dequeue() != ",") throw new Exception("Expected a comma between arguments");
-			if (tokenList.Dequeue() != "#") throw new Exception("Expected a # for A Literal");
-			var next = tokenList.Dequeue();
-			uint immediate = next.StartsWith("0x", StringComparison.OrdinalIgnoreCase)
-				? Convert.ToUInt32(next[2..], 16)
-				: Convert.ToUInt32(next, 10);
-			if (tokenList.Any()) throw new Exception("Too many args passed in...");
-			code.Add(new DataProcessing {
-				Operation = ALUOperation.MOV,
-				DestinationRegister = destinationRegister,
-				Op2 = new Immediate(immediate),
-				Condition = condition
-			});
-		}},
-		{ "stm", (string line, string[] tokens, ARMMachineCode code) => {
-			AssertLength(line, tokens[0], 5);
+		{ "stm", (string line, TokenQueue tokens, ARMMachineCode code) => {
 			LoadBlockDataTransfer(line, tokens, code);
 		}},
-		{ "ldm", (string line, string[] tokens, ARMMachineCode code) => {
-			AssertLength(line, tokens[0], 5);
+		{ "ldm", (string line, TokenQueue tokens, ARMMachineCode code) => {
 			LoadBlockDataTransfer(line, tokens, code);
 		}},
-		{ "cmp", (string line, string[] tokens, ARMMachineCode code) => {
-			AssertLength(line, tokens[0], 3);
-			var tokenList = new Queue<string>(tokens.Skip(1).ToList());
-			var op1 = ParseRegister(tokenList.Dequeue());
-			if (tokenList.Dequeue() != ",") throw new Exception("Expected a comma between arguments");
-			var next = tokenList.Dequeue();
-			ALUOp2 op2;
-			if (next == "#") {
-				var immediate = ParseImmediate(tokenList.Dequeue());
-				op2 = new Immediate(immediate);
-			} else {
-				var op2Register = ParseRegister(next);
-				op2 = new Register(op2Register);
-			}
-			if (tokenList.Any()) throw new Exception("Too many arguments for cmp operation " + line);
-
-			code.Add(new DataProcessing {
-				Operation = ALUOperation.CMP,
-				SetConditionCodes = true,
-				Op1Register = op1,
-				Op2 = op2
-			});
-		}},
-		{ "bx", (string line, string[] tokens, ARMMachineCode code) => {
-			AssertLength(line, tokens[0], 2);
-			var tokenList = new Queue<string>(tokens.Skip(1).ToList());
+		{ "bx", (string line, TokenQueue tokens, ARMMachineCode code) => {
+			tokens.AssertOperationLength(2);
 			var register = ParseRegister(tokenList.Dequeue());
 			if (tokenList.Any()) throw new Exception("Too many arguments for bx operation " + line);
 			code.Add(new BranchExchange {
@@ -192,15 +138,14 @@ public class Compiler {
 				Register = register
 			});
 		}},
-		{ "bl", (string line, string[] tokens, ARMMachineCode code) => {
+		{ "bl", (string line, TokenQueue tokens, ARMMachineCode code) => {
 			Condition condition;
 			if (tokens[0].Length == 4) {
 				condition = ParseCondition(tokens[0][2..]);
 			} else {
-				AssertLength(line, tokens[0], 2);
+				tokens.AssertOperationLength(2);
 				condition = Condition.AL;
 			}
-			var tokenList = new Queue<string>(tokens.Skip(1).ToList());
 			var branchTarget = tokenList.Dequeue();
 			if (tokenList.Any()) throw new Exception("Too many arguments for b operation " + line);
 			code.AddNeedsLabel(new Branch {
@@ -208,15 +153,14 @@ public class Compiler {
 				Condition = condition
 			}, branchTarget);
 		}},
-		{ "b", (string line, string[] tokens, ARMMachineCode code) => {
+		{ "b", (string line, TokenQueue tokens, ARMMachineCode code) => {
 			Condition condition;
 			if (tokens[0].Length == 3) {
 				condition = ParseCondition(tokens[0][1..]);
 			} else {
-				AssertLength(line, tokens[0], 1);
+				tokens.AssertOperationLength(1);
 				condition = Condition.AL;
 			}
-			var tokenList = new Queue<string>(tokens.Skip(1).ToList());
 			var branchTarget = tokenList.Dequeue();
 			if (tokenList.Any()) throw new Exception("Too many arguments for b operation " + line);
 			code.AddNeedsLabel(new Branch {
@@ -224,9 +168,8 @@ public class Compiler {
 				Condition = condition
 			}, branchTarget);
 		}},
-		{ "mul", (string line, string[] tokens, ARMMachineCode code) => {
-			AssertLength(line, tokens[0], 3);
-			var tokenList = new Queue<string>(tokens.Skip(1).ToList());
+		{ "mul", (string line, TokenQueue tokens, ARMMachineCode code) => {
+			tokens.AssertOperationLength(3);
 			var destinationRegister = ParseRegister(tokenList.Dequeue());
 			if (tokenList.Dequeue() != ",") throw new Exception("Expected a comma between arguments");
 			var op1 = ParseRegister(tokenList.Dequeue());
@@ -241,27 +184,114 @@ public class Compiler {
 				Op2Register = op2
 			});
 		}},
-		{ "add", (string line, string[] tokens, ARMMachineCode code) => {
-			AssertLength(line, tokens[0], 3);
-			var tokenList = new Queue<string>(tokens.Skip(1).ToList());
-			var destinationRegister = ParseRegister(tokenList.Dequeue());
-			if (tokenList.Dequeue() != ",") throw new Exception("Expected a comma between arguments");
+
+		// ALU Operations
+		{ "and", (string line, TokenQueue tokens, ARMMachineCode code) => {
+			LoadALUOperation(line, tokens, code, ALUOperation.AND);
+		}},
+		{ "eor", (string line, TokenQueue tokens, ARMMachineCode code) => {
+			LoadALUOperation(line, tokens, code, ALUOperation.EOR);
+		}},
+		{ "sub", (string line, TokenQueue tokens, ARMMachineCode code) => {
+			LoadALUOperation(line, tokens, code, ALUOperation.SUB);
+		}},
+		{ "rsb", (string line, TokenQueue tokens, ARMMachineCode code) => {
+			LoadALUOperation(line, tokens, code, ALUOperation.RSB);
+		}},
+		{ "add", (string line, TokenQueue tokens, ARMMachineCode code) => {
+			LoadALUOperation(line, tokens, code, ALUOperation.ADD);
+		}},
+		{ "adc", (string line, TokenQueue tokens, ARMMachineCode code) => {
+			LoadALUOperation(line, tokens, code, ALUOperation.ADC);
+		}},
+		{ "sbc", (string line, TokenQueue tokens, ARMMachineCode code) => {
+			LoadALUOperation(line, tokens, code, ALUOperation.SBC);
+		}},
+		{ "rsc", (string line, TokenQueue tokens, ARMMachineCode code) => {
+			LoadALUOperation(line, tokens, code, ALUOperation.RSC);
+		}},
+		{ "orr", (string line, TokenQueue tokens, ARMMachineCode code) => {
+			LoadALUOperation(line, tokens, code, ALUOperation.ORR);
+		}},
+		{ "bic", (string line, TokenQueue tokens, ARMMachineCode code) => {
+			LoadALUOperation(line, tokens, code, ALUOperation.BIC);
+		}},
+
+		{ "cmp", (string line, TokenQueue tokens, ARMMachineCode code) => {
+			tokens.AssertOperationLength(3);
 			var op1 = ParseRegister(tokenList.Dequeue());
 			if (tokenList.Dequeue() != ",") throw new Exception("Expected a comma between arguments");
-			var op2 = ParseRegister(tokenList.Dequeue());
-			if (tokenList.Any()) throw new Exception("Too many arguments for mul operation " + line);
+
+			var op2 = PopAluOp2(tokenList);
+
+			if (tokenList.Any()) throw new Exception("Too many arguments for cmp operation " + line);
 
 			code.Add(new DataProcessing {
-				Operation = ALUOperation.ADD,
-				DestinationRegister = destinationRegister,
+				Operation = ALUOperation.CMP,
+				SetConditionCodes = true,
 				Op1Register = op1,
-				Op2 = new Register(op2)
+				Op2 = op2
+			});
+		}},
+		{ "mov", (string line, TokenQueue tokens, ARMMachineCode code) => {
+			Condition condition;
+			if (tokens[0].Length == 5) {
+				condition = ParseCondition(tokens[0][3..]);
+			} else {
+				tokens.AssertOperationLength(3);
+				condition = Condition.AL;
+			}
+			var destinationRegister = ParseRegister(tokenList.Dequeue());
+			if (tokenList.Dequeue() != ",") throw new Exception("Expected a comma between arguments");
+			var op2 = PopAluOp2(tokenList);
+			if (tokenList.Any()) throw new Exception("Too many args passed in...");
+			code.Add(new DataProcessing {
+				Operation = ALUOperation.MOV,
+				DestinationRegister = destinationRegister,
+				Op2 = op2,
+				Condition = condition
 			});
 		}},
 	};
 
-	public static void LoadBlockDataTransfer(string line, string[] tokens, ARMMachineCode code) {//ldmdb sp!, { r0, r1 }
-		var tokenList = new Queue<string>(tokens.Skip(1).ToList());
+	public static void LoadALUOperation(string line, TokenQueue tokens, ARMMachineCode code, ALUOperation operation) {
+		tokens.AssertOperationLength(3);
+		var destinationRegister = ParseRegister(tokenList.Dequeue());
+		if (tokenList.Dequeue() != ",") throw new Exception("Expected a comma between arguments");
+		var op1 = ParseRegister(tokenList.Dequeue());
+		if (tokenList.Dequeue() != ",") throw new Exception("Expected a comma between arguments");
+		var op2 = PopAluOp2(tokenList);
+		if (tokenList.Any()) throw new Exception($"Too many arguments for {tokens[0]} operation {line}");
+
+		code.Add(new DataProcessing {
+			Operation = operation,
+			DestinationRegister = destinationRegister,
+			Op1Register = op1,
+			Op2 = op2
+		});
+	}
+
+	public static void LoadBlockDataTransfer(string line, TokenQueue tokens, ARMMachineCode code) {//ldmdb sp!, { r0, r1 }
+		var operation = tokens[0];
+		if (operation.Length != 3 && operation.Length != 5) {
+			throw new NotImplementedException($"Unexpected operation {operation}. {line}");
+		}
+		var loadStore = operation.Substring(0, 3) switch {
+			"ldm" => LoadStore.Load,
+			"stm" => LoadStore.Store,
+			_ => throw new NotSupportedException($"Could not interpret Load/Store bit for Block Data Transfer command: {operation}, got {operation.Substring(0, 3)}")
+		};
+		var upDown = operation.Length > 3 ? operation[3] switch {
+			'i' => UpDown.Up,
+			'd' => UpDown.Down,
+			_ => throw new NotSupportedException($"Could not interpret Up/Down bit for Block Data Transfer command: {operation}, got {operation[4]}")
+		} : UpDown.Up;
+		var prePost = operation.Length > 3 ? operation[4] switch {
+			'b' => PrePost.Pre,
+			'a' => PrePost.Post,
+			_ => throw new NotSupportedException($"Could not interpret Pre/Post bit for Block Data Transfer command: {operation}, got {operation[5]}")
+		} : PrePost.Post;
+
 		var baseRegister = ParseRegister(tokenList.Dequeue());
 		var next = tokenList.Dequeue();
 		bool writeback = false;
@@ -290,22 +320,6 @@ public class Compiler {
 		}
 		if (tokenList.Any()) throw new Exception("Got more tokens than expected");
 
-		var operation = tokens[0];
-		var loadStore = operation.Substring(0, 3) switch {
-			"ldm" => LoadStore.Load,
-			"stm" => LoadStore.Store,
-			_ => throw new NotSupportedException($"Could not interpret Load/Store bit for Block Data Transfer command: {operation}, got {operation.Substring(0, 3)}")
-		};
-		var upDown = operation[3] switch {
-			'i' => UpDown.Up,
-			'd' => UpDown.Down,
-			_ => throw new NotSupportedException($"Could not interpret Up/Down bit for Block Data Transfer command: {operation}, got {operation[4]}")
-		};
-		var prePost = operation[4] switch {
-			'b' => PrePost.Pre,
-			'a' => PrePost.Post,
-			_ => throw new NotSupportedException($"Could not interpret Pre/Post bit for Block Data Transfer command: {operation}, got {operation[5]}")
-		};
 		code.Add(new BlockDataTransfer {
 			RegisterList = registerList,
 			BaseRegister = baseRegister,
@@ -316,23 +330,10 @@ public class Compiler {
 		});
 	}
 
-	public static byte ParseRegister(string register) {
-		return register switch {
-			"sp" => 13,
-			"lr" => 14,
-			"pc" => 15,
-			_ => byte.TryParse(register.Substring(1), out var r) ? r : throw new Exception($"Failed to parse {register} as a register")
-		};
-	}
-
-	public static uint ParseImmediate(string immediate) {
-		return (uint)(immediate.StartsWith("0x", StringComparison.OrdinalIgnoreCase)
-			? Convert.ToInt32(immediate[2..], 16)
-			: Convert.ToInt32(immediate, 10));
-	}
-
-	public static void AssertLength(string line, string op, int length) {
-		if (op.Length != length) throw new Exception($"Unexpected opcode '{op}'. Line '{line}'");
+	public static void AssertEmptyQueue(string line, Queue<string> tokens) {
+		if (!tokens.Any()) return;
+		var extra = string.Join(' ', tokens);
+		throw new Exception($"Command not recognized; too many arguments. Got '{extra}'. { line }");
 	}
 
 	public static Condition ParseCondition(string condition) {

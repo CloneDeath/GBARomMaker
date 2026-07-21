@@ -62,6 +62,18 @@ public class CILToArmTranspiler {
 			Console.WriteLine();
 		}
 
+		// Free Register 1 = r0
+		// Free Register 2 = r1
+		// Free Register 3 = r2
+		// Function Stack  = r3
+		// Local 0         = r9
+		// Local 1         = r10
+		// Local 2         = r11
+		// Local 3         = r12
+		// Stack Pointer   = sp/r13
+		// Link Register   = lr/r14
+		// Program Counter = pc/r15
+
 		foreach (var instruction in instructions) {
 			var opcode = instruction.OpCode.Name;
 			switch (opcode) {
@@ -105,6 +117,17 @@ public class CILToArmTranspiler {
 					]);
 					break;
 				}
+				case "ldarg.0":
+				case "ldarg.1":
+				case "ldarg.2":
+				case "ldarg.3": {
+					var ldarg = (GBARomMaker.CILParse.Instructions.LDARG)instruction;
+					assembly.Add(instruction.GetBytes().Length, [
+						$"ldr r0, [r3, #-{(method.ArgumentCount - ldarg.Argument) * 4}]",
+						"stmia sp!, { r0 }"
+					]);
+					break;
+				}
 				case "stloc.0":
 				case "stloc.1":
 				case "stloc.2":
@@ -136,7 +159,8 @@ public class CILToArmTranspiler {
 				}
 				case "ret": {
 					assembly.Add(instruction.GetBytes().Length, [
-						"ldmdb sp!, { lr }",
+						"mov sp, r3",
+						"ldm sp, { r0, r1, r2, r3, r9, r10, r11, r12, lr }",
 						"bx lr"
 					]);
 					break;
@@ -222,7 +246,8 @@ public class CILToArmTranspiler {
 	private void DeclareMethod(ARMProgram assembly, MethodDefinitionRef method) {
 		assembly.AddLabel(GetLabelForMethod(method));
 		assembly.Add(0, [
-			"stmia sp!, { lr }"
+			"stmia sp!, { r0, r1, r2, r3, r9, r10, r11, r12, lr }",
+			$"sub r3, sp, #{9 * 4}"
 		]);
 	}
 
