@@ -1,3 +1,5 @@
+using GBARomMaker.ARM.Common;
+
 namespace GBARomMaker.ARM;
 
 public enum BranchExchangeOpCode {

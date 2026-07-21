@@ -1,5 +1,6 @@
 using GBARomMaker.ARM;
 using GBARomMaker.ARM.ALU;
+using GBARomMaker.ARM.Common;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -99,7 +100,35 @@ public class Compiler {
 				tokens.AssertEmpty();
 				return;
 			}
-			throw new NotImplementedException(line);
+			if (source == "[") {
+				var baseRegister = tokens.DequeueRegister();
+				var next = tokens.Dequeue();
+				if (next == "]") {
+					throw new NotImplementedException($"Haven't implemented this yet... tokens: {string.Join(" ", tokens)}; line {line}");
+				}
+
+				if (next != ",") throw new Exception($"Expected a comma between arguments, got '{next}'. Line '{line}'");
+
+				next = tokens.Dequeue();
+				if (next != "#") throw new NotImplementedException("Register Shifted Offsets not supported");
+				var immediate = tokens.DequeueSignedImmediate();
+				next = tokens.Dequeue();
+				if (next != "]") throw new Exception($"Expected a ] to end op, got '{next}'. Line '{line}'");
+				tokens.AssertEmpty();
+
+				code.Add(new SingleDataTransfer {
+					BaseRegister = baseRegister,
+					SourceDestinationRegister = destinationRegister,
+					LoadStore = ARM.Common.LoadStore.Load,
+					Offset = new GBARomMaker.ARM.Memory.Immediate((uint)Math.Abs(immediate)),
+					PrePost = ARM.Common.PrePost.Pre,
+					UpDown = immediate < 0 ? UpDown.Down : UpDown.Up,
+					WriteBack = false,
+					Word = true
+				});
+				return;
+			}
+			throw new Exception($"Unexpected token when reading source: '{source}'. Line: '{line}'.");
 		}},
 		{ "strh", (string line, TokenQueue tokens, ARMMachineCode code) => {
 			tokens.AssertOperationLength(4);
@@ -116,10 +145,10 @@ public class Compiler {
 				OpCode = HOpCode.STRH,
 				DestinationRegister = destinationRegister,
 				BaseRegister = baseRegister,
-				AddOffset = AddOffset.PreTransfer,
+				PrePost = PrePost.Pre,
 				ImmediateOffset = 0,
 				ImmediateOffsetFlag = true,
-				BaseOperation = BaseOperation.Add,
+				UpDown = UpDown.Up,
 				WriteBack = false
 			});
 		}},

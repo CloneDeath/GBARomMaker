@@ -1,5 +1,6 @@
 using System;
 using GBARomMaker.ARM.ALU;
+using GBARomMaker.ARM.Common;
 
 namespace GBARomMaker.ARM;
 

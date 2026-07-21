@@ -42,6 +42,19 @@ public class TokenQueue : IEnumerable<string> {
 		};
 	}
 
+	public int DequeueSignedImmediate() {
+		var immediate = Dequeue();
+		var negate = false;
+		if (immediate == "-") {
+			immediate = Dequeue();
+			negate = true;
+		}
+		var value = (immediate.StartsWith("0x", StringComparison.OrdinalIgnoreCase)
+			? Convert.ToInt32(immediate[2..], 16)
+			: Convert.ToInt32(immediate, 10));
+		return negate ? -value : value;
+	}
+
 	public uint DequeueImmediate() {
 		var immediate = Dequeue();
 		return (uint)(immediate.StartsWith("0x", StringComparison.OrdinalIgnoreCase)
@@ -59,7 +72,7 @@ public class TokenQueue : IEnumerable<string> {
 	
 	public void DequeueComma() {
 		var seperator = Dequeue();
-		if (seperator != ",") throw new Exception($"Expected a comma between arguments. Line '{_line}'");
+		if (seperator != ",") throw new Exception($"Expected a comma between arguments, got '{seperator}'. Line '{_line}'");
 	}
 
     public IEnumerator<string> GetEnumerator() => _tokenQueue.GetEnumerator();

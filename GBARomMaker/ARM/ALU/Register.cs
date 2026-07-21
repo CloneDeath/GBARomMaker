@@ -1,23 +1,10 @@
 using System;
+using GBARomMaker.ARM.Common;
 
 namespace GBARomMaker.ARM.ALU;
 
-public enum ShiftType {
-	LSL = 0,
-	LogicalShiftLeft = 0,
-
-	LSR = 1,
-	LogicalShiftRight = 1,
-
-	ASR = 2,
-	ArethmeticShiftRight = 2,
-
-	ROR = 3,
-	RotateRight = 3
-}
-
 public class Register : ALUOp2 {
-	public override bool IsImmediate => false;
+	public bool IsImmediate => false;
 
 	public Register() : this(0) {}
 
@@ -48,7 +35,7 @@ public class Register : ALUOp2 {
 	public byte ShiftAmount { get; set; }
 	public byte ShiftRegister { get; set; }
 
-	public override byte[] ToBytes() {
+	public byte[] ToBytes() {
 		var data = new byte[2] { 0, 0 };
 		data[1] = ShiftByRegister
 			? (byte)((ShiftRegister) & 0b1111)

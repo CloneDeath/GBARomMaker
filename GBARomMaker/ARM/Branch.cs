@@ -1,4 +1,5 @@
 using System;
+using GBARomMaker.ARM.Common;
 
 namespace GBARomMaker.ARM;
 

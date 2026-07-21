@@ -3,7 +3,7 @@ using System;
 namespace GBARomMaker.ARM.ALU;
 
 public class Immediate : ALUOp2 {
-	public override bool IsImmediate => true;
+	public bool IsImmediate => true;
 	public uint Value { get; set; }
 
 	public Immediate() {
@@ -45,7 +45,7 @@ public class Immediate : ALUOp2 {
 			: (nn << rol) | (nn >> (32-rol));
 	}
 
-	public override byte[] ToBytes() {
+	public byte[] ToBytes() {
 		var data = new byte[2] { 0, 0 };
 		var rornn = this.calculateRORNN();
 		data[1] |= (byte)((rornn.ROR/2) & 0b1111);

@@ -1,23 +1,7 @@
 using System;
+using GBARomMaker.ARM.Common;
 
 namespace GBARomMaker.ARM;
-
-public enum AddOffset {
-	PreTransfer = 1,
-	PostTransfer = 0
-}
-
-public enum BaseOperation {
-	Subtract = 0,
-	Down = 0,
-	Add = 1,
-	Up = 1
-}
-
-public enum LoadStore {
-	Load = 1,
-	Store = 0
-}
 
 public enum HOpCode {
 	Reserved,
@@ -34,8 +18,8 @@ public enum HOpCode {
 public class MemoryHalf : IInstruction {
 	public MemoryHalf() {
 		Condition = Condition.Always;
-		AddOffset = AddOffset.PreTransfer;
-		BaseOperation = BaseOperation.Add;
+		PrePost = PrePost.Pre;
+		UpDown = UpDown.Up;
 		ImmediateOffsetFlag = true;
 		WriteBack = false;
 		BaseRegister = 0;
@@ -52,8 +36,8 @@ public class MemoryHalf : IInstruction {
 		if (((data[3] >> 1) & 0b111) != 0b000) {
 			throw new Exception("Invalid instruction for a STRH");
 		}
-		AddOffset = (data[3] & 0b1) == 1 ? AddOffset.PreTransfer : AddOffset.PostTransfer;
-		BaseOperation = (BaseOperation)(data[2] >> 7);
+		PrePost = (data[3] & 0b1) == 1 ? PrePost.Pre : PrePost.Post;
+		UpDown = (UpDown)(data[2] >> 7);
 		ImmediateOffsetFlag = ((data[2] >> 6) & 0b1) == 1;
 		WriteBack = ((data[2] >> 5) & 0b1) == 1;
 		var loadStore = (LoadStore)((data[2] >> 4) & 0b1);
@@ -74,8 +58,8 @@ public class MemoryHalf : IInstruction {
 
 	public Condition Condition { get; set; }
 	public Instruction Instruction { get; } = Instruction.StoreHalf;
-	public AddOffset AddOffset { get; set; }
-	public BaseOperation BaseOperation { get; set; }
+	public PrePost PrePost { get; set; }
+	public UpDown UpDown { get; set; }
 	public bool ImmediateOffsetFlag { get; set; }
 	public bool WriteBack { get; set; }
 	public byte BaseRegister { get; set; }
@@ -87,7 +71,7 @@ public class MemoryHalf : IInstruction {
 	public byte OffsetRegister { get; set; }
 
 	public byte[] ToBytes() {
-		if (AddOffset == AddOffset.PostTransfer && WriteBack) {
+		if (PrePost == PrePost.Post && WriteBack) {
 			throw new Exception("Writeback was set, but add offset was set to post transfer...");
 		}
 		if (!ImmediateOffsetFlag && ImmediateOffset != 0) throw new Exception("ImmediateOffsetFlag not set, but a value was set for ImmidiateOffset");
@@ -97,8 +81,8 @@ public class MemoryHalf : IInstruction {
 		var data = new byte[4] { 0, 0, 0, 0 };
 		data[3] |= (byte)(((byte)Condition << 4) & 0b11110000);
 		// instruction is 0b000, which is already set for data[3]...
-		data[3] |= (byte)(AddOffset);
-		data[2] |= (byte)((byte)AddOffset << 7);
+		data[3] |= (byte)(PrePost);
+		data[2] |= (byte)((byte)UpDown << 7);
 		data[2] |= (byte)((ImmediateOffsetFlag ? 1 : 0) << 6);
 		data[2] |= (byte)((WriteBack ? 1 : 0) << 5);
 		data[2] |= (byte)((OpCode switch {

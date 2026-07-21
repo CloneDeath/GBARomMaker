@@ -1,3 +1,5 @@
+namespace GBARomMaker.ARM.Common;
+
 // https://problemkaputt.de/gbatek-arm-cpu-flags-condition-field-cond.htm
 public enum Condition {
 	EQ = 0,

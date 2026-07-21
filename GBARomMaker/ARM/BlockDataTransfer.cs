@@ -1,14 +1,6 @@
+using GBARomMaker.ARM.Common;
+
 namespace GBARomMaker.ARM;
-
-public enum PrePost {
-	Pre = 1,
-	Post = 0
-}
-
-public enum UpDown {
-	Up = 1,
-	Down = 0
-}
 
 // https://problemkaputt.de/gbatek-arm-opcodes-memory-block-data-transfer-ldm-stm.htm
 public class BlockDataTransfer : IInstruction {
@@ -46,5 +38,4 @@ public class BlockDataTransfer : IInstruction {
 		data[0] = (byte)(RegisterList & 0xFF);
 		return data;
 	}
-
 }
