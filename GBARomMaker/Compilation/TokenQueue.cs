@@ -24,13 +24,16 @@ public class TokenQueue : IEnumerable<string> {
 			var immediate = DequeueImmediate();
 			return new Immediate(immediate);
 		} else {
-			var op2Register = DequeueRegister();
+			var op2Register = ParseRegister(next);
 			return new Register(op2Register);
 		}
 	}
 
 	public byte DequeueRegister() {
-		var register = Dequeue();
+		return ParseRegister(Dequeue());
+	}
+
+	public static byte ParseRegister(string register) {
 		return register switch {
 			"sp" => 13,
 			"lr" => 14,

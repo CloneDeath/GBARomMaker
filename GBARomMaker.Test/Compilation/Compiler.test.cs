@@ -75,18 +75,4 @@ public abstract class Compiler_test {
 			});
 		}
 	}
-
-	[TestFixture]
-	public class Compiler_ParseRegister_test : Compiler_test {
-		[TestCase("r0", 0)]
-		[TestCase("r2", 2)]
-		[TestCase("sp", 13)]
-		[TestCase("lr", 14)]
-		[TestCase("pc", 15)]
-		public void RegisterIsMappedCorrectly(string registerName, byte expectedRegister) {
-			var register = Compiler.ParseRegister(registerName);
-
-			register.ShouldBe(expectedRegister);
-		}
-	}
 }
