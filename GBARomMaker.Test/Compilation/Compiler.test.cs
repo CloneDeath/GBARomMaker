@@ -14,6 +14,15 @@ public abstract class Compiler_test {
 		[TestCase("ldr sp, =0x03000000 @ CIL stack pointer -- WRAM Internal", new byte[] { 0x03, 0xD4, 0xA0, 0xE3 })]
 		[TestCase("stmia sp!, { r0 }", new byte[] { 0x01, 0x00, 0xAD, 0xE8 })]
 		[TestCase("ldmdb sp!, { r0, r1 }", new byte[] { 0x03, 0x00, 0x3D, 0xE9 })]
+
+		// pop is an Alias for ldmia
+		[TestCase("ldmia sp!, { r1 }", new byte[] { 0x02, 0x00, 0xBD, 0xE8 })]
+		[TestCase("pop sp!, { r1 }",   new byte[] { 0x02, 0x00, 0xBD, 0xE8 })]
+		
+		// push is an Alias for stmdb
+		[TestCase("stmdb sp!, { r1 }", new byte[] { 0x02, 0x00, 0x2D, 0xE9 })]
+		[TestCase("push sp!, { r1 }",  new byte[] { 0x02, 0x00, 0x2D, 0xE9 })]
+		
 		[TestCase("bx lr", new byte[] { 0x1E, 0xFF, 0x2F, 0xE1 })]
 		[TestCase("mul r0,r1,r2", new byte[] { 0x91, 0x02, 0x00, 0xE0 })]
 		[TestCase("cmp r0, r1", new byte[] { 0x01, 0x00, 0x50, 0xE1 })]

@@ -158,6 +158,12 @@ public class Compiler {
 		{ "ldm", (string line, TokenQueue tokens, ARMMachineCode code) => {
 			LoadBlockDataTransfer(line, tokens, code);
 		}},
+		{ "push", (string line, TokenQueue tokens, ARMMachineCode code) => {
+			LoadBlockDataTransfer(line, tokens, code);
+		}},
+		{ "pop", (string line, TokenQueue tokens, ARMMachineCode code) => {
+			LoadBlockDataTransfer(line, tokens, code);
+		}},
 		{ "bx", (string line, TokenQueue tokens, ARMMachineCode code) => {
 			tokens.AssertOperationLength(2);
 			var register = tokens.DequeueRegister();
@@ -296,24 +302,38 @@ public class Compiler {
 	}
 
 	public static void LoadBlockDataTransfer(string line, TokenQueue tokens, ARMMachineCode code) {//ldmdb sp!, { r0, r1 }
-		if (tokens.Operation.Length != 3 && tokens.Operation.Length != 5) {
-			throw new NotImplementedException($"Unexpected operation {tokens.Operation}. {line}");
+		if (tokens.Operation.Length < 3 || tokens.Operation.Length > 5) {
+			throw new NotImplementedException($"Unexpected operation '{tokens.Operation}'. {line}");
 		}
-		var loadStore = tokens.Operation.Substring(0, 3) switch {
-			"ldm" => LoadStore.Load,
-			"stm" => LoadStore.Store,
-			_ => throw new NotSupportedException($"Could not interpret Load/Store bit for Block Data Transfer command: {tokens.Operation}, got {tokens.Operation.Substring(0, 3)}")
-		};
-		var upDown = tokens.Operation.Length > 3 ? tokens.Operation[3] switch {
-			'i' => UpDown.Up,
-			'd' => UpDown.Down,
-			_ => throw new NotSupportedException($"Could not interpret Up/Down bit for Block Data Transfer command: {tokens.Operation}, got {tokens.Operation[4]}")
-		} : UpDown.Up;
-		var prePost = tokens.Operation.Length > 3 ? tokens.Operation[4] switch {
-			'b' => PrePost.Pre,
-			'a' => PrePost.Post,
-			_ => throw new NotSupportedException($"Could not interpret Pre/Post bit for Block Data Transfer command: {tokens.Operation}, got {tokens.Operation[5]}")
-		} : PrePost.Post;
+
+		LoadStore loadStore;
+		if (tokens.Operation.StartsWith("ldm") || tokens.Operation == "pop") {
+			loadStore = LoadStore.Load;
+		} else if (tokens.Operation.StartsWith("stm") || tokens.Operation == "push") {
+			loadStore = LoadStore.Store;
+		} else {
+			throw new NotSupportedException($"Could not interpret Load/Store bit for Block Data Transfer command: {tokens.Operation}");
+		}
+
+		UpDown upDown;
+		if (tokens.Operation == "pop" || tokens.Operation.Length == 3 || tokens.Operation[3] == 'i') {
+			upDown = UpDown.Up;
+		} else if (tokens.Operation == "push" || tokens.Operation[3] == 'd') {
+			upDown = UpDown.Down;
+		} else {
+			throw new NotSupportedException($"Could not interpret Up/Down bit for Block Data Transfer command: {tokens.Operation}");
+		}
+
+		PrePost prePost;
+		if (tokens.Operation == "push") {
+			prePost = PrePost.Pre;
+		} else if (tokens.Operation == "pop" || tokens.Operation.Length == 3 || tokens.Operation[4] == 'a') {
+			prePost = PrePost.Post;
+		} else if (tokens.Operation[4] == 'b') {
+			prePost = PrePost.Pre;
+		} else {
+			throw new NotSupportedException($"Could not interpret Pre/Post bit for Block Data Transfer command: {tokens.Operation}");
+		}
 
 		var baseRegister = tokens.DequeueRegister();
 		var next = tokens.Dequeue();
