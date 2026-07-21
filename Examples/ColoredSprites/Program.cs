@@ -1,6 +1,9 @@
 ﻿unsafe
 {
-	DisplayController.EnableMode3AndBG2();
+	DisplayController.SetControl(new DisplayControl {
+		BGMode = 3,
+		ScreenDisplayBG2 = true
+	});
 
 	for (var i = 0; i <= 10; i++) {
 		DisplayController.SetPixelRed(i, 0);
@@ -10,10 +13,19 @@
 	}
 }
 
+public class DisplayControl {
+	public int BGMode;
+	public bool ScreenDisplayBG2;
+}
+
 public static unsafe class DisplayController {
-	public static unsafe void EnableMode3AndBG2() {
-    	ushort* displayControl = (ushort*)0x04000000;
-	    *displayControl = 0x0403; // Mode 3 + BG2 enabled
+	private static ushort* DISPCNT = (ushort*)0x04000000;
+
+	public static void SetControl(DisplayControl control) {
+		ushort data = 0x0000;
+		data |= (ushort)(control.BGMode & 0b111);
+		data |= (ushort)((control.ScreenDisplayBG2 ? 1 : 0) << 10);
+		*DISPCNT = data;
 	}
 
 	public static void SetPixelRed(int x, int y) {
