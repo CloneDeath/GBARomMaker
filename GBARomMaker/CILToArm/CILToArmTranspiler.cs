@@ -153,14 +153,14 @@ public class CILToArmTranspiler {
 				case "stind.i2": {
 					assembly.Add(instruction.GetBytes().Length, [
 						"pop sp!, { r0, r1 }",
-						"strh r1, [r0]"
+						"strh r0, [r1]"
 					]);
 					break;
 				}
 				case "ret": {
 					assembly.Add(instruction.GetBytes().Length, [
-						"mov sp, r3",
-						"pop sp, { r0, r1, r2, r3, r9, r10, r11, r12, lr }",
+						$"sub sp, r3, #{9 * 4}",
+						"pop sp!, { r0, r1, r2, r3, r9, r10, r11, r12, lr }",
 						"bx lr"
 					]);
 					break;
@@ -251,7 +251,7 @@ public class CILToArmTranspiler {
 		assembly.AddLabel(GetLabelForMethod(method));
 		assembly.Add(0, [
 			"push sp!, { r0, r1, r2, r3, r9, r10, r11, r12, lr }",
-			$"sub r3, sp, #{9 * 4}"
+			$"add r3, sp, #{9 * 4}"
 		]);
 	}
 
