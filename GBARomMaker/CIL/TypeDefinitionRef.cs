@@ -3,7 +3,7 @@ using System.Linq;
 using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
 
-namespace GBARomMaker.CILParse;
+namespace GBARomMaker.CIL;
 
 public class TypeDefinitionRef {
 	private readonly PEReader peReader;
@@ -24,5 +24,11 @@ public class TypeDefinitionRef {
 			var fields = self.GetFields().Select(f => metadata.GetFieldDefinition(f));
 			return fields.Count();
 		}
+	}
+
+	public MethodDefinitionRef GetMethodDefinition(string name) {
+		var methods = self.GetMethods().Select(m => metadata.GetMethodDefinition(m));
+		var method = methods.First(m => metadata.GetString(m.Name) == name);
+		return new MethodDefinitionRef(peReader, metadata, method);		
 	}
 }

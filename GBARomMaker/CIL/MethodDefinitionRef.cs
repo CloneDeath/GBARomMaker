@@ -3,7 +3,7 @@ using System.Linq;
 using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
 
-namespace GBARomMaker.CILParse;
+namespace GBARomMaker.CIL;
 
 public class MethodDefinitionRef {
 	private readonly PEReader peReader;

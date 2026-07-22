@@ -4,6 +4,7 @@ using System.Linq;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 using System.Reflection.PortableExecutable;
+using GBARomMaker.CIL;
 using GBARomMaker.CILParse;
 
 namespace GBARomMaker.CILToArm;
@@ -305,6 +306,20 @@ public class CILToArmTranspiler {
 				var method = _metadata.GetMethodDefinition((MethodDefinitionHandle)handle);
 
 				var methodRef = new MethodDefinitionRef(_peReader, _metadata, method);
+				assembly.MethodsToTranspile.Enqueue(methodRef);
+
+				var target = GetLabelForMethod(methodRef);
+				assembly.Add(instruction.GetBytes().Length, [
+					$"bl {target}"
+				]);
+				return;
+			}
+			case HandleKind.MemberReference: {
+				var member = _metadata.GetMemberReference((MemberReferenceHandle)handle);
+				var memberRef = new MemberReferenceRef(_peReader, _metadata, member);
+
+				if (memberRef.Kind != MemberReferenceKind.Method) throw new Exception("Calls only supported for Methods");
+				var methodRef = memberRef.MethodDefinition;
 				assembly.MethodsToTranspile.Enqueue(methodRef);
 
 				var target = GetLabelForMethod(methodRef);

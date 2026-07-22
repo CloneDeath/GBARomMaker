@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
-using GBARomMaker.CILParse;
+using GBARomMaker.CIL;
 
 namespace GBARomMaker.CILToArm;
 

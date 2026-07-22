@@ -1,7 +1,7 @@
 using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
 
-namespace GBARomMaker.CILParse;
+namespace GBARomMaker.CIL;
 
 public class FieldDefinitionRef {
 	private readonly PEReader peReader;
