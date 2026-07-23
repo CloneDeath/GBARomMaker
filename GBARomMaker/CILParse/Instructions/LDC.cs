@@ -1,4 +1,5 @@
 using System;
+using GBARomMaker.CIL;
 using System.Linq;
 using System.Reflection.Emit;
 
@@ -31,7 +32,7 @@ public class LDC_I4 : CILInstruction {
 		return new byte[] { 0x20 }.Concat(BitConverter.GetBytes(Data)).ToArray();
 	}
 
-	public string GetCIL() {
+	public string GetCIL(CILFactory factory) {
 		return $"ldc.i4 0x{Data:X8}";
 	}
 }
@@ -79,7 +80,7 @@ public class LDC_I4_X : CILInstruction {
 		}];
 	}
 
-	public string GetCIL() {
+	public string GetCIL(CILFactory factory) {
 		var sign = Data == -1 ? "m1" : Data.ToString();
 		return $"ldc.i4.{sign}";
 	}
@@ -95,7 +96,7 @@ public class LDC_I4_S : CILInstruction {
 		return [0x1F, Data];
 	}
 
-	public string GetCIL() {
+	public string GetCIL(CILFactory factory) {
 		return $"ldc.i4.s 0x{Data:X2}";
 	}
 }

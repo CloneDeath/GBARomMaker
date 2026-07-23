@@ -1,4 +1,5 @@
 using System.Reflection.Emit;
+using GBARomMaker.CIL;
 
 namespace GBARomMaker.CILParse.FEInstructions;
 
@@ -11,7 +12,7 @@ public class CEQ : CILInstruction {
 		return [0xFE, 0x01];
     }
 
-    public string GetCIL() {
+    public string GetCIL(CILFactory factory) {
 		return "ceq";
     }
 }

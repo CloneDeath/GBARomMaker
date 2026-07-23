@@ -1,4 +1,5 @@
 using System.Reflection.Emit;
+using GBARomMaker.CIL;
 
 namespace GBARomMaker.CILParse.Instructions;
 
@@ -11,7 +12,7 @@ public class RET : CILInstruction {
 		return [0x2A];
     }
 
-    public string GetCIL() {
+    public string GetCIL(CILFactory factory) {
 		return "ret";
     }
 }

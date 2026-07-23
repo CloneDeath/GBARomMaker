@@ -1,9 +1,10 @@
 using System.Reflection.Emit;
+using GBARomMaker.CIL;
 
 namespace GBARomMaker.CILParse;
 
 public interface CILInstruction {
-	public abstract string GetCIL();
-	public abstract OpCode OpCode { get; }
-	public abstract byte[] GetBytes();
+	public string GetCIL(CILFactory factory);
+	public OpCode OpCode { get; }
+	public byte[] GetBytes();
 }

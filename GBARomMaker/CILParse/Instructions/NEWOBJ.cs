@@ -1,4 +1,5 @@
 using System;
+using GBARomMaker.CIL;
 using System.Linq;
 using System.Reflection.Emit;
 
@@ -19,7 +20,8 @@ public class NEWOBJ : CILInstruction {
 		return new byte[]{0x73}.Concat(BitConverter.GetBytes(MetadataToken)).ToArray();
 	}
 
-	public string GetCIL() {
-		return "newobj " + MetadataToken;
+	public string GetCIL(CILFactory factory) {
+		var method = factory.GetMethodDefinition(MetadataToken);
+		return "newobj " + method.FullName;
 	}
 }

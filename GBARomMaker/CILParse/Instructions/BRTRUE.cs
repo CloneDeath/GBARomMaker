@@ -1,4 +1,5 @@
 using System;
+using GBARomMaker.CIL;
 using System.Linq;
 using System.Reflection.Emit;
 
@@ -22,7 +23,7 @@ public class BRTRUE : CILInstruction {
 		return new byte[]{0x3A}.Concat(BitConverter.GetBytes(Target)).ToArray();
     }
 
-    public string GetCIL() {
+    public string GetCIL(CILFactory factory) {
 		return "brtrue " + Target;
     }
 }
@@ -40,7 +41,7 @@ public class BRTRUE_S : CILInstruction {
 		return new byte[]{ 0x2D, (byte)Target };
     }
 
-    public string GetCIL() {
+    public string GetCIL(CILFactory factory) {
 		return "brtrue.s " + Target;
     }
 }

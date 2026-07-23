@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Reflection.Emit;
+using GBARomMaker.CIL;
 
 namespace GBARomMaker.CILParse.Instructions;
 
@@ -19,7 +20,8 @@ public class CALL : CILInstruction {
 		return new byte[]{0x28}.Concat(BitConverter.GetBytes(MetadataToken)).ToArray();
 	}
 
-	public string GetCIL() {
-		return "call " + MetadataToken;
+	public string GetCIL(CILFactory factory) {
+		var method = factory.GetMethodDefinition(MetadataToken);
+		return "call " + method.FullName;
 	}
 }

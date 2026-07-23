@@ -1,4 +1,5 @@
 using System;
+using GBARomMaker.CIL;
 using System.Linq;
 using System.Reflection.Emit;
 
@@ -19,7 +20,8 @@ public class STFLD : CILInstruction {
 		return new byte[]{0x7D}.Concat(BitConverter.GetBytes(MetadataToken)).ToArray();
 	}
 
-	public string GetCIL() {
-		return "stfld " + MetadataToken;
+	public string GetCIL(CILFactory factory) {
+		var field = factory.GetFieldDefinition(MetadataToken);
+		return "stfld " + field.FullName;
 	}
 }

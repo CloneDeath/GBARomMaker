@@ -1,4 +1,5 @@
 using System;
+using GBARomMaker.CIL;
 using System.Reflection.Emit;
 
 namespace GBARomMaker.CILParse.Instructions;
@@ -37,7 +38,7 @@ public class STLOC : CILInstruction {
 		return [opcode];
     }
 
-    public string GetCIL() {
+    public string GetCIL(CILFactory factory) {
 		return "stloc." + Location;
     }
 }
