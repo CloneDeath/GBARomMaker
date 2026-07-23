@@ -9,7 +9,7 @@ using GBARomMaker.CILParse;
 
 namespace GBARomMaker.CILToArm;
 
-public record MethodToAssemble(MethodDefinitionRef method);
+public record MethodToAssemble(CILMethodDefinition method);
 
 public class CILToArmTranspiler {
 	private PEReader _peReader;
@@ -39,17 +39,17 @@ public class CILToArmTranspiler {
 		return assembly.GetArm7Assembly();
 	}
 
-	private MethodDefinitionRef DetectEntryPoint() {
+	private CILMethodDefinition DetectEntryPoint() {
 		var corHeader = _peReader.PEHeaders.CorHeader ?? throw new InvalidDataException("Not a managed assembly.");
 		var entryPointToken = corHeader.EntryPointTokenOrRelativeVirtualAddress;
 		var entryPointHandle = MetadataTokens.EntityHandle(entryPointToken);
 		if (entryPointHandle.Kind != HandleKind.MethodDefinition) throw new InvalidDataException("Entry point is not a managed method.");
 
 		var method = _metadata.GetMethodDefinition((MethodDefinitionHandle)entryPointHandle);
-		return new MethodDefinitionRef(_peReader, _metadata, method);
+		return new CILMethodDefinition(_peReader, _metadata, method);
 	}
 
-	public void ConvertCILToASM(ARMProgram assembly, MethodDefinitionRef method) {
+	public void ConvertCILToASM(ARMProgram assembly, ICILMethod method) {
 		if (assembly.MethodsTranspiled.Contains(method.FullName)) return;
 
 		var parser = new CILParser();
@@ -270,7 +270,7 @@ public class CILToArmTranspiler {
 		assembly.MethodsTranspiled.Add(method.FullName);
 	}
 
-	private void DeclareMethod(ARMProgram assembly, MethodDefinitionRef method) {
+	private void DeclareMethod(ARMProgram assembly, ICILMethod method) {
 		assembly.AddLabel(GetLabelForMethod(method));
 		assembly.Add(0, [
 			"push sp!, { r0, r1, r2, r3, r9, r10, r11, r12, lr }",
@@ -280,58 +280,24 @@ public class CILToArmTranspiler {
 
 	private void HandleStoreFieldInstruction(CILInstruction instruction, ARMProgram assembly) {
 		var stfld = (GBARomMaker.CILParse.Instructions.STFLD)instruction;
-		var handle = MetadataTokens.EntityHandle(stfld.MetadataToken);
-		switch (handle.Kind) {
-			case HandleKind.FieldDefinition: {
-				var field = _metadata.GetFieldDefinition((FieldDefinitionHandle)handle);
-
-				var fieldRef = new FieldDefinitionRef(_peReader, _metadata, field);
-				assembly.Add(instruction.GetBytes().Length, [
-					"pop sp!, { r0, r1 } @ value, obj",
-					$"str r0, [r1, #{0}] @ {fieldRef.Name}" // todo, figure out offset...
-				]);
-				return;
-			}
-			default: {
-				throw new NotImplementedException("Calls to " + handle.Kind + " not yet implemented");
-			}
-		}
+		var cilFactory = new CILFactory(_peReader, _metadata);
+		var field = cilFactory.GetFieldDefinition(stfld.MetadataToken);
+		assembly.Add(instruction.GetBytes().Length, [
+			"pop sp!, { r0, r1 } @ value, obj",
+			$"str r0, [r1, #{0}] @ {field.Name}" // todo, figure out offset...
+		]);
 	}
 
 	private void HandleCallInstruction(CILInstruction instruction, ARMProgram assembly) {
 		var call = (GBARomMaker.CILParse.Instructions.CALL)instruction;
-		var handle = MetadataTokens.EntityHandle(call.MetadataToken);
-		switch (handle.Kind) {
-			case HandleKind.MethodDefinition: {
-				var method = _metadata.GetMethodDefinition((MethodDefinitionHandle)handle);
-
-				var methodRef = new MethodDefinitionRef(_peReader, _metadata, method);
-				assembly.MethodsToTranspile.Enqueue(methodRef);
-
-				var target = GetLabelForMethod(methodRef);
-				assembly.Add(instruction.GetBytes().Length, [
-					$"bl {target}"
-				]);
-				return;
-			}
-			case HandleKind.MemberReference: {
-				var member = _metadata.GetMemberReference((MemberReferenceHandle)handle);
-				var memberRef = new MemberReferenceRef(_peReader, _metadata, member);
-
-				if (memberRef.Kind != MemberReferenceKind.Method) throw new Exception("Calls only supported for Methods");
-				var methodRef = memberRef.MethodDefinition;
-				assembly.MethodsToTranspile.Enqueue(methodRef);
-
-				var target = GetLabelForMethod(methodRef);
-				assembly.Add(instruction.GetBytes().Length, [
-					$"bl {target}"
-				]);
-				return;
-			}
-			default: {
-				throw new NotImplementedException("Calls to " + handle.Kind + " not yet implemented");
-			}
-		}
+		var cilFactory = new CILFactory(_peReader, _metadata);
+		var method = cilFactory.GetMethodDefinition(call.MetadataToken);
+		
+		assembly.MethodsToTranspile.Enqueue(method);
+		var target = GetLabelForMethod(method);
+		assembly.Add(instruction.GetBytes().Length, [
+			$"bl {target}"
+		]);
 	}
 
 	private void HandleNewObjInstruction(CILInstruction instruction, ARMProgram assembly) {
@@ -340,7 +306,7 @@ public class CILToArmTranspiler {
 		switch (handle.Kind) {
 			case HandleKind.MethodDefinition: {
 				var method = _metadata.GetMethodDefinition((MethodDefinitionHandle)handle);
-				var methodRef = new MethodDefinitionRef(_peReader, _metadata, method);
+				var methodRef = new CILMethodDefinition(_peReader, _metadata, method);
 				if (methodRef.Name != ".ctor") {
 					throw new Exception("Tried to initialize an object with something that isn't a contructor: " + methodRef.FullName);
 				}
@@ -362,14 +328,15 @@ public class CILToArmTranspiler {
 		}
 	}
 
-	private string GetLabelForMethod(MethodDefinitionRef method) {
+	private string GetLabelForMethod(ICILMethod method) {
 		return $"method_{method.FullName}".Replace(".", "_").Replace("<", "_").Replace(">", "_").Replace("$", "_");
 	}
 	
-	public static void PrintCIL(CILInstruction[] instructions) {
+	public void PrintCIL(CILInstruction[] instructions) {
+		var factory = new CILFactory(_peReader, _metadata);
 		var offset = 0;
 		foreach (var instruction in instructions) {
-			Console.WriteLine($"{offset:D4}: {instruction.GetCIL()}");
+			Console.WriteLine($"{offset:D4}: {instruction.GetCIL(factory)}");
 			offset += instruction.GetBytes().Length;
 		}
 	}
