@@ -32,4 +32,11 @@ public class CILTypeDefinition : ICILType {
 		var method = methods.First(m => _metadata.GetString(m.Name) == name);
 		return new CILMethodDefinition(_peReader, _metadata, method);		
 	}
+
+	public CILFieldDefinition[] Fields {
+		get {
+			var fields = _self.GetFields().Select(f => _metadata.GetFieldDefinition(f));
+			return fields.Select(f => new CILFieldDefinition(_peReader, _metadata, f)).ToArray();
+		}
+	}
 }

@@ -9,12 +9,20 @@ public abstract class Compiler_test {
 	public class Compiler_GetOperationsForAssembly_test : Compiler_test {
 		[TestCase("ldr r0, =0x04000000     @ Display control register", new byte[]{ 0x01, 0x03, 0xA0, 0xE3 })]
 		[TestCase("ldr r1, =0x0403         @ Mode 3 + BG2 enabled", new byte[]{ 0x03, 0x10, 0xA0, 0xE3, 0x01, 0x1B, 0x81, 0xE3 })]
+		[TestCase("ldr sp, =0x03000000 @ CIL stack pointer -- WRAM Internal", new byte[] { 0x03, 0xD4, 0xA0, 0xE3 })]
+		[TestCase("ldr r0, [r3, #-8]", new byte[] { 0x08, 0x00, 0x13, 0xE5 })]
+		[TestCase("ldr r0, [sp]", new byte[] { 0x00, 0x00, 0x9D, 0xE5 })]
+		[TestCase("str r0, [r1, #0]", new byte[] { 0x00, 0x00, 0x81, 0xE5 })]
 		[TestCase("strh r1, [r0]", new byte[]{ 0xB0, 0x10, 0xC0, 0xE1 })]
 		[TestCase("mov r1, #0x1F           @ Red", new byte[] { 0x1F, 0x10, 0xA0, 0xE3 })]
-		[TestCase("ldr sp, =0x03000000 @ CIL stack pointer -- WRAM Internal", new byte[] { 0x03, 0xD4, 0xA0, 0xE3 })]
 		[TestCase("stmia sp!, { r0 }", new byte[] { 0x01, 0x00, 0xAD, 0xE8 })]
 		[TestCase("ldmdb sp!, { r0, r1 }", new byte[] { 0x03, 0x00, 0x3D, 0xE9 })]
-
+		[TestCase("bx lr", new byte[] { 0x1E, 0xFF, 0x2F, 0xE1 })]
+		[TestCase("cmp r0, r1", new byte[] { 0x01, 0x00, 0x50, 0xE1 })]
+		[TestCase("cmp r0, #10", new byte[] { 0x0A, 0x00, 0x50, 0xE3 })]
+		[TestCase("nop", new byte[] { 0x00, 0x00, 0xA0, 0xE1 })]
+		[TestCase("movlt r0, #1", new byte[] { 0x01, 0x00, 0xA0, 0xB3 })]
+		
 		// pop is an Alias for ldmia
 		[TestCase("ldmia sp!, { r1 }", new byte[] { 0x02, 0x00, 0xBD, 0xE8 })]
 		[TestCase("pop sp!, { r1 }",   new byte[] { 0x02, 0x00, 0xBD, 0xE8 })]
@@ -22,14 +30,10 @@ public abstract class Compiler_test {
 		// push is an Alias for stmdb
 		[TestCase("stmdb sp!, { r1 }", new byte[] { 0x02, 0x00, 0x2D, 0xE9 })]
 		[TestCase("push sp!, { r1 }",  new byte[] { 0x02, 0x00, 0x2D, 0xE9 })]
-		
-		[TestCase("bx lr", new byte[] { 0x1E, 0xFF, 0x2F, 0xE1 })]
+
+		// ALU
 		[TestCase("mul r0,r1,r2", new byte[] { 0x91, 0x02, 0x00, 0xE0 })]
-		[TestCase("cmp r0, r1", new byte[] { 0x01, 0x00, 0x50, 0xE1 })]
-		[TestCase("cmp r0, #10", new byte[] { 0x0A, 0x00, 0x50, 0xE3 })]
-		[TestCase("nop", new byte[] { 0x00, 0x00, 0xA0, 0xE1 })]
-		[TestCase("movlt r0, #1", new byte[] { 0x01, 0x00, 0xA0, 0xB3 })]
-		[TestCase("ldr r0, [r3, #-8]", new byte[] { 0x08, 0x00, 0x13, 0xE5 })]
+		[TestCase("or r0, r1, r2", new byte[] { 0x91, 0x02, 0x2D, 0xEB })]
 		public void CompiledAssemblyIsCorrect(string line, byte[] expectedData) {
 			var compiler = new Compiler();
 

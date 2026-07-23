@@ -25,7 +25,6 @@ public class CILToArmTranspiler {
 	public string[] Transpile() {
 		var assembly = new ARMProgram {
 			new ARMLine(-1, 0, "ldr sp, =0x03008000 @ CIL stack pointer -- WRAM Internal"),
-			new ARMLine(-1, 1, "ldr r4, =0x02000000 @ Heap Start -- WRAM External")
 		};
 
 		var entrypoint = DetectEntryPoint();
@@ -35,7 +34,8 @@ public class CILToArmTranspiler {
 			var method = assembly.MethodsToTranspile.Dequeue();
 			ConvertCILToASM(assembly, method);
 		}
-
+		
+		assembly.Add(new ARMLine(-1, 1, $"ldr r4, ={assembly.HeapStart:X8} @ Heap Start -- WRAM External"));
 		return assembly.GetArm7Assembly();
 	}
 
@@ -84,6 +84,15 @@ public class CILToArmTranspiler {
 				case "conv.i": {
 					assembly.Add(instruction.GetBytes().Length, [
 						"nop"
+					]);
+					break;
+				}
+				case "conv.u2": {
+					assembly.Add(instruction.GetBytes().Length, [
+						"pop sp!, { r1 }",
+						"ldr r2, =0xFFFF",
+						"and r0, r1, r2",
+						"push sp!, { r0 }"
 					]);
 					break;
 				}
@@ -165,6 +174,14 @@ public class CILToArmTranspiler {
 						"pop sp!, { r0, r1 }",
 						"strh r0, [r1]"
 					]);
+					break;
+				}
+				case "ldfld": {
+					HandleLoadFieldInstruction(instruction, assembly);
+					break;
+				}
+				case "ldsfld": {
+					HandleLoadStaticFieldInstruction(instruction, assembly);
 					break;
 				}
 				case "stfld": {
@@ -256,11 +273,35 @@ public class CILToArmTranspiler {
 					]);
 					break;
 				}
+				case "and": {
+					assembly.Add(instruction.GetBytes().Length, [
+						"pop sp!, { r1, r2 }",
+						"and r0, r1, r2",
+						"push sp!, { r0 }"
+					]);
+					break;
+				}
+				case "or": {
+					assembly.Add(instruction.GetBytes().Length, [
+						"pop sp!, { r1, r2 }",
+						"or r0, r1, r2",
+						"push sp!, { r0 }"
+					]);
+					break;
+				}
 				case "mul": {
 					assembly.Add(instruction.GetBytes().Length, [
 						"pop sp!, { r1, r2 }",
 						"mul r0,r1,r2",
 						"push sp!, { r0 }"
+					]);
+					break;
+				}
+				case "shl": {
+					assembly.Add(instruction.GetBytes().Length, [
+						"pop sp!, { r0, r1 } @ shiftAmount, value",
+						"lsl r2, r0, r1",
+						"push sp!, { r2 }"
 					]);
 					break;
 				}
@@ -278,6 +319,30 @@ public class CILToArmTranspiler {
 		]);
 	}
 
+	private void HandleLoadFieldInstruction(CILInstruction instruction, ARMProgram assembly) {
+		var ldfld = (GBARomMaker.CILParse.Instructions.LDFLD)instruction;
+		var cilFactory = new CILFactory(_peReader, _metadata);
+		var field = cilFactory.GetFieldDefinition(ldfld.MetadataToken);
+		assembly.Add(instruction.GetBytes().Length, [
+			"pop sp!, { r0 } @ obj",
+			$"ldr r1, [r0, #{0}] @ {field.Name}", // todo, figure out offset...
+			"push sp!, { r1 }"
+		]);
+	}
+	
+	private void HandleLoadStaticFieldInstruction(CILInstruction instruction, ARMProgram assembly) {
+		var ldsfld = (GBARomMaker.CILParse.Instructions.LDSFLD)instruction;
+		var cilFactory = new CILFactory(_peReader, _metadata);
+		var field = cilFactory.GetFieldDefinition(ldsfld.MetadataToken);
+		
+		var staticClass = assembly.GetStaticClassLayout(field.Parent);
+		assembly.Add(instruction.GetBytes().Length, [
+			$"ldr r0, =0x{staticClass.StartAddress:X8} @ static ${staticClass.FullName}",
+		 	$"ldr r1, [r0, #{staticClass.GetFieldOffset(field)}] @ {field.Name}",
+		 	"push sp!, { r1 }"
+		]);
+	}
+
 	private void HandleStoreFieldInstruction(CILInstruction instruction, ARMProgram assembly) {
 		var stfld = (GBARomMaker.CILParse.Instructions.STFLD)instruction;
 		var cilFactory = new CILFactory(_peReader, _metadata);
@@ -292,6 +357,13 @@ public class CILToArmTranspiler {
 		var call = (GBARomMaker.CILParse.Instructions.CALL)instruction;
 		var cilFactory = new CILFactory(_peReader, _metadata);
 		var method = cilFactory.GetMethodDefinition(call.MetadataToken);
+
+		if (method.FullName == "System.Object..ctor") {
+			assembly.Add(instruction.GetBytes().Length, [
+				$"nop @ Calling '{method.FullName}'"
+			]);
+			return;
+		}
 		
 		assembly.MethodsToTranspile.Enqueue(method);
 		var target = GetLabelForMethod(method);
@@ -313,8 +385,8 @@ public class CILToArmTranspiler {
 
 				var target = GetLabelForMethod(methodRef);
 				assembly.Add(instruction.GetBytes().Length, [
-					"push sp! { r4 } @ push object ref onto the stack...",
-					"push sp! { r4 } @ push it again for the 'this' param of the constructor",
+					"push sp!, { r4 } @ push object ref onto the stack...",
+					"push sp!, { r4 } @ push it again for the 'this' param of the constructor",
 					$"add r4, r4, #{methodRef.Class.FieldCount * 4}",
 					$"bl {target}"
 				]);

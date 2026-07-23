@@ -104,7 +104,18 @@ public class Compiler {
 				var baseRegister = tokens.DequeueRegister();
 				var next = tokens.Dequeue();
 				if (next == "]") {
-					throw new NotImplementedException($"Haven't implemented this yet... tokens: {string.Join(" ", tokens)}; line {line}");
+					tokens.AssertEmpty();
+					code.Add(new SingleDataTransfer {
+						BaseRegister = baseRegister,
+						SourceDestinationRegister = destinationRegister,
+						LoadStore = LoadStore.Load,
+						Offset = new ARM.Memory.Immediate(0),
+						PrePost = PrePost.Pre,
+						UpDown = UpDown.Up,
+						WriteBack = false,
+						Word = true
+					});
+					return;
 				}
 
 				if (next != ",") throw new Exception($"Expected a comma between arguments, got '{next}'. Line '{line}'");
@@ -120,8 +131,8 @@ public class Compiler {
 					BaseRegister = baseRegister,
 					SourceDestinationRegister = destinationRegister,
 					LoadStore = ARM.Common.LoadStore.Load,
-					Offset = new GBARomMaker.ARM.Memory.Immediate((uint)Math.Abs(immediate)),
-					PrePost = ARM.Common.PrePost.Pre,
+					Offset = new ARM.Memory.Immediate((uint)Math.Abs(immediate)),
+					PrePost = PrePost.Pre,
 					UpDown = immediate < 0 ? UpDown.Down : UpDown.Up,
 					WriteBack = false,
 					Word = true
@@ -150,6 +161,50 @@ public class Compiler {
 				ImmediateOffsetFlag = true,
 				UpDown = UpDown.Up,
 				WriteBack = false
+			});
+		}},
+		{ "str", (string line, TokenQueue tokens, ARMMachineCode code) => {
+			tokens.AssertOperationLength(3);
+			var sourceRegister = tokens.DequeueRegister();
+			tokens.DequeueComma();
+			var source = tokens.Dequeue();
+			if (source != "[") throw new Exception($"Expected [ for addr. Line '{line}'");
+
+			var baseRegister = tokens.DequeueRegister();
+			var next = tokens.Dequeue();
+			if (next == "]") {
+				tokens.AssertEmpty();
+				code.Add(new SingleDataTransfer {
+					BaseRegister = baseRegister,
+					SourceDestinationRegister = sourceRegister,
+					LoadStore = LoadStore.Store,
+					Offset = new ARM.Memory.Immediate(0),
+					PrePost = PrePost.Pre,
+					UpDown = UpDown.Up,
+					WriteBack = false,
+					Word = true
+				});
+				return;
+			}
+
+			if (next != ",") throw new Exception($"Expected a comma between arguments, got '{next}'. Line '{line}'");
+
+			next = tokens.Dequeue();
+			if (next != "#") throw new NotImplementedException("Register Shifted Offsets not supported");
+			var immediate = tokens.DequeueSignedImmediate();
+			next = tokens.Dequeue();
+			if (next != "]") throw new Exception($"Expected a ] to end op, got '{next}'. Line '{line}'");
+			tokens.AssertEmpty();
+
+			code.Add(new SingleDataTransfer {
+				BaseRegister = baseRegister,
+				SourceDestinationRegister = sourceRegister,
+				LoadStore = LoadStore.Store,
+				Offset = new ARM.Memory.Immediate((uint)Math.Abs(immediate)),
+				PrePost = ARM.Common.PrePost.Pre,
+				UpDown = immediate < 0 ? UpDown.Down : UpDown.Up,
+				WriteBack = false,
+				Word = true
 			});
 		}},
 		{ "stm", (string line, TokenQueue tokens, ARMMachineCode code) => {
