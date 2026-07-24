@@ -35,7 +35,7 @@ public class CILToArmTranspiler {
 			ConvertCILToASM(assembly, method);
 		}
 		
-		assembly.Add(new ARMLine(-1, 1, $"ldr r4, ={assembly.HeapStart:X8} @ Heap Start -- WRAM External"));
+		assembly.Add(new ARMLine(-1, 1, $"ldr r4, =0x{assembly.HeapStart:X8} @ Heap Start -- WRAM External"));
 		return assembly.GetArm7Assembly();
 	}
 
@@ -284,7 +284,7 @@ public class CILToArmTranspiler {
 				case "or": {
 					assembly.Add(instruction.GetBytes().Length, [
 						"pop sp!, { r1, r2 }",
-						"or r0, r1, r2",
+						"orr r0, r1, r2",
 						"push sp!, { r0 }"
 					]);
 					break;
@@ -312,8 +312,8 @@ public class CILToArmTranspiler {
 	}
 
 	private void DeclareMethod(ARMProgram assembly, ICILMethod method) {
-		assembly.AddLabel(GetLabelForMethod(method));
 		assembly.Add(0, [
+			$"{GetLabelForMethod(method)}:",
 			"push sp!, { r0, r1, r2, r3, r9, r10, r11, r12, lr }",
 			$"add r3, sp, #{9 * 4}"
 		]);

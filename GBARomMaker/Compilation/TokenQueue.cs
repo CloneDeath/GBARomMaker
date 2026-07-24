@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using GBARomMaker.ARM.ALU;
+using GBARomMaker.ARM.Common;
 
 public class TokenQueue : IEnumerable<string> {
 	private string[] _tokens;
@@ -25,7 +26,17 @@ public class TokenQueue : IEnumerable<string> {
 			return new Immediate(immediate);
 		} else {
 			var op2Register = ParseRegister(next);
-			return new Register(op2Register);
+			if (!_tokenQueue.Any()) return new Register(op2Register);
+			DequeueComma();
+
+			var shiftType = DequeueShiftType();
+			var shiftRegister = DequeueRegister();
+
+			return new Register(op2Register) {
+				ShiftRegister = shiftRegister,
+				ShiftType = shiftType,
+				ShiftByRegister = true
+			};
 		}
 	}
 
@@ -73,6 +84,17 @@ public class TokenQueue : IEnumerable<string> {
 	public void DequeueComma() {
 		var seperator = Dequeue();
 		if (seperator != ",") throw new Exception($"Expected a comma between arguments, got '{seperator}'. Line '{_line}'");
+	}
+
+	public ShiftType DequeueShiftType() {
+		var shiftType = Dequeue();
+		return shiftType switch {
+			"lsl" => ShiftType.LSL,
+			"lsr" => ShiftType.LSR,
+			"asr" => ShiftType.ASR,
+			"ror" => ShiftType.ROR,
+			_ => throw new Exception($"Expected a shift type, got '{shiftType}'. Line '{_line}'")
+		};
 	}
 
     public IEnumerator<string> GetEnumerator() => _tokenQueue.GetEnumerator();

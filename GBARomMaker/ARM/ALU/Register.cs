@@ -29,7 +29,7 @@ public class Register : ALUOp2 {
 	}
 
 	public byte OpRegister { get; set; }
-	public bool ShiftByRegister { get; }
+	public bool ShiftByRegister { get; set; }
 	public ShiftType ShiftType { get; set; }
 
 	public byte ShiftAmount { get; set; }
@@ -40,7 +40,7 @@ public class Register : ALUOp2 {
 		data[1] = ShiftByRegister
 			? (byte)((ShiftRegister) & 0b1111)
 			: (byte)((ShiftAmount >> 1) & 0b1111);
-		data[0] |= (byte)((ShiftByRegister ? 1 : ShiftAmount) << 7);
+		data[0] |= (byte)((ShiftByRegister ? 0 : ShiftAmount) << 7);
 		data[0] |= (byte)(((byte)ShiftType & 0b11) << 5);
 		data[0] |= (byte)(ShiftByRegister ? 0b10000 : 0);
 		data[0] |= (byte)(OpRegister & 0b1111);

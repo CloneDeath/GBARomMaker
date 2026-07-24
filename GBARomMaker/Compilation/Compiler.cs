@@ -338,6 +338,25 @@ public class Compiler {
 				Condition = condition
 			});
 		}},
+		{ "lsl", (string line, TokenQueue tokens, ARMMachineCode code) => {
+			tokens.AssertOperationLength(3);
+			var destinationRegister = tokens.DequeueRegister();
+			tokens.DequeueComma();
+			var op2Register = tokens.DequeueRegister();
+			tokens.DequeueComma();
+			var shiftRegister = tokens.DequeueRegister();
+			tokens.AssertEmpty();
+			code.Add(new DataProcessing {
+				Operation = ALUOperation.MOV,
+				DestinationRegister = destinationRegister,
+				Condition = Condition.Always,
+				Op2 = new ARM.ALU.Register (op2Register) {
+					ShiftRegister = shiftRegister,
+					ShiftType = ShiftType.LSL,
+					ShiftByRegister = true
+				}
+			});
+		}},
 	};
 
 	public static void LoadALUOperation(string line, TokenQueue tokens, ARMMachineCode code, ALUOperation operation) {

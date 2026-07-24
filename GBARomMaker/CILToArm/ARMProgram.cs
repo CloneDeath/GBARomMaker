@@ -31,7 +31,7 @@ public class ARMProgram : List<ARMLine> {
 	}
 
 	public void AddLabel(string label) {
-		AddLabel(Offset, label);
+		AddLabel(Offset + 1, label);
 	}
 
 	public string[] GetArm7Assembly() {

@@ -20,9 +20,11 @@ public abstract class Compiler_test {
 		[TestCase("bx lr", new byte[] { 0x1E, 0xFF, 0x2F, 0xE1 })]
 		[TestCase("cmp r0, r1", new byte[] { 0x01, 0x00, 0x50, 0xE1 })]
 		[TestCase("cmp r0, #10", new byte[] { 0x0A, 0x00, 0x50, 0xE3 })]
-		[TestCase("nop", new byte[] { 0x00, 0x00, 0xA0, 0xE1 })]
 		[TestCase("movlt r0, #1", new byte[] { 0x01, 0x00, 0xA0, 0xB3 })]
 		
+		// nop
+		[TestCase("nop", new byte[] { 0x00, 0x00, 0xA0, 0xE1 })]
+
 		// pop is an Alias for ldmia
 		[TestCase("ldmia sp!, { r1 }", new byte[] { 0x02, 0x00, 0xBD, 0xE8 })]
 		[TestCase("pop sp!, { r1 }",   new byte[] { 0x02, 0x00, 0xBD, 0xE8 })]
@@ -33,7 +35,11 @@ public abstract class Compiler_test {
 
 		// ALU
 		[TestCase("mul r0,r1,r2", new byte[] { 0x91, 0x02, 0x00, 0xE0 })]
-		[TestCase("or r0, r1, r2", new byte[] { 0x91, 0x02, 0x2D, 0xEB })]
+		[TestCase("orr r0, r1, r2", new byte[] { 0x02, 0x00, 0x81, 0xE1 })]
+		
+		// lsl is a psudocommand for mov with logical shift left
+		[TestCase("mov r2, r0, lsl r1", new byte[] { 0x10, 0x21, 0xA0, 0xE1 })]
+		[TestCase("lsl r2, r0, r1", new byte[] { 0x10, 0x21, 0xA0, 0xE1 })]
 		public void CompiledAssemblyIsCorrect(string line, byte[] expectedData) {
 			var compiler = new Compiler();
 
