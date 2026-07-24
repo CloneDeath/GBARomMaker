@@ -141,8 +141,9 @@ public class CILToArmTranspiler {
 				case "ldarg.2":
 				case "ldarg.3": {
 					var ldarg = (GBARomMaker.CILParse.Instructions.LDARG)instruction;
+					var wordsBack = (method.ArgumentCount - ldarg.Argument) - 1;
 					assembly.Add(instruction.GetBytes().Length, [
-						$"ldr r0, [r3, #{ldarg.Argument * 4}]",
+						$"ldr r0, [r3, #{wordsBack * 4}] @ arg {ldarg.Argument}",
 						"push sp!, { r0 }"
 					]);
 					break;
@@ -292,7 +293,7 @@ public class CILToArmTranspiler {
 				case "mul": {
 					assembly.Add(instruction.GetBytes().Length, [
 						"pop sp!, { r1, r2 }",
-						"mul r0,r1,r2",
+						"mul r0, r1, r2",
 						"push sp!, { r0 }"
 					]);
 					break;
@@ -323,9 +324,10 @@ public class CILToArmTranspiler {
 		var ldfld = (GBARomMaker.CILParse.Instructions.LDFLD)instruction;
 		var cilFactory = new CILFactory(_peReader, _metadata);
 		var field = cilFactory.GetFieldDefinition(ldfld.MetadataToken);
+		var classLayout = assembly.GetClassLayout(field.Parent);
 		assembly.Add(instruction.GetBytes().Length, [
-			"pop sp!, { r0 } @ obj",
-			$"ldr r1, [r0, #{0}] @ {field.Name}", // todo, figure out offset...
+			$"pop sp!, {{ r0 }} @ {classLayout.FullName}",
+			$"ldr r1, [r0, #{classLayout.GetFieldOffset(field)}] @ {field.Name}",
 			"push sp!, { r1 }"
 		]);
 	}
@@ -336,8 +338,19 @@ public class CILToArmTranspiler {
 		var field = cilFactory.GetFieldDefinition(ldsfld.MetadataToken);
 		
 		var staticClass = assembly.GetStaticClassLayout(field.Parent);
+		var constructor = staticClass.Constructor;
 		assembly.Add(instruction.GetBytes().Length, [
 			$"ldr r0, =0x{staticClass.StartAddress:X8} @ static ${staticClass.FullName}",
+		]);
+		if (constructor != null) {
+			assembly.MethodsToTranspile.Enqueue(constructor);
+			assembly.Add(0, [
+				$"ldr r1, [r0]",
+				$"cmp r1, #1",
+				$"bleq {GetLabelForMethod(constructor)}",
+			]);
+		}
+		assembly.Add(0, [
 		 	$"ldr r1, [r0, #{staticClass.GetFieldOffset(field)}] @ {field.Name}",
 		 	"push sp!, { r1 }"
 		]);
@@ -347,9 +360,11 @@ public class CILToArmTranspiler {
 		var stfld = (GBARomMaker.CILParse.Instructions.STFLD)instruction;
 		var cilFactory = new CILFactory(_peReader, _metadata);
 		var field = cilFactory.GetFieldDefinition(stfld.MetadataToken);
+
+		var classLayout = assembly.GetClassLayout(field.Parent);
 		assembly.Add(instruction.GetBytes().Length, [
 			"pop sp!, { r0, r1 } @ value, obj",
-			$"str r0, [r1, #{0}] @ {field.Name}" // todo, figure out offset...
+			$"str r0, [r1, #{classLayout.GetFieldOffset(field)}] @ {field.FullName}"
 		]);
 	}
 
@@ -383,11 +398,13 @@ public class CILToArmTranspiler {
 					throw new Exception("Tried to initialize an object with something that isn't a contructor: " + methodRef.FullName);
 				}
 
+				var classLayout = assembly.GetClassLayout(methodRef.Parent);
+
 				var target = GetLabelForMethod(methodRef);
 				assembly.Add(instruction.GetBytes().Length, [
 					"push sp!, { r4 } @ push object ref onto the stack...",
 					"push sp!, { r4 } @ push it again for the 'this' param of the constructor",
-					$"add r4, r4, #{methodRef.Class.FieldCount * 4}",
+					$"add r4, r4, #{classLayout.Size}",
 					$"bl {target}"
 				]);
 

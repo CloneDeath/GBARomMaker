@@ -6,6 +6,7 @@ namespace GBARomMaker.CILToArm;
 
 public class ARMProgram : List<ARMLine> {
 	private List<StaticClassLayout> _staticClasses = new();
+	private List<ClassLayout> _classes = new();
 
 	public int JumpCount = 0;
 	public int Offset { get; private set; } = 0;
@@ -19,7 +20,7 @@ public class ARMProgram : List<ARMLine> {
 		var existing = this.Where(l => l.CilOffset == Offset);
 		var maxOrder = existing.Any() ? existing.Max(l => l.Order) + 1 : 0;
 		for (var i = 0; i < lines.Length; i++) {
-			this.Add(new ARMLine(Offset, maxOrder + i, "\t" + lines[i]));
+			this.Add(new ARMLine(Offset, maxOrder + i, lines[i]));
 		}
 		Offset += size;
 	}
@@ -45,6 +46,15 @@ public class ARMProgram : List<ARMLine> {
 		var instance = new StaticClassLayout(type, HeapStart);
 		HeapStart += instance.Size;
 		_staticClasses.Add(instance);
+		return instance;
+	}
+
+	public ClassLayout GetClassLayout(CILTypeDefinition type) {
+		var existing = _classes.FirstOrDefault(c => c.FullName == type.FullName);
+		if (existing != null) return existing;
+
+		var instance = new ClassLayout(type);
+		_classes.Add(instance);
 		return instance;
 	}
 }

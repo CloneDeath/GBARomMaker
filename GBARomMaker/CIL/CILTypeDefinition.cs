@@ -27,7 +27,11 @@ public class CILTypeDefinition : ICILType {
 		}
 	}
 
-	public CILMethodDefinition GetMethodDefinition(string name) {
+    public CILMethodDefinition? Constructor => _self.GetMethods()
+		.Select(m => new CILMethodDefinition(_peReader, _metadata, _metadata.GetMethodDefinition(m)))
+		.FirstOrDefault(m => m.IsConstructor);
+
+    public CILMethodDefinition GetMethodDefinition(string name) {
 		var methods = _self.GetMethods().Select(m => _metadata.GetMethodDefinition(m));
 		var method = methods.First(m => _metadata.GetString(m.Name) == name);
 		return new CILMethodDefinition(_peReader, _metadata, method);		

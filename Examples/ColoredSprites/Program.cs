@@ -4,13 +4,8 @@
 		BGMode = 3,
 		ScreenDisplayBG2 = true
 	});
-
-	for (var i = 0; i <= 10; i++) {
-		DisplayController.SetPixelRed(i, 0);
-		DisplayController.SetPixelRed(i, 10);
-		DisplayController.SetPixelRed(0, i);
-		DisplayController.SetPixelRed(10, i);
-	}
+	
+	DisplayController.SetPixelRed(10, 20);
 }
 
 public class DisplayControl {
@@ -24,7 +19,8 @@ public static unsafe class DisplayController {
 	public static void SetControl(DisplayControl control) {
 		ushort data = 0x0000;
 		data |= (ushort)(control.BGMode & 0b111);
-		data |= (ushort)((control.ScreenDisplayBG2 ? 1 : 0) << 10);
+		//data |= (ushort)((control.ScreenDisplayBG2 ? 1 : 0) << 10);
+		data |= (ushort)(1 << 10);
 		*DISPCNT = data;
 	}
 
