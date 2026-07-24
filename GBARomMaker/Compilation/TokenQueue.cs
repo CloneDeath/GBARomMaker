@@ -97,6 +97,40 @@ public class TokenQueue : IEnumerable<string> {
 		};
 	}
 
+	public Condition ExtractCondition(string baseOperation) {
+		if (Operation == baseOperation) {
+			return Condition.AL;
+		}
+		return ParseCondition(Operation[baseOperation.Length..]);
+	}
+
+	public static Condition ParseCondition(string condition) {
+		return condition.ToUpper() switch {
+			"EQ" => Condition.EQ,
+			"NE" => Condition.NE,
+			
+			"CS" => Condition.CS,
+			"HS" => Condition.CS,
+			
+			"CC" => Condition.CC,
+			"LO" => Condition.CC,
+			
+			"MI" => Condition.MI,
+			"PL" => Condition.PL,
+			"VS" => Condition.VS,
+			"VC" => Condition.VC,
+			"HI" => Condition.HI,
+			"LS" => Condition.LS,
+			"GE" => Condition.GE,
+			"LT" => Condition.LT,
+			"GT" => Condition.GT,
+			"LE" => Condition.LE,
+			"AL" => Condition.AL,
+			"NV" => Condition.NV,
+			_ => throw new Exception("Unrecognized Condition " + condition)
+		};
+	}
+
     public IEnumerator<string> GetEnumerator() => _tokenQueue.GetEnumerator();
     IEnumerator IEnumerable.GetEnumerator() => _tokenQueue.GetEnumerator();
 }

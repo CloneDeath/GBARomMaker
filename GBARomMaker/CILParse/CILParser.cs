@@ -33,6 +33,7 @@ public class CILParser {
 		[STFLD.Definition],
 		[STIND.Definition],
 		STLOC.Definitions,
+		[STSFLD.Definition],
 	}.SelectMany(d => d).ToList();
 	
 	public static readonly List<CILInstructionDefinition> FEInstructions = new CILInstructionDefinition[][] {

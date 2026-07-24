@@ -189,6 +189,10 @@ public class CILToArmTranspiler {
 					HandleStoreFieldInstruction(instruction, assembly);
 					break;
 				}
+				case "stsfld": {
+					HandleStoreStaticFieldInstruction(instruction, assembly);
+					break;
+				}
 				case "ret": {
 					assembly.Add(instruction.GetBytes().Length, [
 						$"sub sp, r3, #{9 * 4}",
@@ -347,7 +351,9 @@ public class CILToArmTranspiler {
 			assembly.Add(0, [
 				$"ldr r1, [r0]",
 				$"cmp r1, #1",
-				$"bleq {GetLabelForMethod(constructor)}",
+				$"ldrne r1, =1",
+				$"strne r1, [r0]",
+				$"blne {GetLabelForMethod(constructor)}",
 			]);
 		}
 		assembly.Add(0, [
@@ -365,6 +371,32 @@ public class CILToArmTranspiler {
 		assembly.Add(instruction.GetBytes().Length, [
 			"pop sp!, { r0, r1 } @ value, obj",
 			$"str r0, [r1, #{classLayout.GetFieldOffset(field)}] @ {field.FullName}"
+		]);
+	}
+
+	private void HandleStoreStaticFieldInstruction(CILInstruction instruction, ARMProgram assembly) {
+		var stsfld = (GBARomMaker.CILParse.Instructions.STSFLD)instruction;
+		var cilFactory = new CILFactory(_peReader, _metadata);
+		var field = cilFactory.GetFieldDefinition(stsfld.MetadataToken);
+
+		var staticClass = assembly.GetStaticClassLayout(field.Parent);
+		var constructor = staticClass.Constructor;
+		assembly.Add(instruction.GetBytes().Length, [
+			$"ldr r0, =0x{staticClass.StartAddress:X8} @ static ${staticClass.FullName}",
+		]);
+		if (constructor != null) {
+			assembly.MethodsToTranspile.Enqueue(constructor);
+			assembly.Add(0, [
+				$"ldr r1, [r0]",
+				$"cmp r1, #1",
+				$"ldrne r1, =1",
+				$"strne r1, [r0]",
+				$"blne {GetLabelForMethod(constructor)}",
+			]);
+		}
+		assembly.Add(0, [
+		 	"pop sp!, { r1 }",
+		 	$"str r1, [r0, #{staticClass.GetFieldOffset(field)}] @ {field.Name}",
 		]);
 	}
 

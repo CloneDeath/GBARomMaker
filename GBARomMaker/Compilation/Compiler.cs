@@ -54,7 +54,7 @@ public class Compiler {
 			});
 		}},
 		{ "ldr", (string line, TokenQueue tokens, ARMMachineCode code) => {
-			tokens.AssertOperationLength(3);
+			var condition = tokens.ExtractCondition("ldr");			
 			var destinationRegister = tokens.DequeueRegister();
 			tokens.DequeueComma();
 			var source = tokens.Dequeue();
@@ -64,7 +64,8 @@ public class Compiler {
 					code.Add(new DataProcessing {
 						Operation = ALUOperation.MOV,
 						DestinationRegister = destinationRegister,
-						Op2 = new Immediate(0)
+						Op2 = new Immediate(0),
+						Condition = condition
 					});
 					return;
 				}
@@ -80,7 +81,8 @@ public class Compiler {
 					code.Add(new DataProcessing {
 						Operation = ALUOperation.MOV,
 						DestinationRegister = destinationRegister,
-						Op2 = new Immediate(immediate)
+						Op2 = new Immediate(immediate),
+						Condition = condition
 					});
 					return;
 				}
@@ -88,13 +90,15 @@ public class Compiler {
 				code.Add(new DataProcessing {
 					Operation = ALUOperation.MOV,
 					DestinationRegister = destinationRegister,
-					Op2 = new Immediate(bytes[0])
+					Op2 = new Immediate(bytes[0]),
+					Condition = condition
 				});
 				code.Add(bytes[1..].Select(b => new DataProcessing {
 					Operation = ALUOperation.ORR,
 					DestinationRegister = destinationRegister,
 					Op1Register = destinationRegister,
-					Op2 = new Immediate(b)
+					Op2 = new Immediate(b),
+					Condition = condition
 				}).ToArray());
 
 				tokens.AssertEmpty();
@@ -164,7 +168,7 @@ public class Compiler {
 			});
 		}},
 		{ "str", (string line, TokenQueue tokens, ARMMachineCode code) => {
-			tokens.AssertOperationLength(3);
+			var condition = tokens.ExtractCondition("str");			
 			var sourceRegister = tokens.DequeueRegister();
 			tokens.DequeueComma();
 			var source = tokens.Dequeue();
@@ -175,6 +179,7 @@ public class Compiler {
 			if (next == "]") {
 				tokens.AssertEmpty();
 				code.Add(new SingleDataTransfer {
+					Condition = condition,
 					BaseRegister = baseRegister,
 					SourceDestinationRegister = sourceRegister,
 					LoadStore = LoadStore.Store,
@@ -197,6 +202,7 @@ public class Compiler {
 			tokens.AssertEmpty();
 
 			code.Add(new SingleDataTransfer {
+				Condition = condition,
 				BaseRegister = baseRegister,
 				SourceDestinationRegister = sourceRegister,
 				LoadStore = LoadStore.Store,
@@ -229,13 +235,7 @@ public class Compiler {
 			});
 		}},
 		{ "bl", (string line, TokenQueue tokens, ARMMachineCode code) => {
-			Condition condition;
-			if (tokens.Operation.Length == 4) {
-				condition = ParseCondition(tokens.Operation[2..]);
-			} else {
-				tokens.AssertOperationLength(2);
-				condition = Condition.AL;
-			}
+			var condition = tokens.ExtractCondition("bl");
 			var branchTarget = tokens.Dequeue();
 			tokens.AssertEmpty();
 			code.AddNeedsLabel(new Branch {
@@ -244,13 +244,7 @@ public class Compiler {
 			}, branchTarget);
 		}},
 		{ "b", (string line, TokenQueue tokens, ARMMachineCode code) => {
-			Condition condition;
-			if (tokens.Operation.Length == 3) {
-				condition = ParseCondition(tokens.Operation[1..]);
-			} else {
-				tokens.AssertOperationLength(1);
-				condition = Condition.AL;
-			}
+			var condition = tokens.ExtractCondition("b");
 			var branchTarget = tokens.Dequeue();
 			tokens.AssertEmpty();
 			code.AddNeedsLabel(new Branch {
@@ -320,13 +314,7 @@ public class Compiler {
 			});
 		}},
 		{ "mov", (string line, TokenQueue tokens, ARMMachineCode code) => {
-			Condition condition;
-			if (tokens.Operation.Length == 5) {
-				condition = ParseCondition(tokens.Operation[3..]);
-			} else {
-				tokens.AssertOperationLength(3);
-				condition = Condition.AL;
-			}
+			var condition = tokens.ExtractCondition("mov");
 			var destinationRegister = tokens.DequeueRegister();
 			tokens.DequeueComma();
 			var op2 = tokens.DequeueAluOp2();
@@ -450,32 +438,5 @@ public class Compiler {
 		if (!tokens.Any()) return;
 		var extra = string.Join(' ', tokens);
 		throw new Exception($"Command not recognized; too many arguments. Got '{extra}'. { line }");
-	}
-
-	public static Condition ParseCondition(string condition) {
-		return condition.ToUpper() switch {
-			"EQ" => Condition.EQ,
-			"NE" => Condition.NE,
-			
-			"CS" => Condition.CS,
-			"HS" => Condition.CS,
-			
-			"CC" => Condition.CC,
-			"LO" => Condition.CC,
-			
-			"MI" => Condition.MI,
-			"PL" => Condition.PL,
-			"VS" => Condition.VS,
-			"VC" => Condition.VC,
-			"HI" => Condition.HI,
-			"LS" => Condition.LS,
-			"GE" => Condition.GE,
-			"LT" => Condition.LT,
-			"GT" => Condition.GT,
-			"LE" => Condition.LE,
-			"AL" => Condition.AL,
-			"NV" => Condition.NV,
-			_ => throw new Exception("Unrecognized Condition " + condition)
-		};
 	}
 } 
