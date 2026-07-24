@@ -72,7 +72,12 @@ public static class Program {
 
 	public static void PrintAsm(string[] instructions) {
 		foreach (var line in instructions) {
-			Console.WriteLine(line);
+			if (line.EndsWith(":")) {
+				if (line.StartsWith("method_")) Console.WriteLine();
+				Console.WriteLine(line);
+			}
+			else 
+				Console.WriteLine($"\t{line}");
 		}
 	}
 }
