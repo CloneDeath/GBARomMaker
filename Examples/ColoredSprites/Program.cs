@@ -10,11 +10,11 @@
 
     // OBJ palette color 1 = red
     ((ushort*)0x05000200)[1] = 0x001F;	
-	ushort* tile = (ushort*)0x06014000;
+	byte* tile = (byte*)0x06014000;
 
 	// 8x8, 4bpp: two pixels per byte, both palette index 1
-    for (int i = 0; i < 16; i++)
-        tile[i] = 0x1111;
+    for (int i = 0; i < 32; i++)
+        tile[i] = 0x11;
 
 	ushort* oam = (ushort*)0x07000000;
 

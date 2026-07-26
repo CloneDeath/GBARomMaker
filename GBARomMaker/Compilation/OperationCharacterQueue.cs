@@ -21,6 +21,8 @@ public class OperationCharacterQueue {
 		_index += value.Length;
 	}
 
+	public int Index => _index;
+
 	private static readonly Dictionary<string, Condition> Conditions = new() {
 		["EQ"] = Condition.EQ,
 		["NE"] = Condition.NE,

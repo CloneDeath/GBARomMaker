@@ -35,7 +35,7 @@ public class CILToArmTranspiler {
 			ConvertCILToASM(assembly, method);
 		}
 		
-		assembly.Add(new ARMLine(-1, 1, $"ldr r4, =0x{assembly.HeapStart:X8} @ Heap Start -- WRAM External"));
+		assembly.Add(new ARMLine(-1, 1, $"ldr r8, =0x{assembly.HeapStart:X8} @ Heap Start -- WRAM External"));
 		return assembly.GetArm7Assembly();
 	}
 
@@ -67,8 +67,10 @@ public class CILToArmTranspiler {
 		// Free Register 1 = r0
 		// Free Register 2 = r1
 		// Free Register 3 = r2
-		// Function Stack  = r3
-		// Heap Pointer    = r4 <- Temporary until we implement malloc/free
+		// Free Register 4 = r3
+		// Free Register 5 = r4
+		// Function Stack  = r7
+		// Heap Pointer    = r8 <- Temporary until we implement malloc/free
 		// Local 0         = r9
 		// Local 1         = r10
 		// Local 2         = r11
@@ -144,7 +146,7 @@ public class CILToArmTranspiler {
 					var argCount = method.ParameterCount + (method.IsInstance ? 1 : 0);
 					var wordsBack = (argCount - ldarg.Argument) - 1;
 					assembly.Add(instruction.GetBytes().Length, [
-						$"ldr r0, [r3, #{wordsBack * 4}] @ arg {ldarg.Argument}",
+						$"ldr r0, [r7, #{wordsBack * 4}] @ arg {ldarg.Argument}",
 						"push sp!, { r0 }"
 					]);
 					break;
@@ -190,9 +192,34 @@ public class CILToArmTranspiler {
 					break;
 				}
 				case "stind.i1": {
+					// If we're not in byte-addressable memory, then read-modify-write a short instead
+					var end = "byte_store_" + assembly.JumpCount++;
 					assembly.Add(instruction.GetBytes().Length, [
 						"pop sp!, { r0, r1 } @ value, addr",
-						"strb r0, [r1]"
+						"ldr r2, =0x05000000 @ VRAM Start",
+						"cmp r1, r2",
+						"strltb r0, [r1]",
+						$"blt {end}",
+						"ldr r2, =0x08000000 @ VRAM End",
+						"cmp r1, r2",
+						"strgeb r0, [r1]",
+						$"bge {end}",
+						"ldr r2, =0x01",
+						"and r4, r1, r2 @ byte offset",
+						"mvn r2, r2",
+						"and r3, r1, r2 @ half address",
+
+						"ldrh r2, [r3]",
+						"cmp r4, #0",
+						"ldreq r1, =0xFF00",
+						"ldrne r1, =0x00FF",
+						"and r2, r2, r1",
+						"ldreq r1, =0",
+						"ldrne r1, =8",
+						"lsl r0, r0, r1",
+						"orr r2, r0, r2",
+						"strh r2, [r3]",
+						$"{end}:",
 					]);
 					break;
 				}
@@ -221,8 +248,8 @@ public class CILToArmTranspiler {
 				}
 				case "ret": {
 					assembly.Add(instruction.GetBytes().Length, [
-						$"sub sp, r3, #{9 * 4}",
-						"pop sp!, { r0, r1, r2, r3, r9, r10, r11, r12, lr }",
+						$"sub sp, r7, #{11 * 4}",
+						"pop sp!, { r0, r1, r2, r3, r4, r7, r9, r10, r11, r12, lr }",
 					]);
 					// pop any method parameters
 					if (method.ParameterCount > 0 || method.IsInstance) {
@@ -345,8 +372,8 @@ public class CILToArmTranspiler {
 	private void DeclareMethod(ARMProgram assembly, ICILMethod method) {
 		assembly.Add(0, [
 			$"{GetLabelForMethod(method)}:",
-			"push sp!, { r0, r1, r2, r3, r9, r10, r11, r12, lr }",
-			$"add r3, sp, #{9 * 4}"
+			"push sp!, { r0, r1, r2, r3, r4, r7, r9, r10, r11, r12, lr }",
+			$"add r7, sp, #{11 * 4}"
 		]);
 	}
 
@@ -460,9 +487,9 @@ public class CILToArmTranspiler {
 
 				var target = GetLabelForMethod(methodRef);
 				assembly.Add(instruction.GetBytes().Length, [
-					"push sp!, { r4 } @ push object ref onto the stack...",
-					"push sp!, { r4 } @ push it again for the 'this' param of the constructor",
-					$"add r4, r4, #{classLayout.Size}",
+					"push sp!, { r8 } @ push object ref onto the stack...",
+					"push sp!, { r8 } @ push it again for the 'this' param of the constructor",
+					$"add r8, r8, #{classLayout.Size}",
 					$"bl {target}"
 				]);
 
