@@ -149,6 +149,15 @@ public class CILToArmTranspiler {
 					]);
 					break;
 				}
+				case "stloc.s": {
+					var stlocs = (GBARomMaker.CILParse.Instructions.STLOC_S)instruction;
+					var location = stlocs.Location;
+					var register = location + 9;
+					assembly.Add(instruction.GetBytes().Length, [
+						$"pop sp!, {{ r{register} }}"
+					]);;
+					break;
+				}
 				case "stloc.0":
 				case "stloc.1":
 				case "stloc.2":
@@ -171,9 +180,25 @@ public class CILToArmTranspiler {
 					]);
 					break;
 				}
+				case "ldloc.s": {
+					var ldlocs = (GBARomMaker.CILParse.Instructions.LDLOC_S)instruction;
+					var location = ldlocs.Location;
+					var register = location + 9;
+					assembly.Add(instruction.GetBytes().Length, [
+						$"push sp!, {{ r{register} }}"
+					]);
+					break;
+				}
+				case "stind.i1": {
+					assembly.Add(instruction.GetBytes().Length, [
+						"pop sp!, { r0, r1 } @ value, addr",
+						"strb r0, [r1]"
+					]);
+					break;
+				}
 				case "stind.i2": {
 					assembly.Add(instruction.GetBytes().Length, [
-						"pop sp!, { r0, r1 }",
+						"pop sp!, { r0, r1 } @ value, addr",
 						"strh r0, [r1]"
 					]);
 					break;

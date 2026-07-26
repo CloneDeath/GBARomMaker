@@ -23,7 +23,7 @@ public class MemoryHalf : IInstruction {
 		ImmediateOffsetFlag = true;
 		WriteBack = false;
 		BaseRegister = 0;
-		DestinationRegister = 0;
+		SourceDestinationRegister = 0;
 		ImmediateOffset = 0;
 		Reserved1 = true;
 		OpCode = HOpCode.STRH;
@@ -42,7 +42,7 @@ public class MemoryHalf : IInstruction {
 		WriteBack = ((data[2] >> 5) & 0b1) == 1;
 		var loadStore = (LoadStore)((data[2] >> 4) & 0b1);
 		BaseRegister = (byte)(data[2] & 0b1111);
-		DestinationRegister = (byte)(data[1] >> 4);
+		SourceDestinationRegister = (byte)(data[1] >> 4);
 		ImmediateOffset = ImmediateOffsetFlag ? (byte)(((data[1] & 0b1111) << 4) | (data[0] & 0b1111)) : (byte)0;
 		Reserved1 = (data[0] >> 7) == 1;
 		OpCode = ((data[0] >> 5) & 0b11) switch {
@@ -63,7 +63,7 @@ public class MemoryHalf : IInstruction {
 	public bool ImmediateOffsetFlag { get; set; }
 	public bool WriteBack { get; set; }
 	public byte BaseRegister { get; set; }
-	public byte DestinationRegister { get; set; }
+	public byte SourceDestinationRegister { get; set; }
 	public byte ImmediateOffset { get; set; }
 	public bool Reserved1 { get; set; }
 	public HOpCode OpCode { get; set; }
@@ -97,7 +97,7 @@ public class MemoryHalf : IInstruction {
 			_ => throw new Exception("Invalid HOpCode")
 		}) << 4);
 		data[2] |= (byte)(BaseRegister & 0b1111);
-		data[1] |= (byte)(DestinationRegister << 4);
+		data[1] |= (byte)(SourceDestinationRegister << 4);
 		data[1] |= (byte)((ImmediateOffset >> 4) & 0b1111);
 		data[0] |= (byte)((Reserved1 ? 1 : 0) << 7);
 		data[0] |= (byte)((OpCode switch {

@@ -1,3 +1,4 @@
+using GBARomMaker.Compilation;
 using Shouldly;
 
 namespace GBARomMaker.Test.Compilation;
@@ -12,7 +13,7 @@ public abstract class TokenQueue_test {
 		[TestCase("lr", 14)]
 		[TestCase("pc", 15)]
 		public void RegisterIsMappedCorrectly(string registerName, byte expectedRegister) {
-			var register = new TokenQueue([], "").ParseRegister(registerName);
+			var register = new TokenQueue([registerName], $"{registerName}").ParseRegister(registerName);
 
 			register.ShouldBe(expectedRegister);
 		}

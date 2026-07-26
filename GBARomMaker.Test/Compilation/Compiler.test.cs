@@ -19,6 +19,7 @@ public abstract class Compiler_test {
 		[TestCase("str r0, [r1, #0]", new byte[] { 0x00, 0x00, 0x81, 0xE5 })]
 		[TestCase("strne r1, [r0]", new byte[] { 0x00, 0x10, 0x80, 0x15 })]
 		[TestCase("strh r1, [r0]", new byte[]{ 0xB0, 0x10, 0xC0, 0xE1 })]
+		[TestCase("strb r0, [r1]", new byte[] { 0x00, 0x00, 0xC1, 0xE5 })]
 		
 		// ldr variations
 		[TestCase("ldr r0, =0x04000000     @ Display control register", new byte[]{ 0x01, 0x03, 0xA0, 0xE3 })]
