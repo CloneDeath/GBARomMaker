@@ -306,7 +306,7 @@ public class CILToArmTranspiler {
 				case "shl": {
 					assembly.Add(instruction.GetBytes().Length, [
 						"pop sp!, { r0, r1 } @ shiftAmount, value",
-						"lsl r2, r0, r1",
+						"lsl r2, r1, r0",
 						"push sp!, { r2 }"
 					]);
 					break;
