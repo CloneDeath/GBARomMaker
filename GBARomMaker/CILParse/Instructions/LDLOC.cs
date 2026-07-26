@@ -6,6 +6,7 @@ namespace GBARomMaker.CILParse.Instructions;
 
 public class LDLOC : CILInstruction {
 	public static CILInstructionDefinition[] Definitions = [
+		new(0x11, 1, (args) => new LDLOC_S(args[0])), // ldloc.s
 		new(0x06, 0, (_) => new LDLOC(0)), // ldloc.0
 		new(0x07, 0, (_) => new LDLOC(1)), // ldloc.1
 		new(0x08, 0, (_) => new LDLOC(2)), // ldloc.2
@@ -41,4 +42,18 @@ public class LDLOC : CILInstruction {
     public string GetCIL(CILFactory factory) {
 		return "ldloc." + Location;
     }
+}
+
+public class LDLOC_S : CILInstruction {
+	public LDLOC_S(byte location) {
+		Location = location;
+	}
+
+	public byte Location { get; }
+
+	public OpCode OpCode => OpCodes.Ldloc_S;
+
+	public byte[] GetBytes() => [0x11, Location];
+
+	public string GetCIL(CILFactory factory) => $"ldloc.s {Location}";
 }

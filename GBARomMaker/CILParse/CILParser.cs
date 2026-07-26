@@ -31,7 +31,7 @@ public class CILParser {
 		[RET.Definition],
 		[SHL.Definition],
 		[STFLD.Definition],
-		[STIND.Definition],
+		STIND_IX.Definitions,
 		STLOC.Definitions,
 		[STSFLD.Definition],
 	}.SelectMany(d => d).ToList();

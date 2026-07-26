@@ -6,6 +6,7 @@ namespace GBARomMaker.CILParse.Instructions;
 
 public class STLOC : CILInstruction {
 	public static CILInstructionDefinition[] Definitions = [
+		new(0x13, 1, (args) => new STLOC_S(args[0])), // stloc.s
 		new(0x0A, 0, (_) => new STLOC(0)), // stloc.0
 		new(0x0B, 0, (_) => new STLOC(1)), // stloc.1
 		new(0x0C, 0, (_) => new STLOC(2)), // stloc.2
@@ -41,4 +42,18 @@ public class STLOC : CILInstruction {
     public string GetCIL(CILFactory factory) {
 		return "stloc." + Location;
     }
+}
+
+public class STLOC_S : CILInstruction {
+	public STLOC_S(byte location) {
+		Location = location;
+	}
+
+	public byte Location { get; }
+
+	public OpCode OpCode => OpCodes.Stloc_S;
+
+	public byte[] GetBytes() => [0x13, Location];
+
+	public string GetCIL(CILFactory factory) => $"stloc.s {Location}";
 }
