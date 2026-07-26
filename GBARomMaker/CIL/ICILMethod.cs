@@ -4,6 +4,6 @@ public interface ICILMethod {
 	public string Name { get; }
 	public string FullName { get; }
 	public byte[] BodyBytes { get; }
-    bool IsInstanceMethod { get; }
-    int ArgumentCount { get; }
+    int ParameterCount { get; }
+	bool IsInstance { get; }
 }

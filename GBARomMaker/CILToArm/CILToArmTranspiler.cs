@@ -141,7 +141,8 @@ public class CILToArmTranspiler {
 				case "ldarg.2":
 				case "ldarg.3": {
 					var ldarg = (GBARomMaker.CILParse.Instructions.LDARG)instruction;
-					var wordsBack = (method.ArgumentCount - ldarg.Argument) - 1;
+					var argCount = method.ParameterCount + (method.IsInstance ? 1 : 0);
+					var wordsBack = (argCount - ldarg.Argument) - 1;
 					assembly.Add(instruction.GetBytes().Length, [
 						$"ldr r0, [r3, #{wordsBack * 4}] @ arg {ldarg.Argument}",
 						"push sp!, { r0 }"
@@ -198,11 +199,11 @@ public class CILToArmTranspiler {
 						$"sub sp, r3, #{9 * 4}",
 						"pop sp!, { r0, r1, r2, r3, r9, r10, r11, r12, lr }",
 					]);
-					// pop any method arguments, including "this"
-					if (method.IsInstanceMethod || method.ArgumentCount > 0) {
-						var count = (method.IsInstanceMethod ? 1 : 0) + method.ArgumentCount;
+					// pop any method parameters
+					if (method.ParameterCount > 0 || method.IsInstance) {
+						var argsToPop = (method.IsInstance ? 1 : 0) + method.ParameterCount;
 						assembly.Add(0, [
-							$"add sp, sp, #{count * 4}"
+							$"add sp, sp, #{argsToPop * 4}"
 						]);
 					}
 					assembly.Add(0, [
@@ -407,7 +408,7 @@ public class CILToArmTranspiler {
 
 		if (method.FullName == "System.Object..ctor") {
 			assembly.Add(instruction.GetBytes().Length, [
-				$"nop @ Calling '{method.FullName}'"
+				$"add sp, sp, #4 @ Pop `this`; Calling '{method.FullName}'"
 			]);
 			return;
 		}

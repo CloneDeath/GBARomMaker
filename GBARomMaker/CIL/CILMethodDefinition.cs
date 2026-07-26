@@ -23,16 +23,13 @@ public class CILMethodDefinition : ICILMethod {
 
 	public byte[] BodyBytes => _peReader.GetMethodBody(_method.RelativeVirtualAddress)?.GetILBytes() ?? [];
 
-	public int ArgumentCount {
-		get {
-			var parameters = _method.GetParameters().Select(p => _metadata.GetParameter(p));
-			return parameters.Where(p => p.SequenceNumber > 0).Count();
-		}
-	}
+	public int ParameterCount => _method.GetParameters().Count();
 
-	public bool IsInstanceMethod {
+	public bool IsInstance {
 		get {
-			return _method.GetParameters().Select(p => _metadata.GetParameter(p)).Any(p => p.SequenceNumber == 0);
+			var signature = _metadata.GetBlobReader(_method.Signature);
+			var header = signature.ReadSignatureHeader();
+			return header.IsInstance;
 		}
 	}
 

@@ -76,8 +76,9 @@ public static class Program {
 				if (line.StartsWith("method_")) Console.WriteLine();
 				Console.WriteLine(line);
 			}
-			else 
+			else {
 				Console.WriteLine($"\t{line}");
+			}
 		}
 	}
 }

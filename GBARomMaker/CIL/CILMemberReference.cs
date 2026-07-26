@@ -38,6 +38,6 @@ public class CILMemberReference : ICILMethod {
 	public string Name => _metadata.GetString(_self.Name);
 	public string FullName => $"{Parent.Namespace}.{Parent.Name}.{Name}";
 	public byte[] BodyBytes => throw new NotImplementedException();
-    public bool IsInstanceMethod => throw new NotImplementedException();
-    public int ArgumentCount => throw new NotImplementedException();
+    public bool IsInstance => throw new NotImplementedException();
+    public int ParameterCount => throw new NotImplementedException();
 }

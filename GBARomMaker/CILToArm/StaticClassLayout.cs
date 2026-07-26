@@ -25,7 +25,7 @@ public class StaticClassLayout {
 			var candidate = _fields[i];
 			if (candidate.Name != field.Name) continue;
 
-			return (i * 4) + 1;
+			return ((i+1) * 4);
 		}
 		throw new Exception($"Field '{field.Name}' does not exist in type '{FullName}'");
 	}
