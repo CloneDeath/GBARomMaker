@@ -45,7 +45,8 @@ public class Compiler {
 
 	private Dictionary<string, AddOperations> _operationMap = new() {
 		{ "nop", (string line, TokenQueue tokens, ARMMachineCode code) => {
-			tokens.AssertOperationLength(3);
+			tokens.Operation.DequeueValue("nop");
+			tokens.Operation.AssertEmpty();
 			tokens.AssertEmpty();
 			code.Add(new DataProcessing {
 				Operation = ALUOperation.MOV,
@@ -54,7 +55,10 @@ public class Compiler {
 			});
 		}},
 		{ "ldr", (string line, TokenQueue tokens, ARMMachineCode code) => {
-			var condition = tokens.ExtractCondition("ldr");			
+			tokens.Operation.DequeueValue("ldr");
+			var condition = tokens.Operation.DequeueCondition();
+			tokens.Operation.AssertEmpty();
+
 			var destinationRegister = tokens.DequeueRegister();
 			tokens.DequeueComma();
 			var source = tokens.Dequeue();
@@ -145,97 +149,109 @@ public class Compiler {
 			}
 			throw new Exception($"Unexpected token when reading source: '{source}'. Line: '{line}'.");
 		}},
-		{ "strh", (string line, TokenQueue tokens, ARMMachineCode code) => {
-			tokens.AssertOperationLength(4);
-			var destinationRegister = tokens.DequeueRegister();
-			tokens.DequeueComma();
-			
-			if (tokens.Dequeue() != "[") throw new Exception("Expected a [ for Address specified");
-			var baseRegister = tokens.DequeueRegister();
-			var addressNext = tokens.Dequeue();
-			if (addressNext != "]") throw new NotImplementedException("Not implemented complex addresses yet...");
-
-			tokens.AssertEmpty();
-			code.Add(new MemoryHalf {
-				OpCode = HOpCode.STRH,
-				DestinationRegister = destinationRegister,
-				BaseRegister = baseRegister,
-				PrePost = PrePost.Pre,
-				ImmediateOffset = 0,
-				ImmediateOffsetFlag = true,
-				UpDown = UpDown.Up,
-				WriteBack = false
-			});
-		}},
 		{ "str", (string line, TokenQueue tokens, ARMMachineCode code) => {
-			var condition = tokens.ExtractCondition("str");			
+			tokens.Operation.DequeueValue("str");
+			var condition = tokens.Operation.DequeueCondition();
+			var flag = tokens.Operation.TryDequeue(1, out var f) ? f : null;
+			tokens.Operation.AssertEmpty();
+
 			var sourceRegister = tokens.DequeueRegister();
 			tokens.DequeueComma();
-			var source = tokens.Dequeue();
-			if (source != "[") throw new Exception($"Expected [ for addr. Line '{line}'");
-
+			if (tokens.Dequeue() != "[") throw new Exception($"Expected [ for addr. Line '{line}'");
 			var baseRegister = tokens.DequeueRegister();
+
 			var next = tokens.Dequeue();
 			if (next == "]") {
 				tokens.AssertEmpty();
-				code.Add(new SingleDataTransfer {
-					Condition = condition,
-					BaseRegister = baseRegister,
-					SourceDestinationRegister = sourceRegister,
-					LoadStore = LoadStore.Store,
-					Offset = new ARM.Memory.Immediate(0),
-					PrePost = PrePost.Pre,
-					UpDown = UpDown.Up,
-					WriteBack = false,
-					Word = true
-				});
+				code.Add(flag == "h" 
+					? new MemoryHalf {
+						Condition = condition,
+						SourceDestinationRegister = sourceRegister,
+						BaseRegister = baseRegister,
+						OpCode = HOpCode.STRH,
+						PrePost = PrePost.Pre,
+						ImmediateOffset = 0,
+						ImmediateOffsetFlag = true,
+						UpDown = UpDown.Up,
+						WriteBack = false
+					}
+					: new SingleDataTransfer {
+						Condition = condition,
+						SourceDestinationRegister = sourceRegister,
+						BaseRegister = baseRegister,
+						LoadStore = LoadStore.Store,
+						Offset = new ARM.Memory.Immediate(0),
+						PrePost = PrePost.Pre,
+						UpDown = UpDown.Up,
+						WriteBack = false,
+						Word = flag == "b" ? false : true
+					}
+				);
 				return;
 			}
-
 			if (next != ",") throw new Exception($"Expected a comma between arguments, got '{next}'. Line '{line}'");
-
 			next = tokens.Dequeue();
-			if (next != "#") throw new NotImplementedException("Register Shifted Offsets not supported");
+			if (next != "#") throw new NotImplementedException($"Register Shifted Offsets not supported. Line '{line}'");
 			var immediate = tokens.DequeueSignedImmediate();
 			next = tokens.Dequeue();
 			if (next != "]") throw new Exception($"Expected a ] to end op, got '{next}'. Line '{line}'");
 			tokens.AssertEmpty();
 
-			code.Add(new SingleDataTransfer {
-				Condition = condition,
-				BaseRegister = baseRegister,
-				SourceDestinationRegister = sourceRegister,
-				LoadStore = LoadStore.Store,
-				Offset = new ARM.Memory.Immediate((uint)Math.Abs(immediate)),
-				PrePost = ARM.Common.PrePost.Pre,
-				UpDown = immediate < 0 ? UpDown.Down : UpDown.Up,
-				WriteBack = false,
-				Word = true
-			});
+			code.Add(flag == "h"
+				? new MemoryHalf {
+					Condition = condition,
+					SourceDestinationRegister = sourceRegister,
+					BaseRegister = baseRegister,
+					OpCode = HOpCode.STRH,
+					PrePost = PrePost.Pre,
+					ImmediateOffset = (byte)immediate,
+					ImmediateOffsetFlag = true,
+					UpDown = immediate < 0 ? UpDown.Down : UpDown.Up,
+					WriteBack = false
+				}
+				: new SingleDataTransfer {
+					Condition = condition,
+					SourceDestinationRegister = sourceRegister,
+					BaseRegister = baseRegister,
+					LoadStore = LoadStore.Store,
+					UpDown = immediate < 0 ? UpDown.Down : UpDown.Up,
+					Offset = new ARM.Memory.Immediate((uint)Math.Abs(immediate)),
+					PrePost = ARM.Common.PrePost.Pre,
+					WriteBack = false,
+					Word = flag == "b" ? false : true
+				}
+			);
 		}},
 		{ "stm", (string line, TokenQueue tokens, ARMMachineCode code) => {
-			LoadBlockDataTransfer(line, tokens, code);
+			LoadBlockDataTransfer("stm", line, tokens, code);
 		}},
 		{ "ldm", (string line, TokenQueue tokens, ARMMachineCode code) => {
-			LoadBlockDataTransfer(line, tokens, code);
+			LoadBlockDataTransfer("ldm", line, tokens, code);
 		}},
 		{ "push", (string line, TokenQueue tokens, ARMMachineCode code) => {
-			LoadBlockDataTransfer(line, tokens, code);
+			LoadBlockDataTransfer("push", line, tokens, code);
 		}},
 		{ "pop", (string line, TokenQueue tokens, ARMMachineCode code) => {
-			LoadBlockDataTransfer(line, tokens, code);
+			LoadBlockDataTransfer("pop", line, tokens, code);
 		}},
 		{ "bx", (string line, TokenQueue tokens, ARMMachineCode code) => {
-			tokens.AssertOperationLength(2);
+			tokens.Operation.DequeueValue("bx");
+			var condition = tokens.Operation.DequeueCondition();
+			tokens.Operation.AssertEmpty();
+
 			var register = tokens.DequeueRegister();
 			tokens.AssertEmpty();
 			code.Add(new BranchExchange {
 				OpCode = BranchExchangeOpCode.BX,
-				Register = register
+				Register = register,
+				Condition = condition
 			});
 		}},
 		{ "bl", (string line, TokenQueue tokens, ARMMachineCode code) => {
-			var condition = tokens.ExtractCondition("bl");
+			tokens.Operation.DequeueValue("bl");
+			var condition = tokens.Operation.DequeueCondition();
+			tokens.Operation.AssertEmpty();
+
 			var branchTarget = tokens.Dequeue();
 			tokens.AssertEmpty();
 			code.AddNeedsLabel(new Branch {
@@ -244,7 +260,10 @@ public class Compiler {
 			}, branchTarget);
 		}},
 		{ "b", (string line, TokenQueue tokens, ARMMachineCode code) => {
-			var condition = tokens.ExtractCondition("b");
+			tokens.Operation.DequeueValue("b");
+			var condition = tokens.Operation.DequeueCondition();
+			tokens.Operation.AssertEmpty();
+
 			var branchTarget = tokens.Dequeue();
 			tokens.AssertEmpty();
 			code.AddNeedsLabel(new Branch {
@@ -253,7 +272,10 @@ public class Compiler {
 			}, branchTarget);
 		}},
 		{ "mul", (string line, TokenQueue tokens, ARMMachineCode code) => {
-			tokens.AssertOperationLength(3);
+			tokens.Operation.DequeueValue("mul");
+			var condition = tokens.Operation.DequeueCondition();
+			tokens.Operation.AssertEmpty();
+
 			var destinationRegister = tokens.DequeueRegister();
 			tokens.DequeueComma();
 			var op1 = tokens.DequeueRegister();
@@ -264,7 +286,8 @@ public class Compiler {
 				Opcode = MULOperation.MUL,
 				DestinationRegister = destinationRegister,
 				Op1Register = op1,
-				Op2Register = op2
+				Op2Register = op2,
+				Condition = condition
 			});
 		}},
 
@@ -301,7 +324,10 @@ public class Compiler {
 		}},
 
 		{ "cmp", (string line, TokenQueue tokens, ARMMachineCode code) => {
-			tokens.AssertOperationLength(3);
+			tokens.Operation.DequeueValue("cmp");
+			var condition = tokens.Operation.DequeueCondition();
+			tokens.Operation.AssertEmpty();
+
 			var op1 = tokens.DequeueRegister();
 			tokens.DequeueComma();
 			var op2 = tokens.DequeueAluOp2();
@@ -310,11 +336,15 @@ public class Compiler {
 				Operation = ALUOperation.CMP,
 				SetConditionCodes = true,
 				Op1Register = op1,
-				Op2 = op2
+				Op2 = op2,
+				Condition = condition
 			});
 		}},
 		{ "mov", (string line, TokenQueue tokens, ARMMachineCode code) => {
-			var condition = tokens.ExtractCondition("mov");
+			tokens.Operation.DequeueValue("mov");
+			var condition = tokens.Operation.DequeueCondition();
+			tokens.Operation.AssertEmpty();
+
 			var destinationRegister = tokens.DequeueRegister();
 			tokens.DequeueComma();
 			var op2 = tokens.DequeueAluOp2();
@@ -327,7 +357,10 @@ public class Compiler {
 			});
 		}},
 		{ "lsl", (string line, TokenQueue tokens, ARMMachineCode code) => {
-			tokens.AssertOperationLength(3);
+			tokens.Operation.DequeueValue("lsl");
+			var condition = tokens.Operation.DequeueCondition();
+			tokens.Operation.AssertEmpty();
+
 			var destinationRegister = tokens.DequeueRegister();
 			tokens.DequeueComma();
 			var op2Register = tokens.DequeueRegister();
@@ -337,7 +370,7 @@ public class Compiler {
 			code.Add(new DataProcessing {
 				Operation = ALUOperation.MOV,
 				DestinationRegister = destinationRegister,
-				Condition = Condition.Always,
+				Condition = condition,
 				Op2 = new ARM.ALU.Register (op2Register) {
 					ShiftRegister = shiftRegister,
 					ShiftType = ShiftType.LSL,
@@ -348,7 +381,10 @@ public class Compiler {
 	};
 
 	public static void LoadALUOperation(string line, TokenQueue tokens, ARMMachineCode code, ALUOperation operation) {
-		tokens.AssertOperationLength(3);
+		tokens.Operation.DequeueValue(operation.ToString());
+		var condition = tokens.Operation.DequeueCondition();
+		tokens.Operation.AssertEmpty();
+
 		var destinationRegister = tokens.DequeueRegister();
 		tokens.DequeueComma();
 		var op1 = tokens.DequeueRegister();
@@ -359,46 +395,46 @@ public class Compiler {
 			Operation = operation,
 			DestinationRegister = destinationRegister,
 			Op1Register = op1,
-			Op2 = op2
+			Op2 = op2,
+			Condition = condition
 		});
 	}
 
-	public static void LoadBlockDataTransfer(string line, TokenQueue tokens, ARMMachineCode code) {//ldmdb sp!, { r0, r1 }
-		if (tokens.Operation.Length < 3 || tokens.Operation.Length > 5) {
-			throw new NotImplementedException($"Unexpected operation '{tokens.Operation}'. {line}");
-		}
+	public static void LoadBlockDataTransfer(string operation, string line, TokenQueue tokens, ARMMachineCode code) {//ldmdb sp!, { r0, r1 }
+		tokens.Operation.DequeueValue(operation);
+		var condition = tokens.Operation.DequeueCondition();
 
-		LoadStore loadStore;
-		if (tokens.Operation.StartsWith("ldm") || tokens.Operation == "pop") {
-			loadStore = LoadStore.Load;
-		} else if (tokens.Operation.StartsWith("stm") || tokens.Operation == "push") {
-			loadStore = LoadStore.Store;
-		} else {
-			throw new NotSupportedException($"Could not interpret Load/Store bit for Block Data Transfer command: {tokens.Operation}");
-		}
+		LoadStore loadStore = operation switch {
+			"ldm" => LoadStore.Load,
+			"pop" => LoadStore.Load,
+			"stm" => LoadStore.Store,
+			"push" => LoadStore.Store,
+			_ => throw new NotSupportedException($"Could not interpret Load/Store bit for Block Data Transfer command. Line '{line}'")
+		};
 
+		var next = tokens.Operation.TryDequeue(1, out var ud) ? ud : null;
 		UpDown upDown;
-		if (tokens.Operation == "pop" || tokens.Operation.Length == 3 || tokens.Operation[3] == 'i') {
+		if (operation == "pop" || next == "i") {
 			upDown = UpDown.Up;
-		} else if (tokens.Operation == "push" || tokens.Operation[3] == 'd') {
+		} else if (operation == "push" || next == "d") {
 			upDown = UpDown.Down;
 		} else {
-			throw new NotSupportedException($"Could not interpret Up/Down bit for Block Data Transfer command: {tokens.Operation}");
+			throw new NotSupportedException($"Could not interpret Up/Down bit for Block Data Transfer command. Line '{line}'");
 		}
 
+		next = tokens.Operation.TryDequeue(1, out var pp) ? pp: null;
 		PrePost prePost;
-		if (tokens.Operation == "push") {
+		if (operation == "push" || next == "b") {
 			prePost = PrePost.Pre;
-		} else if (tokens.Operation == "pop" || tokens.Operation.Length == 3 || tokens.Operation[4] == 'a') {
+		} else if (operation == "pop" || next == "a") {
 			prePost = PrePost.Post;
-		} else if (tokens.Operation[4] == 'b') {
-			prePost = PrePost.Pre;
 		} else {
-			throw new NotSupportedException($"Could not interpret Pre/Post bit for Block Data Transfer command: {tokens.Operation}");
+			throw new NotSupportedException($"Could not interpret Pre/Post bit for Block Data Transfer command. Line '{line}'");
 		}
+		tokens.Operation.AssertEmpty();
 
 		var baseRegister = tokens.DequeueRegister();
-		var next = tokens.Dequeue();
+		next = tokens.Dequeue();
 		bool writeback = false;
 		if (next == "!") {
 			writeback = true;
@@ -432,11 +468,5 @@ public class Compiler {
 			UpDown = upDown,
 			WriteBack = writeback
 		});
-	}
-
-	public static void AssertEmptyQueue(string line, Queue<string> tokens) {
-		if (!tokens.Any()) return;
-		var extra = string.Join(' ', tokens);
-		throw new Exception($"Command not recognized; too many arguments. Got '{extra}'. { line }");
 	}
 } 

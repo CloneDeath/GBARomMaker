@@ -5,6 +5,8 @@ using System.Linq;
 using GBARomMaker.ARM.ALU;
 using GBARomMaker.ARM.Common;
 
+namespace GBARomMaker.Compilation;
+
 public class TokenQueue : IEnumerable<string> {
 	private string[] _tokens;
 	private Queue<string> _tokenQueue;
@@ -14,9 +16,10 @@ public class TokenQueue : IEnumerable<string> {
 		_tokens = tokens;
 		_tokenQueue = new Queue<string>(tokens);
 		_line = line;
+		Operation = new(_tokens[0], line);
 	}
 
-	public string Operation => _tokens[0];
+	public OperationCharacterQueue Operation { get; private set; }
 	public string Dequeue() => _tokenQueue.Dequeue();
 
 	public ALUOp2 DequeueAluOp2() {
@@ -73,10 +76,6 @@ public class TokenQueue : IEnumerable<string> {
 			: Convert.ToInt32(immediate, 10));
 	}
 
-	public void AssertOperationLength(int length) {
-		if (Operation.Length != length) throw new Exception($"Unexpected opcode '{Operation}'. Line '{_line}'");
-	}
-
 	public void AssertEmpty() {
 		if (_tokenQueue.Any()) throw new Exception($"Too many arguments for '{Operation}'. Line '{_line}'");
 	}
@@ -97,39 +96,6 @@ public class TokenQueue : IEnumerable<string> {
 		};
 	}
 
-	public Condition ExtractCondition(string baseOperation) {
-		if (Operation == baseOperation) {
-			return Condition.AL;
-		}
-		return ParseCondition(Operation[baseOperation.Length..]);
-	}
-
-	public static Condition ParseCondition(string condition) {
-		return condition.ToUpper() switch {
-			"EQ" => Condition.EQ,
-			"NE" => Condition.NE,
-			
-			"CS" => Condition.CS,
-			"HS" => Condition.CS,
-			
-			"CC" => Condition.CC,
-			"LO" => Condition.CC,
-			
-			"MI" => Condition.MI,
-			"PL" => Condition.PL,
-			"VS" => Condition.VS,
-			"VC" => Condition.VC,
-			"HI" => Condition.HI,
-			"LS" => Condition.LS,
-			"GE" => Condition.GE,
-			"LT" => Condition.LT,
-			"GT" => Condition.GT,
-			"LE" => Condition.LE,
-			"AL" => Condition.AL,
-			"NV" => Condition.NV,
-			_ => throw new Exception("Unrecognized Condition " + condition)
-		};
-	}
 
     public IEnumerator<string> GetEnumerator() => _tokenQueue.GetEnumerator();
     IEnumerator IEnumerable.GetEnumerator() => _tokenQueue.GetEnumerator();
