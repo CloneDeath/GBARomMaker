@@ -1,0 +1,45 @@
+using System;
+using System.Reflection.Emit;
+using GBARomMaker.CIL;
+
+namespace GBARomMaker.CILParse.Instructions;
+
+public static class LDIND {
+	public static CILInstructionDefinition[] Definitions = [
+		new(0x47, 0, (_) => new LDIND_U(1)),
+		new(0x49, 0, (_) => new LDIND_U(2)),
+		new(0x4B, 0, (_) => new LDIND_U(4)),
+	];
+}
+
+public class LDIND_U : CILInstruction {
+	public LDIND_U(int bytes) {
+		Bytes = bytes;
+	}
+
+	public int Bytes { get; set; }
+
+	public OpCode OpCode {
+		get {
+			return Bytes switch {
+				1 => OpCodes.Ldind_U1,
+				2 => OpCodes.Ldind_U2,
+				4 => OpCodes.Ldind_U4,
+				_ => throw new NotSupportedException("No valid opcode for value " + Bytes)
+			};
+		}
+	}
+
+	public byte[] GetBytes() {
+		return [Bytes switch {
+			1 => 0x47,
+			2 => 0x49,
+			4 => 0x4B,
+			_ => throw new NotSupportedException("No valid opcode for value " + Bytes)
+		}];
+	}
+
+    public string GetCIL(CILFactory factory) {
+		return $"ldind.u{Bytes}";
+    }
+}

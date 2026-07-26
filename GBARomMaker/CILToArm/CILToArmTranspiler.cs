@@ -191,6 +191,14 @@ public class CILToArmTranspiler {
 					]);
 					break;
 				}
+				case "ldind.u2": {
+					assembly.Add(instruction.GetBytes().Length, [
+						"pop sp!, { r0 }",
+						"ldrh r1, [r0]",
+						"push sp!, { r1 }",
+					]);
+					break;
+				}
 				case "stind.i1": {
 					// If we're not in byte-addressable memory, then read-modify-write a short instead
 					var end = "byte_store_" + assembly.JumpCount++;
@@ -318,6 +326,18 @@ public class CILToArmTranspiler {
 						"pop sp!, { r0 }",
 						"cmp r0, #0",
 						$"bne {label}"
+					]);
+					var target = assembly.Offset + brt.Target;
+					assembly.AddLabel(target, label);
+					break;
+				}
+				case "brfalse.s": {
+					var brt = (GBARomMaker.CILParse.Instructions.BRFALSE_S)instruction;
+					var label = $"jump_{assembly.JumpCount++}";
+					assembly.Add(instruction.GetBytes().Length, [
+						"pop sp!, { r0 }",
+						"cmp r0, #0",
+						$"beq {label}"
 					]);
 					var target = assembly.Offset + brt.Target;
 					assembly.AddLabel(target, label);
