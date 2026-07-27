@@ -336,6 +336,16 @@ public class CILToArmTranspiler {
 					HandleNewObjInstruction(instruction, assembly);
 					break;
 				}
+				case "br": {
+					var br = (GBARomMaker.CILParse.Instructions.BR)instruction;
+					var label = $"jump_{assembly.JumpCount++}";
+					assembly.Add(instruction.GetBytes().Length, [
+						$"b {label}"
+					]);
+					var target = assembly.Offset + br.Target;
+					assembly.AddLabel(target, label);
+					break;
+				}
 				case "br.s": {
 					var brs = (GBARomMaker.CILParse.Instructions.BR_S)instruction;
 					var label = $"jump_{assembly.JumpCount++}";
@@ -343,6 +353,18 @@ public class CILToArmTranspiler {
 						$"b {label}"
 					]);
 					var target = assembly.Offset + brs.Target;
+					assembly.AddLabel(target, label);
+					break;
+				}
+				case "brtrue": {
+					var brt = (GBARomMaker.CILParse.Instructions.BRTRUE)instruction;
+					var label = $"jump_{assembly.JumpCount++}";
+					assembly.Add(instruction.GetBytes().Length, [
+						"pop sp!, { r0 }",
+						"cmp r0, #0",
+						$"bne {label}"
+					]);
+					var target = assembly.Offset + brt.Target;
 					assembly.AddLabel(target, label);
 					break;
 				}
@@ -358,15 +380,27 @@ public class CILToArmTranspiler {
 					assembly.AddLabel(target, label);
 					break;
 				}
-				case "brfalse.s": {
-					var brt = (GBARomMaker.CILParse.Instructions.BRFALSE_S)instruction;
+				case "brfalse": {
+					var brf = (GBARomMaker.CILParse.Instructions.BRFALSE)instruction;
 					var label = $"jump_{assembly.JumpCount++}";
 					assembly.Add(instruction.GetBytes().Length, [
 						"pop sp!, { r0 }",
 						"cmp r0, #0",
 						$"beq {label}"
 					]);
-					var target = assembly.Offset + brt.Target;
+					var target = assembly.Offset + brf.Target;
+					assembly.AddLabel(target, label);
+					break;
+				}
+				case "brfalse.s": {
+					var brf = (GBARomMaker.CILParse.Instructions.BRFALSE_S)instruction;
+					var label = $"jump_{assembly.JumpCount++}";
+					assembly.Add(instruction.GetBytes().Length, [
+						"pop sp!, { r0 }",
+						"cmp r0, #0",
+						$"beq {label}"
+					]);
+					var target = assembly.Offset + brf.Target;
 					assembly.AddLabel(target, label);
 					break;
 				}
@@ -410,7 +444,7 @@ public class CILToArmTranspiler {
 					]);
 					break;
 				}
-				default: throw new Exception("Couldn't convert instruction to ARM7 ASM: " + opcode);
+				default: throw new Exception($"Couldn't convert CIL instruction to ARM7 ASM: '{opcode}'.");
 			}
 		}
 		assembly.MethodsTranspiled.Add(method.FullName);
