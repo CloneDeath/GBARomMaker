@@ -160,15 +160,6 @@ public class CILToArmTranspiler {
 					]);
 					break;
 				}
-				case "stloc.s": {
-					var stlocs = (GBARomMaker.CILParse.Instructions.STLOC_S)instruction;
-					var location = stlocs.Location;
-					var register = location + 9;
-					assembly.Add(instruction.GetBytes().Length, [
-						$"pop sp!, {{ r{register} }}"
-					]);;
-					break;
-				}
 				case "stloc.0":
 				case "stloc.1":
 				case "stloc.2":
@@ -176,7 +167,25 @@ public class CILToArmTranspiler {
 					var location = int.Parse(opcode[6].ToString()); // stloc.X
 					var register = location + 9;
 					assembly.Add(instruction.GetBytes().Length, [
-						$"pop sp!, {{ r{register} }}"
+						$"pop sp!, {{ r{register} }} @ local {location}"
+					]);;
+					break;
+				}
+				case "stloc.s": {
+					var stlocs = (GBARomMaker.CILParse.Instructions.STLOC_S)instruction;
+					var location = stlocs.Location;
+					if (location <= 3) {
+						var register = location + 9;
+						assembly.Add(instruction.GetBytes().Length, [
+							$"pop sp!, {{ r{register} }} @ local {location}"
+						]);
+						break;
+					}
+					var offset = (location - 4) * 4;
+					assembly.Add(instruction.GetBytes().Length, [
+						"ldr r0, =0x03000000",
+						"pop sp!, { r1 }",
+						$"str r1, [r0, #{offset}] @ local {location}",
 					]);;
 					break;
 				}
@@ -187,17 +196,26 @@ public class CILToArmTranspiler {
 					var location = int.Parse(opcode[6].ToString()); // ldloc.X
 					var register = location + 9;
 					assembly.Add(instruction.GetBytes().Length, [
-						$"push sp!, {{ r{register} }}"
+						$"push sp!, {{ r{register} }} @ local {location}"
 					]);
 					break;
 				}
 				case "ldloc.s": {
 					var ldlocs = (GBARomMaker.CILParse.Instructions.LDLOC_S)instruction;
 					var location = ldlocs.Location;
-					var register = location + 9;
+					if (location <= 3) {
+						var register = location + 9;
+						assembly.Add(instruction.GetBytes().Length, [
+							$"push sp!, {{ r{register} }} @ local {location}"
+						]);
+						break;
+					}
+					var offset = (location - 4) * 4;
 					assembly.Add(instruction.GetBytes().Length, [
-						$"push sp!, {{ r{register} }}"
-					]);
+						"ldr r0, =0x03000000",
+						$"ldr r1, [r0, #{offset}] @ local {location}",
+						"push sp!, { r1 }"
+					]);;
 					break;
 				}
 				case "ldind.u2": {
