@@ -89,6 +89,15 @@ public class CILToArmTranspiler {
 					]);
 					break;
 				}
+				case "conv.u1": {
+					assembly.Add(instruction.GetBytes().Length, [
+						"pop sp!, { r1 }",
+						"ldr r2, =0xFF",
+						"and r0, r1, r2",
+						"push sp!, { r0 }"
+					]);
+					break;
+				}
 				case "conv.u2": {
 					assembly.Add(instruction.GetBytes().Length, [
 						"pop sp!, { r1 }",

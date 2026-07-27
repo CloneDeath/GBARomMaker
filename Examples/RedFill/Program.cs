@@ -5,16 +5,16 @@
 		ScreenDisplayBG2 = true,
 	});
 
-	var color = new Color();
+	var color = new Color { Red = 31 };
 	for (var x = 0; x < 240; x++){
-		for (var y = 0; y < 160; y++) {
+		//for (var y = 0; y < 1; y++) {
 			color.Red += 1;
 			if (color.Red >= 32) {
 				color.Red = 0;
 				color.Blue += 1;
 			}
-			DisplayController.SetPixelRed(x, y, color);
-		}
+			DisplayController.SetPixelRed(x, 1, color);
+		//}
 	}
 
 	while(true){};
@@ -51,8 +51,11 @@ public static unsafe class DisplayController {
 
 	public static void SetPixelRed(int x, int y, Color color) {
     	ushort* topLeftPixel = (ushort*)0x06000000;
-		var destination = topLeftPixel+x+(y*240);
-    	*destination = (ushort)(color.Red & 0x001F); // Red
-    	//*destination = 0x03E0; // Green
+		ushort* destination = topLeftPixel+x+(y*240);
+		ushort value = 0x0000;
+    	value = (ushort)(color.Red & 0x001F);
+    	//value |= 0x03E0; // Green
+    	value |= (ushort)((color.Blue & 0x001F) << 10);
+		*destination = value;
 	}
 }
