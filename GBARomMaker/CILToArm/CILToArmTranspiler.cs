@@ -23,11 +23,26 @@ public class CILToArmTranspiler {
 	}
 
 	public string[] Transpile() {
+		var entrypoint = DetectEntryPoint();
+
 		var assembly = new ARMProgram {
 			new ARMLine(-1, 0, "ldr sp, =0x03008000 @ CIL stack pointer -- WRAM Internal"),
+			// heap start (added below...)
+			new ARMLine(-1, 2, "ldr r0, =gba_irq_handler @ Install IRQ Handler"),
+			new ARMLine(-1, 3, "ldr r1, =0x03007FFC"),
+			new ARMLine(-1, 4, "str r0, [r1]"),
+			new ARMLine(-1, 5, $"b {GetLabelForMethod(entrypoint)}"),
+			new ARMLine(-1, 6, $"gba_irq_handler:"),
+			//new ARMLine(-1, 7, $"ldr r1, =0x03007FF8 @ ICF"),
+			//new ARMLine(-1, 8, $"ldrh r2, [r1]"),
+			//new ARMLine(-1, 9, $"orr r2, r2, #1"),
+			//new ARMLine(-1, 10, $"strh r2, [r1]"),
+			new ARMLine(-1, 7, $"ldr r0, =1"),
+			new ARMLine(-1, 8, $"ldr r1, =0x04000202 @ IRQ Ack"),
+			new ARMLine(-1, 9, $"strh r0, [r1]"),
+			new ARMLine(-1, 10, $"bx lr"),
 		};
 
-		var entrypoint = DetectEntryPoint();
 		ConvertCILToASM(assembly, entrypoint);
 
 		while (assembly.MethodsToTranspile.Any()) {
@@ -51,6 +66,20 @@ public class CILToArmTranspiler {
 
 	public void ConvertCILToASM(ARMProgram assembly, ICILMethod method) {
 		if (assembly.MethodsTranspiled.Contains(method.FullName)) return;
+
+		if (method.IsNativeInvoke) {
+			if (method.NativeInvokeTarget != "WaitVBlank") throw new Exception("Unrecognized native invoke target");
+
+			DeclareMethod(assembly, method);
+			assembly.Add(0, [
+				"swi 0x050000",
+				$"sub sp, r7, #{11 * 4}",
+				"pop sp!, { r0, r1, r2, r3, r4, r7, r9, r10, r11, r12, lr }",
+				"bx lr"
+			]);
+			assembly.MethodsTranspiled.Add(method.FullName);
+			return;
+		}
 
 		var parser = new CILParser();
 		var instructions = parser.GetInstructions(method.BodyBytes);

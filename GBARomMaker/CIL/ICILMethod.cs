@@ -4,6 +4,8 @@ public interface ICILMethod {
 	public string Name { get; }
 	public string FullName { get; }
 	public byte[] BodyBytes { get; }
-    int ParameterCount { get; }
-	bool IsInstance { get; }
+    public int ParameterCount { get; }
+	public bool IsInstance { get; }
+	public bool IsNativeInvoke { get; }
+	public string NativeInvokeTarget { get; }
 }

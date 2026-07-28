@@ -54,6 +54,19 @@ public class Compiler {
 				Op2 = new Register(0)
 			});
 		}},
+		{ "swi", (string line, TokenQueue tokens, ARMMachineCode code) => {
+			tokens.Operation.DequeueValue("swi");
+			var condition = tokens.Operation.DequeueCondition();
+			tokens.Operation.AssertEmpty();
+			
+			var comment = tokens.DequeueImmediate();
+			tokens.AssertEmpty();
+
+			code.Add(new SoftwareInterrupt {
+				Condition = condition,
+				Comment = comment
+			});
+		}},
 		{ "ldr", (string line, TokenQueue tokens, ARMMachineCode code) => {
 			tokens.Operation.DequeueValue("ldr");
 			var condition = tokens.Operation.DequeueCondition();
@@ -63,8 +76,24 @@ public class Compiler {
 			var destinationRegister = tokens.DequeueRegister();
 			tokens.DequeueComma();
 			var source = tokens.Dequeue();
-			if (source == "=") { // This is actual a psudocommand for MOV/ORs
+			if (source == "=") { // This is actual a psudocommand for MOV/ORs or PC Offset to Label
 				if (flag != null) throw new NotImplementedException($"Tried to direct assign to ldrh, doesn't make sense... Line '{line}'");
+				var upcoming = tokens.Peek();
+				if (!new Regex("\\d").IsMatch(upcoming)) {
+					var label = tokens.Dequeue();
+
+					code.AddNeedsLabel(new DataProcessingWithLabelOffset {
+						Condition = condition,
+						Operation = ALUOperation.ADD,
+						DestinationRegister = destinationRegister,
+						Op1Register = 15, // PC
+						SetConditionCodes = false
+					}, label);
+
+					tokens.AssertEmpty();
+					return;
+				}
+
 				var immediateValue = tokens.DequeueImmediate();
 				if (immediateValue == 0) {
 					code.Add(new DataProcessing {
@@ -73,6 +102,7 @@ public class Compiler {
 						Op2 = new Immediate(0),
 						Condition = condition
 					});
+					tokens.AssertEmpty();
 					return;
 				}
 				// Find all bytes we need to store...
@@ -90,6 +120,7 @@ public class Compiler {
 						Op2 = new Immediate(immediateValue),
 						Condition = condition
 					});
+					tokens.AssertEmpty();
 					return;
 				}
 

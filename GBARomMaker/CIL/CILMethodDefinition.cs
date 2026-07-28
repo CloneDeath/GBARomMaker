@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Reflection;
 using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
 
@@ -34,4 +35,22 @@ public class CILMethodDefinition : ICILMethod {
 	}
 
 	public bool IsConstructor => Name == ".ctor" || Name == ".cctor";
+	public bool IsNativeInvoke {
+		get {
+			var isInvoke = _method.Attributes.HasFlag(MethodAttributes.PinvokeImpl);
+			if (!isInvoke) return false;
+
+			var import = _method.GetImport();
+			var module = _metadata.GetModuleReference(import.Module);
+			var moduleName = _metadata.GetString(module.Name);
+			return moduleName == "gba";
+		}
+	}
+
+	public string NativeInvokeTarget {
+		get {
+			var import = _method.GetImport();
+			return _metadata.GetString(import.Name);
+		}
+	}
 }

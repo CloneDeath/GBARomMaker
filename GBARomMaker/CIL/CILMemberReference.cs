@@ -15,7 +15,6 @@ public class CILMemberReference : ICILMethod {
 		this._self = self;
 	}
 
-
 	public MemberReferenceKind Kind => _self.GetKind();
 
     public ICILType Parent {
@@ -40,4 +39,6 @@ public class CILMemberReference : ICILMethod {
 	public byte[] BodyBytes => throw new NotImplementedException();
     public bool IsInstance => throw new NotImplementedException();
     public int ParameterCount => throw new NotImplementedException();
+    public bool IsNativeInvoke => throw new NotImplementedException();
+    public string NativeInvokeTarget => throw new NotImplementedException();
 }

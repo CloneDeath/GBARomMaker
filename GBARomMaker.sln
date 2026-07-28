@@ -14,7 +14,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ColoredSprites", "Examples\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RedSquare", "Examples\RedSquare\RedSquare.csproj", "{6F661C33-99AF-4D7D-9735-3707DF900E00}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RedFill", "Examples\RedFill\RedFill.csproj", "{551F1254-9043-4CD7-A915-FC00EF0E24C9}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ColorFill", "Examples\ColorFill\ColorFill.csproj", "{551F1254-9043-4CD7-A915-FC00EF0E24C9}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

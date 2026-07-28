@@ -1,43 +1,4 @@
-﻿unsafe
-{
-	DisplayController.SetControl(new DisplayControl {
-		BGMode = 3,
-		ScreenDisplayBG2 = true,
-	});
-
-	var color = new Color { Red = 31 };
-	for (var y = 0; y < 160; y++) {
-		for (var x = 0; x < 240; x++){
-			color.Red += 1;
-			if (color.Red >= 32) {
-				color.Red = 0;
-				color.Blue += 1;
-			}
-			if (color.Blue >= 32) {
-				color.Blue = 0;
-				color.Green += 1;
-			}
-			DisplayController.SetPixelRed(x, y, color);
-		}
-	}
-
-	while(true){};
-}
-
-public class DisplayControl {
-	public int BGMode;
-	public bool ScreenDisplayBG0;
-	public bool ScreenDisplayBG1;
-	public bool ScreenDisplayBG2;
-	public bool ScreenDisplayBG3;
-	public bool ScreenDisplayOBJ;
-}
-
-public class Color {
-	public byte Red;
-	public byte Green;
-	public byte Blue;
-}
+namespace GBA;
 
 public static unsafe class DisplayController {
 	private static ushort* DISPCNT = (ushort*)0x04000000;
@@ -53,7 +14,7 @@ public static unsafe class DisplayController {
 		*DISPCNT = data;
 	}
 
-	public static void SetPixelRed(int x, int y, Color color) {
+	public static void SetPixel(int x, int y, Color color) {
     	ushort* topLeftPixel = (ushort*)0x06000000;
 		ushort* destination = topLeftPixel+x+(y*240);
 		ushort value = 0x0000;

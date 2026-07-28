@@ -71,10 +71,17 @@ public class TokenQueue : IEnumerable<string> {
 
 	public uint DequeueImmediate() {
 		var immediate = Dequeue();
-		return (uint)(immediate.StartsWith("0x", StringComparison.OrdinalIgnoreCase)
-			? Convert.ToInt32(immediate[2..], 16)
-			: Convert.ToInt32(immediate, 10));
+		try {
+			return (uint)(immediate.StartsWith("0x", StringComparison.OrdinalIgnoreCase)
+				? Convert.ToInt32(immediate[2..], 16)
+				: Convert.ToInt32(immediate, 10));
+		}
+		catch (FormatException ex) {
+			throw new Exception($"Failed to parse number: {ex.Message} Line '{_line}'");
+		}
 	}
+
+	public string Peek() => _tokenQueue.Peek();
 
 	public void AssertEmpty() {
 		if (_tokenQueue.Any()) throw new Exception($"Too many arguments for '{Operation}'. Line '{_line}'");
