@@ -26,21 +26,99 @@ public class CILToArmTranspiler {
 		var entrypoint = DetectEntryPoint();
 
 		var assembly = new ARMProgram {
-			new ARMLine(-1, 0, "ldr sp, =0x03008000 @ CIL stack pointer -- WRAM Internal"),
+			new ARMLine(-1, 0, "ldr sp, =0x03007F00 @ CIL stack pointer -- WRAM Internal"),
 			// heap start (added below...)
 			new ARMLine(-1, 2, "ldr r0, =gba_irq_handler @ Install IRQ Handler"),
 			new ARMLine(-1, 3, "ldr r1, =0x03007FFC"),
 			new ARMLine(-1, 4, "str r0, [r1]"),
 			new ARMLine(-1, 5, $"b {GetLabelForMethod(entrypoint)}"),
+
 			new ARMLine(-1, 6, $"gba_irq_handler:"),
-			//new ARMLine(-1, 7, $"ldr r1, =0x03007FF8 @ ICF"),
-			//new ARMLine(-1, 8, $"ldrh r2, [r1]"),
-			//new ARMLine(-1, 9, $"orr r2, r2, #1"),
-			//new ARMLine(-1, 10, $"strh r2, [r1]"),
-			new ARMLine(-1, 7, $"ldr r0, =1"),
-			new ARMLine(-1, 8, $"ldr r1, =0x04000202 @ IRQ Ack"),
-			new ARMLine(-1, 9, $"strh r0, [r1]"),
-			new ARMLine(-1, 10, $"bx lr"),
+			//new ARMLine(-1, gba_h++, $"ldr r1, =0x06000006"), // 0x06000004 = 0x7C00
+			//new ARMLine(-1, gba_h++, $"ldr r2, =0x7C00"),
+			//new ARMLine(-1, gba_h++, $"strh r2, [r1]"),
+
+			//new ARMLine(-1, gba_h++, "ldr r1, =0x4000202 @ REG_IF"), 
+			//new ARMLine(-1, gba_h++, "ldrh r2, [r1]"),
+			//new ARMLine(-1, gba_h++, "ldr r3, =1"),
+			//new ARMLine(-1, gba_h++, "orr r2, r2, r3"),
+			//new ARMLine(-1, gba_h++, "strh r2, [r1]"),
+			//new ARMLine(-1, gba_h++, $"bx lr"),
+			
+
+			// ldr r3, =0x04000000
+			// ldr r2, [r3, #0x0200] @ 0x04000200
+			// ldr r1, [r3, #0x0208] @ 0x04000208
+			// str r3, [r3, #0x0208] @ 0x04000208 = 0x040000000,
+			// ldrh r2, [r3, #-8] @ 0x03FFFFF8
+			// strh r2, [r3, #-8] @
+			new ARMLine(-1, 7, $"ldr r1, =0x03007FF8 @ ICF"),
+			new ARMLine(-1, 8, $"ldrh r2, [r1]"),
+			new ARMLine(-1, 9, $"orr r2, r2, #1"),
+			new ARMLine(-1, 10, $"strh r2, [r1]"),
+			new ARMLine(-1, 11, $"ldr r0, =1"),
+			new ARMLine(-1, 12, $"ldr r1, =0x04000202 @ IRQ Ack"),
+			new ARMLine(-1, 13, $"strh r0, [r1]"),
+			new ARMLine(-1, 14, $"bx lr"),
+			
+
+			//new ARMLine(-1, gba_h++, "ldr r3, =0x04000000"),
+			//new ARMLine(-1, gba_h++, "ldr r2, [r3, #0x200]"),
+			//new ARMLine(-1, gba_h++, "ldr r1, [r3, #0x208]"),
+			//new ARMLine(-1, gba_h++, "str r3, [r3, #0x208]"),
+			//new ARMLine(-1, gba_h++, "mrs r0, SPSR"),
+			//new ARMLine(-1, gba_h++, "push { r0, r1, r3, lr }"),
+			//new ARMLine(-1, gba_h++, "and r1, r2, r2, lsr #16"),
+			//new ARMLine(-1, gba_h++, "ldrh r2, [r3, #-8]"),
+
+// 3000020:       e1822001        orr     r2, r2, r1
+// 3000024:       e14320b8        strh    r2, [r3, #-8]
+// 3000028:       e59f2084        ldr     r2, [pc, #132]  @ 30000b4 <IntrRet+0x2c>
+// 300002c:       e2833c02        add     r3, r3, #512    @ 0x200
+//
+//03000030 <findIRQ>:
+// 3000030:       e5920004        ldr     r0, [r2, #4]
+// 3000034:       e3500000        cmp     r0, #0
+// 3000038:       0a000003        beq     300004c <no_handler>
+// 300003c:       e0100001        ands    r0, r0, r1
+// 3000040:       1a000005        bne     300005c <jump_intr>
+// 3000044:       e2822008        add     r2, r2, #8
+// 3000048:       eafffff8        b       3000030 <findIRQ>
+//
+//0300004c <no_handler>:
+// 300004c:       e1c310b2        strh    r1, [r3, #2]
+// 3000050:       e8bd400b        pop     {r0, r1, r3, lr}
+// 3000054:       e5831208        str     r1, [r3, #520]  @ 0x208
+// 3000058:       e1a0f00e        mov     pc, lr
+//
+//0300005c <jump_intr>:
+// 300005c:       e5922000        ldr     r2, [r2]
+// 3000060:       e3520000        cmp     r2, #0
+// 3000064:       0afffff8        beq     300004c <no_handler>
+//
+//03000068 <got_handler>:
+// 3000068:       e10f1000        mrs     r1, CPSR
+// 300006c:       e3c110df        bic     r1, r1, #223    @ 0xdf
+// 3000070:       e381101f        orr     r1, r1, #31
+// 3000074:       e129f001        msr     CPSR_fc, r1
+// 3000078:       e1c300b2        strh    r0, [r3, #2]
+// 300007c:       e52de004        push    {lr}            @ (str lr, [sp, #-4]!)
+// 3000080:       e28fe000        add     lr, pc, #0
+// 3000084:       e12fff12        bx      r2
+//
+//03000088 <IntrRet>:
+// 3000088:       e49de004        pop     {lr}            @ (ldr lr, [sp], #4)
+// 300008c:       e3a03301        mov     r3, #67108864   @ 0x4000000
+// 3000090:       e5833208        str     r3, [r3, #520]  @ 0x208
+// 3000094:       e10f3000        mrs     r3, CPSR
+// 3000098:       e3c330df        bic     r3, r3, #223    @ 0xdf
+// 300009c:       e3833092        orr     r3, r3, #146    @ 0x92
+// 30000a0:       e129f003        msr     CPSR_fc, r3
+// 30000a4:       e8bd400b        pop     {r0, r1, r3, lr}
+// 30000a8:       e5831208        str     r1, [r3, #520]  @ 0x208
+// 30000ac:       e169f000        msr     SPSR_fc, r0
+// 30000b0:       e1a0f00e        mov     pc, lr
+// 30000b4:       030000d4        .word   0x030000d4
 		};
 
 		ConvertCILToASM(assembly, entrypoint);
@@ -291,6 +369,13 @@ public class CILToArmTranspiler {
 					assembly.Add(instruction.GetBytes().Length, [
 						"pop sp!, { r0, r1 } @ value, addr",
 						"strh r0, [r1]"
+					]);
+					break;
+				}
+				case "stind.i4": {
+					assembly.Add(instruction.GetBytes().Length, [
+						"pop sp!, { r0, r1 } @ value, addr",
+						"str r0, [r1]"
 					]);
 					break;
 				}

@@ -4,7 +4,7 @@ public static unsafe class DisplayController {
 	private static readonly ushort* DISPCNT = (ushort*)0x04000000;
 	private static readonly ushort* DISPSTAT = (ushort*)0x04000004;
 	private static readonly ushort* IE = (ushort*)0x4000200;
-	private static readonly ushort* IME = (ushort*)0x4000208;
+	private static readonly uint* IME = (uint*)0x4000208;
 
 	public static void SetControl(DisplayControl control) {
 		ushort data = 0x0000;
