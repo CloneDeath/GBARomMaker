@@ -68,19 +68,6 @@ public class CILToArmTranspiler {
 	public void ConvertCILToASM(ARMProgram assembly, ICILMethod method) {
 		if (assembly.MethodsTranspiled.Contains(method.FullName)) return;
 
-		if (method.IsNativeInvoke) {
-			if (method.NativeInvokeTarget != "WaitVBlank") throw new Exception("Unrecognized native invoke target");
-
-			DeclareMethod(assembly, method);
-			assembly.Add(0, [
-				"swi 0x050000",
-				$"sub sp, r7, #{11 * 4}",
-				"pop sp!, { r0, r1, r2, r3, r4, r7, r9, r10, r11, r12, lr }",
-				"bx lr"
-			]);
-			assembly.MethodsTranspiled.Add(method.FullName);
-			return;
-		}
 
 		var parser = new CILParser();
 		var instructions = parser.GetInstructions(method.BodyBytes);
@@ -582,7 +569,15 @@ public class CILToArmTranspiler {
 			]);
 			return;
 		}
-		
+
+		if (method.IsNativeInvoke) {
+			if (method.NativeInvokeTarget != "WaitVBlank") throw new Exception("Unrecognized native invoke target");
+			assembly.Add(instruction.GetBytes().Length, [
+				"swi 0x050000 @ WaitVBlank",
+			]);
+			return;
+		}
+
 		assembly.MethodsToTranspile.Enqueue(method);
 		var target = GetLabelForMethod(method);
 		assembly.Add(instruction.GetBytes().Length, [
