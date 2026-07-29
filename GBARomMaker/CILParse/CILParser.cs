@@ -17,6 +17,7 @@ public class CILParser {
 		BRFALSE.Definitions,
 		BRTRUE.Definitions,
 		[CALL.Definition],
+		[CALLVIRT.Definition],
 		[CONV.Definition],
 		CONV_U.Definitions,
 		[DUP.Definition],

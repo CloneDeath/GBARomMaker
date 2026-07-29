@@ -53,4 +53,15 @@ public class CILMethodDefinition : ICILMethod {
 			return _metadata.GetString(import.Name);
 		}
 	}
+
+    public bool HasReturnValue {
+		get {
+			var signature = _metadata.GetBlobReader(_method.Signature);
+			var header = signature.ReadSignatureHeader();
+			if (header.IsGeneric) signature.ReadCompressedInteger(); // generic parameter count
+			signature.ReadCompressedInteger(); // normal parameter count
+			var returnType = signature.ReadSignatureTypeCode();
+			return returnType != SignatureTypeCode.Void;
+		}
+	}
 }

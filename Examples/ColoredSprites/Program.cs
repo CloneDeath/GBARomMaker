@@ -27,7 +27,7 @@ unsafe {
 	ushort x = 0;
 	while(true){
 		oam[1] = x++;
-		if (x >= 200) {
+		if (x >= 232) {
 			x = 0;
 		}
 		DisplayController.SetPixel(x, 50, Colors.Green);

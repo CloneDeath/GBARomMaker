@@ -8,4 +8,5 @@ public interface ICILMethod {
 	public bool IsInstance { get; }
 	public bool IsNativeInvoke { get; }
 	public string NativeInvokeTarget { get; }
+	public bool HasReturnValue { get; }
 }

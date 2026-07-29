@@ -20,11 +20,7 @@ public static unsafe class DisplayController {
 	public static void SetPixel(int x, int y, Color color) {
     	ushort* topLeftPixel = (ushort*)0x06000000;
 		ushort* destination = topLeftPixel+x+(y*240);
-		ushort value = 0x0000;
-    	value = (ushort)(color.Red & 0x001F);
-    	value |= (ushort)((color.Green & 0x001F) << 5);
-    	value |= (ushort)((color.Blue & 0x001F) << 10);
-		*destination = value;
+		*destination = color.ToUShort();
 	}
 
 	public static void EnableVBlank() {

@@ -86,6 +86,7 @@ public class CILToArmTranspiler {
 		// Free Register 3 = r2
 		// Free Register 4 = r3
 		// Free Register 5 = r4
+		// Return Register = r6 <- NOT SAVED to stack when going between methods.
 		// Function Stack  = r7
 		// Heap Pointer    = r8 <- Temporary until we implement malloc/free
 		// Local 0         = r9
@@ -307,6 +308,7 @@ public class CILToArmTranspiler {
 				}
 				case "ret": {
 					assembly.Add(instruction.GetBytes().Length, [
+						method.HasReturnValue ? "pop sp!, { r6 } @ return value" : "nop @ no return value",
 						$"sub sp, r7, #{11 * 4}",
 						"pop sp!, { r0, r1, r2, r3, r4, r7, r9, r10, r11, r12, lr }",
 					]);
@@ -314,7 +316,12 @@ public class CILToArmTranspiler {
 					if (method.ParameterCount > 0 || method.IsInstance) {
 						var argsToPop = (method.IsInstance ? 1 : 0) + method.ParameterCount;
 						assembly.Add(0, [
-							$"add sp, sp, #{argsToPop * 4}"
+							$"add sp, sp, #{argsToPop * 4} @ this: { method.IsInstance }; param count: {method.ParameterCount}"
+						]);
+					}
+					if (method.HasReturnValue) {
+						assembly.Add(0, [
+							"push sp!, { r6 }",
 						]);
 					}
 					assembly.Add(0, [
@@ -354,6 +361,10 @@ public class CILToArmTranspiler {
 				}
 				case "call": {
 					HandleCallInstruction(instruction, assembly);
+					break;
+				}
+				case "callvirt": {
+					HandleCallvirtInstruction(instruction, assembly);
 					break;
 				}
 				case "newobj": {
@@ -562,6 +573,35 @@ public class CILToArmTranspiler {
 		var call = (GBARomMaker.CILParse.Instructions.CALL)instruction;
 		var cilFactory = new CILFactory(_peReader, _metadata);
 		var method = cilFactory.GetMethodDefinition(call.MetadataToken);
+
+		if (method.FullName == "System.Object..ctor") {
+			assembly.Add(instruction.GetBytes().Length, [
+				$"add sp, sp, #4 @ Pop `this`; Calling '{method.FullName}'"
+			]);
+			return;
+		}
+
+		if (method.IsNativeInvoke) {
+			if (method.NativeInvokeTarget != "WaitVBlank") throw new Exception("Unrecognized native invoke target");
+			assembly.Add(instruction.GetBytes().Length, [
+				"swi 0x050000 @ WaitVBlank",
+			]);
+			return;
+		}
+
+		assembly.MethodsToTranspile.Enqueue(method);
+		var target = GetLabelForMethod(method);
+		assembly.Add(instruction.GetBytes().Length, [
+			$"bl {target}"
+		]);
+	}
+	
+	private void HandleCallvirtInstruction(CILInstruction instruction, ARMProgram assembly) {
+		var callvirt = (GBARomMaker.CILParse.Instructions.CALLVIRT)instruction;
+		var cilFactory = new CILFactory(_peReader, _metadata);
+		var method = cilFactory.GetMethodDefinition(callvirt.MetadataToken);
+
+		Console.WriteLine(method.FullName + " CALLVIRT");
 
 		if (method.FullName == "System.Object..ctor") {
 			assembly.Add(instruction.GetBytes().Length, [

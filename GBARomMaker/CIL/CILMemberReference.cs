@@ -41,4 +41,5 @@ public class CILMemberReference : ICILMethod {
     public int ParameterCount => throw new NotImplementedException();
     public bool IsNativeInvoke => throw new NotImplementedException();
     public string NativeInvokeTarget => throw new NotImplementedException();
+    public bool HasReturnValue => throw new NotImplementedException();
 }
