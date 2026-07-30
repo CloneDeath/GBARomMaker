@@ -23,15 +23,15 @@ unsafe {
 
 	DisplayController.EnableVBlank();
 	byte x = 0;
-	//float y = 0;
+	float y = 0;
 	while(true){
 		sprite.X = x++;
 		if (x >= 232) {
 			x = 0;
-			//y = 0;
+			y = 0;
 		}
-		//y += 1.5f;
-		//oam[0] = (ushort)y;
+		y += 1.5f;
+		sprite.Y = (byte)y;
 		DisplayController.SetPixel(x, 50, Colors.Green);
 		Interrupt.WaitVBlank();
 	};

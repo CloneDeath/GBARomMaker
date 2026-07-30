@@ -19,6 +19,8 @@ public static class LDC {
 		new(0x1E, 0, (data) => new LDC_I4_X(8)), // ldc.i4.8
 		new(0x1F, 1, (data) => new LDC_I4_S(data[0])), // ldc.i4.s
 		new(0x20, 4, (data) => new LDC_I4(BitConverter.ToInt32(data))), // ldc.i4
+		new(0x22, 4, (data) => new LDC_R4(data)), // ldc.r4
+		new(0x23, 8, (data) => new LDC_R8(data)), // ldc.r8
 	];
 }
 
@@ -101,3 +103,32 @@ public class LDC_I4_S : CILInstruction {
 	}
 }
 
+public class LDC_R4 : CILInstruction {
+	public float Data { get; }
+	public LDC_R4(byte[] data) { this.Data = BitConverter.ToSingle(data); }
+	
+	public OpCode OpCode => OpCodes.Ldc_R4;
+
+	public byte[] GetBytes() {
+		return new byte[] { 0x22 }.Concat(BitConverter.GetBytes(Data)).ToArray();
+	}
+
+	public string GetCIL(CILFactory factory) {
+		return $"ldc.r4 {Data}";
+	}
+}
+
+public class LDC_R8 : CILInstruction {
+	public double Data { get; }
+	public LDC_R8(byte[] data) { this.Data = BitConverter.ToDouble(data); }
+	
+	public OpCode OpCode => OpCodes.Ldc_R8;
+
+	public byte[] GetBytes() {
+		return new byte[] { 0x23 }.Concat(BitConverter.GetBytes(Data)).ToArray();
+	}
+
+	public string GetCIL(CILFactory factory) {
+		return $"ldc.r8 {Data}";
+	}
+}

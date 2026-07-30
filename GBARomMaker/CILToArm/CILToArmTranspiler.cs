@@ -601,8 +601,6 @@ public class CILToArmTranspiler {
 		var cilFactory = new CILFactory(_peReader, _metadata);
 		var method = cilFactory.GetMethodDefinition(callvirt.MetadataToken);
 
-		Console.WriteLine(method.FullName + " CALLVIRT");
-
 		if (method.FullName == "System.Object..ctor") {
 			assembly.Add(instruction.GetBytes().Length, [
 				$"add sp, sp, #4 @ Pop `this`; Calling '{method.FullName}'"
