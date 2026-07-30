@@ -27,9 +27,9 @@ public class CILTypeDefinition : ICILType {
 		}
 	}
 
-    public CILMethodDefinition? Constructor => _self.GetMethods()
+    public CILMethodDefinition? StaticConstructor => _self.GetMethods()
 		.Select(m => new CILMethodDefinition(_peReader, _metadata, _metadata.GetMethodDefinition(m)))
-		.FirstOrDefault(m => m.IsConstructor);
+		.FirstOrDefault(m => m.IsStaticConstructor);
 
     public CILMethodDefinition GetMethodDefinition(string name) {
 		var methods = _self.GetMethods().Select(m => _metadata.GetMethodDefinition(m));

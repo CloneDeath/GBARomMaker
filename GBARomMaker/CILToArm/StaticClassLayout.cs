@@ -30,5 +30,5 @@ public class StaticClassLayout {
 		throw new Exception($"Field '{field.Name}' does not exist in type '{FullName}'");
 	}
 
-	public CILMethodDefinition? Constructor => _type.Constructor;
+	public CILMethodDefinition? StaticConstructor => _type.StaticConstructor;
 }

@@ -34,7 +34,10 @@ public class CILMethodDefinition : ICILMethod {
 		}
 	}
 
-	public bool IsConstructor => Name == ".ctor" || Name == ".cctor";
+	public bool IsConstructor => IsInstanceConstructor || IsStaticConstructor;
+	public bool IsInstanceConstructor => Name == ".ctor";
+	public bool IsStaticConstructor => Name == ".cctor";
+
 	public bool IsNativeInvoke {
 		get {
 			var isInvoke = _method.Attributes.HasFlag(MethodAttributes.PinvokeImpl);

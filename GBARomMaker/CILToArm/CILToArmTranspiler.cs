@@ -511,18 +511,18 @@ public class CILToArmTranspiler {
 		var field = cilFactory.GetFieldDefinition(ldsfld.MetadataToken);
 		
 		var staticClass = assembly.GetStaticClassLayout(field.Parent);
-		var constructor = staticClass.Constructor;
+		var staticConstructor = staticClass.StaticConstructor;
 		assembly.Add(instruction.GetBytes().Length, [
 			$"ldr r0, =0x{staticClass.StartAddress:X8} @ static ${staticClass.FullName}",
 		]);
-		if (constructor != null) {
-			assembly.MethodsToTranspile.Enqueue(constructor);
+		if (staticConstructor != null) {
+			assembly.MethodsToTranspile.Enqueue(staticConstructor);
 			assembly.Add(0, [
 				$"ldr r1, [r0]",
 				$"cmp r1, #1",
 				$"ldrne r1, =1",
 				$"strne r1, [r0]",
-				$"blne {GetLabelForMethod(constructor)}",
+				$"blne {GetLabelForMethod(staticConstructor)}",
 			]);
 		}
 		assembly.Add(0, [
@@ -549,18 +549,18 @@ public class CILToArmTranspiler {
 		var field = cilFactory.GetFieldDefinition(stsfld.MetadataToken);
 
 		var staticClass = assembly.GetStaticClassLayout(field.Parent);
-		var constructor = staticClass.Constructor;
+		var staticConstructor = staticClass.StaticConstructor;
 		assembly.Add(instruction.GetBytes().Length, [
 			$"ldr r0, =0x{staticClass.StartAddress:X8} @ static ${staticClass.FullName}",
 		]);
-		if (constructor != null) {
-			assembly.MethodsToTranspile.Enqueue(constructor);
+		if (staticConstructor != null) {
+			assembly.MethodsToTranspile.Enqueue(staticConstructor);
 			assembly.Add(0, [
 				$"ldr r1, [r0]",
 				$"cmp r1, #1",
 				$"ldrne r1, =1",
 				$"strne r1, [r0]",
-				$"blne {GetLabelForMethod(constructor)}",
+				$"blne {GetLabelForMethod(staticConstructor)}",
 			]);
 		}
 		assembly.Add(0, [
