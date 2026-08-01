@@ -1,4 +1,6 @@
+using System.Collections.Generic;
 using System.Reflection.Emit;
+using System.Reflection.Metadata;
 using GBARomMaker.CIL;
 
 namespace GBARomMaker.CILParse.Instructions;
@@ -12,7 +14,16 @@ public class AND : CILInstruction {
 		return [0x5F];
     }
 
-    public string GetCIL(CILFactory factory) {
+    public string GetCIL(CILFactory factory, ICILMethod method) {
 		return "and";
     }
+
+	public void ModifyStack(CILFactory factory, ICILMethod method, Stack<SignatureTypeCode> current) {
+		current.Pop();
+		current.Pop();
+		current.Push(SignatureTypeCode.Int32);
+	}
+    public bool AlwaysBranches => false;
+	public bool SometimesBranches => false;
+	public int? BranchTarget => null;
 }

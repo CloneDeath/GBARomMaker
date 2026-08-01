@@ -1,3 +1,5 @@
+using System.Reflection.Metadata;
+
 namespace GBARomMaker.CIL;
 
 public interface ICILMethod {
@@ -8,5 +10,7 @@ public interface ICILMethod {
 	public bool IsInstance { get; }
 	public bool IsNativeInvoke { get; }
 	public string NativeInvokeTarget { get; }
+	public SignatureTypeCode ReturnValue { get; }
 	public bool HasReturnValue { get; }
+	public SignatureTypeCode[] GetLocalVariableTypes();
 }

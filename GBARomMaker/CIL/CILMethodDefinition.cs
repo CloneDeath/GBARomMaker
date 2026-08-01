@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Metadata;
@@ -57,14 +58,36 @@ public class CILMethodDefinition : ICILMethod {
 		}
 	}
 
-    public bool HasReturnValue {
+	public SignatureTypeCode ReturnValue {
 		get {
 			var signature = _metadata.GetBlobReader(_method.Signature);
 			var header = signature.ReadSignatureHeader();
 			if (header.IsGeneric) signature.ReadCompressedInteger(); // generic parameter count
 			signature.ReadCompressedInteger(); // normal parameter count
-			var returnType = signature.ReadSignatureTypeCode();
-			return returnType != SignatureTypeCode.Void;
+			return signature.ReadSignatureTypeCode();
 		}
+	}
+
+    public bool HasReturnValue => ReturnValue != SignatureTypeCode.Void;
+
+	public SignatureTypeCode[] GetLocalVariableTypes() {
+		var body = _peReader.GetMethodBody(_method.RelativeVirtualAddress);
+
+		if (body.LocalSignature.IsNil) {
+			return [];
+		}
+
+		var localSignature = _metadata.GetStandaloneSignature(body.LocalSignature);
+		var signatureReader = _metadata.GetBlobReader(localSignature.Signature);
+
+		signatureReader.ReadSignatureHeader();
+		var localVariableCount = signatureReader.ReadCompressedInteger();
+
+		var types = new List<SignatureTypeCode>();
+		for (int i = 0; i < localVariableCount; i++) {
+			var type = signatureReader.ReadSignatureTypeCode();
+			types.Add(type);
+		}
+		return types.ToArray();
 	}
 }

@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.Reflection.Emit;
+using System.Reflection.Metadata;
 using GBARomMaker.CIL;
 
 namespace GBARomMaker.CILParse.Instructions;
@@ -39,7 +41,15 @@ public class LDIND_U : CILInstruction {
 		}];
 	}
 
-    public string GetCIL(CILFactory factory) {
+    public string GetCIL(CILFactory factory, ICILMethod method) {
 		return $"ldind.u{Bytes}";
     }
+    
+	public void ModifyStack(CILFactory factory, ICILMethod method, Stack<SignatureTypeCode> current) {
+		throw new NotImplementedException();
+	}
+
+    public bool AlwaysBranches => false;
+	public bool SometimesBranches => false;
+	public int? BranchTarget => null;
 }

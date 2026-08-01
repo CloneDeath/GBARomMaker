@@ -6,6 +6,7 @@ using System.Reflection.Metadata.Ecma335;
 using System.Reflection.PortableExecutable;
 using GBARomMaker.CIL;
 using GBARomMaker.CILParse;
+using GBARomMaker.CILToArm.ControlFlow;
 
 namespace GBARomMaker.CILToArm;
 
@@ -68,16 +69,18 @@ public class CILToArmTranspiler {
 	public void ConvertCILToASM(ARMProgram assembly, ICILMethod method) {
 		if (assembly.MethodsTranspiled.Contains(method.FullName)) return;
 
+		var factory = new CILFactory(_peReader, _metadata);
 
 		var parser = new CILParser();
-		var instructions = parser.GetInstructions(method.BodyBytes);
+		var instructions = new ControlFlowGraph(parser.GetInstructions(method.BodyBytes), factory, method);
 
 		DeclareMethod(assembly, method);
 
 		if (_showCil) {
 			Console.WriteLine($"{method.FullName}");
+			Console.WriteLine($"  locals: {string.Join(", ", method.GetLocalVariableTypes())}");
 			Console.WriteLine(string.Join(" ", method.BodyBytes.Select(b => $"0x{b:X2}")));
-			PrintCIL(instructions);
+			instructions.Print();
 			Console.WriteLine();
 		}
 
@@ -97,7 +100,8 @@ public class CILToArmTranspiler {
 		// Link Register   = lr/r14
 		// Program Counter = pc/r15
 
-		foreach (var instruction in instructions) {
+		foreach (var instructionWithMetadata in instructions.Instructions) {
+			var instruction = instructionWithMetadata.Instruction;
 			var opcode = instruction.OpCode.Name;
 			switch (opcode) {
 				case "nop":
@@ -161,6 +165,14 @@ public class CILToArmTranspiler {
 					var ldc = (GBARomMaker.CILParse.Instructions.LDC_I4_S)instruction;
 					assembly.Add(instruction.GetBytes().Length, [
 						$"ldr r0, =0x{ldc.Data:X2}",
+						"push sp!, { r0 }"
+					]);
+					break;
+				}
+				case "ldc.r4": {
+					var ldc = (GBARomMaker.CILParse.Instructions.LDC_R4)instruction;
+					assembly.Add(instruction.GetBytes().Length, [
+						$"ldr r0, =0x{ldc.DataRaw:X8}",
 						"push sp!, { r0 }"
 					]);
 					break;
@@ -440,11 +452,23 @@ public class CILToArmTranspiler {
 					break;
 				}
 				case "add": {
-					assembly.Add(instruction.GetBytes().Length, [
-						"pop sp!, { r1, r2 }",
-						"add r0,r1,r2",
-						"push sp!, { r0 }"
-					]);
+					var relevantStack = instructionWithMetadata.StackTypes?.TakeLast(2).ToList() ?? throw new InvalidOperationException("Stack not deep enough for an add!");
+					var stackTypeA = relevantStack[0];
+					var stackTypeB = relevantStack[1];
+					
+					// see Table III.2: Binary Numeric Operations
+					if (stackTypeA == SignatureTypeCode.Int32 && stackTypeB == SignatureTypeCode.Int32
+						|| stackTypeA == SignatureTypeCode.Pointer && stackTypeB == SignatureTypeCode.Int32
+						|| stackTypeA == SignatureTypeCode.Int32 && stackTypeB == SignatureTypeCode.Pointer
+						) {
+						assembly.Add(instruction.GetBytes().Length, [
+							$"pop sp!, {{ r1, r2 }} @ <{stackTypeA}, {stackTypeB}>",
+							"add r0,r1,r2",
+							"push sp!, { r0 }"
+						]);
+					} else {
+						throw new NotImplementedException($"CIL 'add' not supported for types {stackTypeA} + {stackTypeB}");
+					}
 					break;
 				}
 				case "and": {
@@ -657,12 +681,4 @@ public class CILToArmTranspiler {
 		return $"method_{method.FullName}".Replace(".", "_").Replace("<", "_").Replace(">", "_").Replace("$", "_");
 	}
 	
-	public void PrintCIL(CILInstruction[] instructions) {
-		var factory = new CILFactory(_peReader, _metadata);
-		var offset = 0;
-		foreach (var instruction in instructions) {
-			Console.WriteLine($"{offset:D4}: {instruction.GetCIL(factory)}");
-			offset += instruction.GetBytes().Length;
-		}
-	}
 }

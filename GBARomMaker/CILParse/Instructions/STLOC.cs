@@ -1,6 +1,8 @@
 using System;
 using GBARomMaker.CIL;
 using System.Reflection.Emit;
+using System.Reflection.Metadata;
+using System.Collections.Generic;
 
 namespace GBARomMaker.CILParse.Instructions;
 
@@ -39,9 +41,16 @@ public class STLOC : CILInstruction {
 		return [opcode];
     }
 
-    public string GetCIL(CILFactory factory) {
+    public string GetCIL(CILFactory factory, ICILMethod method) {
 		return "stloc." + Location;
     }
+
+	public void ModifyStack(CILFactory factory, ICILMethod method, Stack<SignatureTypeCode> current) {
+		current.Pop();
+	}
+    public bool AlwaysBranches => false;
+	public bool SometimesBranches => false;
+	public int? BranchTarget => null;
 }
 
 public class STLOC_S : CILInstruction {
@@ -50,10 +59,14 @@ public class STLOC_S : CILInstruction {
 	}
 
 	public byte Location { get; }
-
 	public OpCode OpCode => OpCodes.Stloc_S;
-
 	public byte[] GetBytes() => [0x13, Location];
+	public string GetCIL(CILFactory factory, ICILMethod method) => $"stloc.s {Location}";
 
-	public string GetCIL(CILFactory factory) => $"stloc.s {Location}";
+	public void ModifyStack(CILFactory factory, ICILMethod method, Stack<SignatureTypeCode> current) {
+		current.Pop();
+	}
+    public bool AlwaysBranches => false;
+	public bool SometimesBranches => false;
+	public int? BranchTarget => null;
 }

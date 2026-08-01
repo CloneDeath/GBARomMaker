@@ -2,6 +2,8 @@ using System;
 using GBARomMaker.CIL;
 using System.Linq;
 using System.Reflection.Emit;
+using System.Reflection.Metadata;
+using System.Collections.Generic;
 
 namespace GBARomMaker.CILParse.Instructions;
 
@@ -20,8 +22,16 @@ public class STFLD : CILInstruction {
 		return new byte[]{0x7D}.Concat(BitConverter.GetBytes(MetadataToken)).ToArray();
 	}
 
-	public string GetCIL(CILFactory factory) {
+	public string GetCIL(CILFactory factory, ICILMethod method) {
 		var field = factory.GetFieldDefinition(MetadataToken);
 		return "stfld " + field.FullName;
 	}
+
+	public void ModifyStack(CILFactory factory, ICILMethod method, Stack<SignatureTypeCode> current) {
+		current.Pop();
+		current.Pop();
+	}
+    public bool AlwaysBranches => false;
+	public bool SometimesBranches => false;
+	public int? BranchTarget => null;
 }

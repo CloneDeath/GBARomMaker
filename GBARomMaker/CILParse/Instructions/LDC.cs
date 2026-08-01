@@ -2,6 +2,8 @@ using System;
 using GBARomMaker.CIL;
 using System.Linq;
 using System.Reflection.Emit;
+using System.Reflection.Metadata;
+using System.Collections.Generic;
 
 namespace GBARomMaker.CILParse.Instructions;
 
@@ -34,9 +36,17 @@ public class LDC_I4 : CILInstruction {
 		return new byte[] { 0x20 }.Concat(BitConverter.GetBytes(Data)).ToArray();
 	}
 
-	public string GetCIL(CILFactory factory) {
+	public string GetCIL(CILFactory factory, ICILMethod method) {
 		return $"ldc.i4 0x{Data:X8}";
 	}
+
+    public void ModifyStack(CILFactory factory, ICILMethod method, Stack<SignatureTypeCode> current) {
+		current.Push(SignatureTypeCode.Int32);
+	}
+
+    public bool AlwaysBranches => false;
+	public bool SometimesBranches => false;
+	public int? BranchTarget => null;
 }
 
 public class LDC_I4_X : CILInstruction {
@@ -82,10 +92,18 @@ public class LDC_I4_X : CILInstruction {
 		}];
 	}
 
-	public string GetCIL(CILFactory factory) {
+	public string GetCIL(CILFactory factory, ICILMethod method) {
 		var sign = Data == -1 ? "m1" : Data.ToString();
 		return $"ldc.i4.{sign}";
 	}
+
+    public void ModifyStack(CILFactory factory, ICILMethod method, Stack<SignatureTypeCode> current) {
+		current.Push(SignatureTypeCode.Int32);
+	}
+
+    public bool AlwaysBranches => false;
+	public bool SometimesBranches => false;
+	public int? BranchTarget => null;
 }
 
 public class LDC_I4_S : CILInstruction {
@@ -98,14 +116,26 @@ public class LDC_I4_S : CILInstruction {
 		return [0x1F, Data];
 	}
 
-	public string GetCIL(CILFactory factory) {
+	public string GetCIL(CILFactory factory, ICILMethod method) {
 		return $"ldc.i4.s 0x{Data:X2}";
 	}
+
+    public void ModifyStack(CILFactory factory, ICILMethod method, Stack<SignatureTypeCode> current) {
+		current.Push(SignatureTypeCode.Int32);
+	}
+
+    public bool AlwaysBranches => false;
+	public bool SometimesBranches => false;
+	public int? BranchTarget => null;
 }
 
 public class LDC_R4 : CILInstruction {
 	public float Data { get; }
-	public LDC_R4(byte[] data) { this.Data = BitConverter.ToSingle(data); }
+	public uint DataRaw { get; }
+	public LDC_R4(byte[] data) {
+		this.Data = BitConverter.ToSingle(data);
+		this.DataRaw = BitConverter.ToUInt32(data);
+	}
 	
 	public OpCode OpCode => OpCodes.Ldc_R4;
 
@@ -113,9 +143,17 @@ public class LDC_R4 : CILInstruction {
 		return new byte[] { 0x22 }.Concat(BitConverter.GetBytes(Data)).ToArray();
 	}
 
-	public string GetCIL(CILFactory factory) {
+	public string GetCIL(CILFactory factory, ICILMethod method) {
 		return $"ldc.r4 {Data}";
 	}
+
+    public void ModifyStack(CILFactory factory, ICILMethod method, Stack<SignatureTypeCode> current) {
+		current.Push(SignatureTypeCode.Single);
+	}
+
+    public bool AlwaysBranches => false;
+	public bool SometimesBranches => false;
+	public int? BranchTarget => null;
 }
 
 public class LDC_R8 : CILInstruction {
@@ -128,7 +166,15 @@ public class LDC_R8 : CILInstruction {
 		return new byte[] { 0x23 }.Concat(BitConverter.GetBytes(Data)).ToArray();
 	}
 
-	public string GetCIL(CILFactory factory) {
+	public string GetCIL(CILFactory factory, ICILMethod method) {
 		return $"ldc.r8 {Data}";
 	}
+
+    public void ModifyStack(CILFactory factory, ICILMethod method, Stack<SignatureTypeCode> current) {
+		current.Push(SignatureTypeCode.Double);
+	}
+
+    public bool AlwaysBranches => false;
+	public bool SometimesBranches => false;
+	public int? BranchTarget => null;
 }
