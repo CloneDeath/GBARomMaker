@@ -34,8 +34,7 @@ public class CALLVIRT : CILInstruction {
 			current.Pop();
 		}
 		if (targetMethod.HasReturnValue) {
-			if (targetMethod.ReturnType != SignatureTypeCode.Int32) throw new NotImplementedException("Only return types of int supported");
-			current.Push(SignatureTypeCode.Int32);
+			current.Push(targetMethod.ReturnType);
 		}
 	}
 

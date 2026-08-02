@@ -26,24 +26,28 @@ public class CILToArmTranspiler {
 	public string[] Transpile() {
 		var entrypoint = DetectEntryPoint();
 
+		var header_line = 2;
 		var assembly = new ARMProgram {
 			new ARMLine(-1, 0, "ldr sp, =0x03007F00 @ CIL stack pointer -- WRAM Internal"),
 			// heap start (added below...)
-			new ARMLine(-1, 2, "ldr r0, =gba_irq_handler @ Install IRQ Handler"),
-			new ARMLine(-1, 3, "ldr r1, =0x03007FFC"),
-			new ARMLine(-1, 4, "str r0, [r1]"),
-			new ARMLine(-1, 5, $"b {GetLabelForMethod(entrypoint)}"),
+			new ARMLine(-1, header_line++, "ldr r0, =gba_irq_handler @ Install IRQ Handler"),
+			new ARMLine(-1, header_line++, "ldr r1, =0x03007FFC"),
+			new ARMLine(-1, header_line++, "str r0, [r1]"),
+			new ARMLine(-1, header_line++, $"b {GetLabelForMethod(entrypoint)}"),
 
-			new ARMLine(-1, 6, $"gba_irq_handler:"),
-			new ARMLine(-1, 7, $"ldr r1, =0x03007FF8 @ ICF"),
-			new ARMLine(-1, 8, $"ldrh r2, [r1]"),
-			new ARMLine(-1, 9, $"orr r2, r2, #1"),
-			new ARMLine(-1, 10, $"strh r2, [r1]"),
-			new ARMLine(-1, 11, $"ldr r0, =1"),
-			new ARMLine(-1, 12, $"ldr r1, =0x04000202 @ IRQ Ack"),
-			new ARMLine(-1, 13, $"strh r0, [r1]"),
-			new ARMLine(-1, 14, $"bx lr"),
+			new ARMLine(-1, header_line++, $"gba_irq_handler:"),
+			new ARMLine(-1, header_line++, $"ldr r1, =0x03007FF8 @ ICF"),
+			new ARMLine(-1, header_line++, $"ldrh r2, [r1]"),
+			new ARMLine(-1, header_line++, $"orr r2, r2, #1"),
+			new ARMLine(-1, header_line++, $"strh r2, [r1]"),
+			new ARMLine(-1, header_line++, $"ldr r0, =1"),
+			new ARMLine(-1, header_line++, $"ldr r1, =0x04000202 @ IRQ Ack"),
+			new ARMLine(-1, header_line++, $"strh r0, [r1]"),
+			new ARMLine(-1, header_line++, $"bx lr"),
 		};
+		foreach (var line in FloatFunctions.GetLines()) {
+			assembly.Add(new ARMLine(-1, header_line++, line));
+		}
 
 		ConvertCILToASM(assembly, entrypoint);
 
@@ -79,7 +83,6 @@ public class CILToArmTranspiler {
 		if (_showCil) {
 			Console.WriteLine($"{method.FullName}");
 			Console.WriteLine($"  locals: {string.Join(", ", method.GetLocalVariableTypes())}");
-			Console.WriteLine(string.Join(" ", method.BodyBytes.Select(b => $"0x{b:X2}")));
 			instructions.Print();
 			Console.WriteLine();
 		}
@@ -452,22 +455,33 @@ public class CILToArmTranspiler {
 					break;
 				}
 				case "add": {
-					var relevantStack = instructionWithMetadata.StackTypes?.TakeLast(2).ToList() ?? throw new InvalidOperationException("Stack not deep enough for an add!");
+					var relevantStack = instructionWithMetadata.StackTypes?.Take(2).ToList() ?? throw new InvalidOperationException($"Stack not deep enough for an add! {instructionWithMetadata}");
 					var stackTypeA = relevantStack[0];
 					var stackTypeB = relevantStack[1];
-					
+	
+					var stackTypeAIsInt32Compatible = stackTypeA == SignatureTypeCode.Int32
+						|| stackTypeA == SignatureTypeCode.Pointer
+						|| stackTypeA == SignatureTypeCode.Byte;
+
+					var stackTypeBIsInt32Compatible = stackTypeB == SignatureTypeCode.Int32
+						|| stackTypeB == SignatureTypeCode.Pointer
+						|| stackTypeB == SignatureTypeCode.Byte;
+
 					// see Table III.2: Binary Numeric Operations
-					if (stackTypeA == SignatureTypeCode.Int32 && stackTypeB == SignatureTypeCode.Int32
-						|| stackTypeA == SignatureTypeCode.Pointer && stackTypeB == SignatureTypeCode.Int32
-						|| stackTypeA == SignatureTypeCode.Int32 && stackTypeB == SignatureTypeCode.Pointer
-						) {
+					if (stackTypeAIsInt32Compatible && stackTypeBIsInt32Compatible) {
 						assembly.Add(instruction.GetBytes().Length, [
 							$"pop sp!, {{ r1, r2 }} @ <{stackTypeA}, {stackTypeB}>",
 							"add r0,r1,r2",
 							"push sp!, { r0 }"
 						]);
+					} else if (stackTypeA == SignatureTypeCode.Single && stackTypeB == SignatureTypeCode.Single) {
+						assembly.Add(instruction.GetBytes().Length, [
+							$"pop sp!, {{ r0, r1 }} @ <{stackTypeA}, {stackTypeB}>",
+							"bl gba_float_add",
+							"push sp!, { r0 }"
+						]);
 					} else {
-						throw new NotImplementedException($"CIL 'add' not supported for types {stackTypeA} + {stackTypeB}");
+						throw new NotImplementedException($"CIL 'add' not supported for types {stackTypeA} + {stackTypeB}. {instructionWithMetadata}");
 					}
 					break;
 				}

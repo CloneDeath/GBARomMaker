@@ -46,7 +46,11 @@ public class LDIND_U : CILInstruction {
     }
     
 	public void ModifyStack(CILFactory factory, ICILMethod method, Stack<SignatureTypeCode> current) {
-		throw new NotImplementedException();
+		if (Bytes == 8) {
+			current.Push(SignatureTypeCode.Int64);
+		} else {
+			current.Push(SignatureTypeCode.Int32);
+		}
 	}
 
     public bool AlwaysBranches => false;

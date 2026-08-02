@@ -45,17 +45,24 @@ public class ControlFlowGraph {
 
 		// Populate Stack
 		_instructions[0].StackTypes = new SignatureTypeCode[0];
-		var toPopulate = new Queue<InstructionMetadata>();
-		foreach (var next in _instructions[0].Next) {
-			toPopulate.Enqueue(next);
-		}
+		var toPopulate = new Queue<InstructionMetadata>(_instructions.ToArray());
 		while (toPopulate.Any()) {
 			var current = toPopulate.Dequeue();
 			if (current.StackTypes != null) continue; // already populated
-			current.StackTypes = current.Previous.First(i => i.StackTypes != null).NextStackTypes;
-			foreach (var next in current.Next) {
-				toPopulate.Enqueue(next);
+			if (!current.Previous.Any()) { // unreachable
+				current.StackTypes = [];
+				continue;
+			};
+			var previousPopulated = current.Previous.FirstOrDefault(i => i.StackTypes != null);
+			if (previousPopulated == null) {
+				// push the previouses onto the queue to be done first, then revisit this one
+				foreach (var prev in current.Previous) {
+					toPopulate.Enqueue(prev);
+				}
+				toPopulate.Enqueue(current);
+				continue;
 			}
+			current.StackTypes = previousPopulated.NextStackTypes;
 		}
 	}
 

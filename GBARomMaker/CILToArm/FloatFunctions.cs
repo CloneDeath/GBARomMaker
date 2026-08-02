@@ -4,7 +4,7 @@ namespace GBARomMaker.CILToArm;
 
 // https://fossies.org/linux/gcc/libgcc/config/arm/ieee754-sf.S
 public static class FloatFunctions {
-	public static string[] GetAdd() {
+	public static string[] GetLines() {
 		return @"
 gba_float_subtract:
 	eor     r1, r1, #0x80000000 

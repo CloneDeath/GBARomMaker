@@ -436,23 +436,34 @@ public class Compiler {
 		{ "lsl", (string line, TokenQueue tokens, ARMMachineCode code) => {
 			tokens.Operation.DequeueValue("lsl");
 			var condition = tokens.Operation.DequeueCondition();
+			var setConditionCodes = tokens.Operation.TryDequeue(1, out var flag) && flag == "s";
 			tokens.Operation.AssertEmpty();
 
 			var destinationRegister = tokens.DequeueRegister();
 			tokens.DequeueComma();
 			var op2Register = tokens.DequeueRegister();
+			var op2 = new ARM.ALU.Register(op2Register) {
+				ShiftType = ShiftType.LSL
+			};
+
 			tokens.DequeueComma();
-			var shiftRegister = tokens.DequeueRegister();
+			var next = tokens.Dequeue();
+			if (next == "#") {
+				var immediate = tokens.DequeueImmediate();
+				op2.ShiftByRegister = false;
+				op2.ShiftAmount = (byte)immediate;
+			} else {
+				var shiftRegister = tokens.ParseRegister(next);
+				op2.ShiftByRegister = true;
+				op2.ShiftRegister = shiftRegister;
+			}
 			tokens.AssertEmpty();
 			code.Add(new DataProcessing {
+				Condition = condition,
 				Operation = ALUOperation.MOV,
 				DestinationRegister = destinationRegister,
-				Condition = condition,
-				Op2 = new ARM.ALU.Register (op2Register) {
-					ShiftRegister = shiftRegister,
-					ShiftType = ShiftType.LSL,
-					ShiftByRegister = true
-				}
+				SetConditionCodes = setConditionCodes,
+				Op2 = op2
 			});
 		}},
 	};

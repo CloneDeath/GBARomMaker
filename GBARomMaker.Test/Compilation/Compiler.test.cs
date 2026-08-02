@@ -50,6 +50,7 @@ public abstract class Compiler_test {
 		// lsl is a psudocommand for mov with logical shift left
 		[TestCase("mov r2, r0, lsl r1", new byte[] { 0x10, 0x21, 0xA0, 0xE1 })]
 		[TestCase("lsl r2, r0, r1", new byte[] { 0x10, 0x21, 0xA0, 0xE1 })]
+		[TestCase("lsls r2, r0, #1", new byte[] { 0x80, 0x20, 0xB0, 0xE1 })]
 		public void CompiledAssemblyIsCorrect(string line, byte[] expectedData) {
 			var compiler = new Compiler();
 

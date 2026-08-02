@@ -48,4 +48,9 @@ public class InstructionMetadata {
 			return stack.ToList();
 		}
 	}
+
+	public override string ToString() {
+		var stack = StackTypes == null ? "null" : string.Join(", ", StackTypes ?? []);
+		return $"{nameof(InstructionMetadata)} {{ '{GetCIL()}', offset: { Offset }, stack: [{ stack }] }}";
+	}
 }
