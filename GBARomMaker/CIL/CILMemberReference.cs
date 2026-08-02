@@ -1,6 +1,7 @@
 using System;
 using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
+using GBARomMaker.CIL.Blobs;
 
 namespace GBARomMaker.CIL;
 
@@ -8,16 +9,16 @@ public class CILMemberReference : ICILMethod {
 	private readonly PEReader _peReader;
 	private readonly MetadataReader _metadata;
 	private readonly MemberReference _self;
+	private readonly MethodSignatureBlob _signature;
 	
 	public CILMemberReference(PEReader peReader, MetadataReader metadata, MemberReference self) {
 		this._peReader = peReader;
 		this._metadata = metadata;
 		this._self = self;
+		this._signature = new MethodSignatureBlob(metadata, self.Signature);
 	}
-
-	public MemberReferenceKind Kind => _self.GetKind();
-
-    public ICILType Parent {
+    
+	public ICILType Parent {
         get {
 			var factory = new CILFactory(_peReader, _metadata);
 			switch (_self.Parent.Kind) {
@@ -33,15 +34,17 @@ public class CILMemberReference : ICILMethod {
 			}
         }
     }
-
 	public string Name => _metadata.GetString(_self.Name);
 	public string FullName => $"{Parent.Namespace}.{Parent.Name}.{Name}";
-	public byte[] BodyBytes => throw new NotImplementedException();
-    public bool IsInstance => throw new NotImplementedException();
-    public int ParameterCount => throw new NotImplementedException();
-    public bool IsNativeInvoke => throw new NotImplementedException();
-    public string NativeInvokeTarget => throw new NotImplementedException();
-	public SignatureTypeCode ReturnValue => throw new NotImplementedException();
-    public bool HasReturnValue => throw new NotImplementedException();
-    public SignatureTypeCode[] GetLocalVariableTypes() => throw new NotImplementedException();
+	public byte[] BodyBytes => throw new NotImplementedException($"For {FullName}");
+	public bool IsInstance => _signature.IsInstance;
+    public int ParameterCount => _signature.ParameterCount;
+	public SignatureTypeCode ReturnType => _signature.ReturnType;
+	public bool HasReturnValue => ReturnType != SignatureTypeCode.Void;
+	public SignatureTypeCode[] GetArgumentTypes() => _signature.ArgumentTypes;
+
+	public MemberReferenceKind Kind => _self.GetKind();
+    public bool IsNativeInvoke => throw new NotImplementedException($"For {FullName}");
+    public string NativeInvokeTarget => throw new NotImplementedException($"For {FullName}");
+    public SignatureTypeCode[] GetLocalVariableTypes() => throw new NotImplementedException($"For {FullName}");
 }

@@ -28,7 +28,8 @@ public class LDFLD : CILInstruction {
 	}
     
 	public void ModifyStack(CILFactory factory, ICILMethod method, Stack<SignatureTypeCode> current) {
-		throw new NotImplementedException();
+		var field = factory.GetFieldDefinition(MetadataToken);
+		current.Push(field.Type);
 	}
 
     public bool AlwaysBranches => false;

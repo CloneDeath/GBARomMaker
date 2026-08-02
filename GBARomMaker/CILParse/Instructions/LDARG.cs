@@ -43,7 +43,17 @@ public class LDARG : CILInstruction {
     }
 
     public void ModifyStack(CILFactory factory, ICILMethod method, Stack<SignatureTypeCode> current) {
-		throw new NotImplementedException();
+		if (!method.IsInstance) {
+			current.Push(method.GetArgumentTypes()[Argument]);
+			return;
+		}
+
+		if (Argument == 0) {
+			current.Push(SignatureTypeCode.Pointer);
+			return;
+		}
+
+		current.Push(method.GetArgumentTypes()[Argument - 1]);
 	}
 
     public bool AlwaysBranches => false;

@@ -1,9 +1,8 @@
-using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
 using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
+using GBARomMaker.CIL.Blobs;
 
 namespace GBARomMaker.CIL;
 
@@ -11,29 +10,24 @@ public class CILMethodDefinition : ICILMethod {
 	private readonly PEReader _peReader;
 	private readonly MetadataReader _metadata;
 	private readonly MethodDefinition _method;
-	
-	public CILTypeDefinition Parent => new(_peReader, _metadata, _metadata.GetTypeDefinition(_method.GetDeclaringType()));
+	private readonly MethodSignatureBlob _signature;
 
 	public CILMethodDefinition(PEReader peReader, MetadataReader metadata, MethodDefinition method) {
 		this._peReader = peReader;
 		this._metadata = metadata;
 		this._method = method;
+		this._signature = new MethodSignatureBlob(metadata, method.Signature);
 	}
 
+	public CILTypeDefinition Parent => new(_peReader, _metadata, _metadata.GetTypeDefinition(_method.GetDeclaringType()));
 	public string Name => _metadata.GetString(_method.Name);
 	public string FullName => $"{Parent.Namespace}.{Parent.Name}.{Name}";
-
 	public byte[] BodyBytes => _peReader.GetMethodBody(_method.RelativeVirtualAddress)?.GetILBytes() ?? [];
-
-	public int ParameterCount => _method.GetParameters().Count();
-
-	public bool IsInstance {
-		get {
-			var signature = _metadata.GetBlobReader(_method.Signature);
-			var header = signature.ReadSignatureHeader();
-			return header.IsInstance;
-		}
-	}
+	public bool IsInstance => _signature.IsInstance;
+	public int ParameterCount => _signature.ParameterCount;
+	public SignatureTypeCode ReturnType => _signature.ReturnType;
+	public bool HasReturnValue => ReturnType != SignatureTypeCode.Void;
+	public SignatureTypeCode[] GetArgumentTypes() => _signature.ArgumentTypes;
 
 	public bool IsConstructor => IsInstanceConstructor || IsStaticConstructor;
 	public bool IsInstanceConstructor => Name == ".ctor";
@@ -57,18 +51,6 @@ public class CILMethodDefinition : ICILMethod {
 			return _metadata.GetString(import.Name);
 		}
 	}
-
-	public SignatureTypeCode ReturnValue {
-		get {
-			var signature = _metadata.GetBlobReader(_method.Signature);
-			var header = signature.ReadSignatureHeader();
-			if (header.IsGeneric) signature.ReadCompressedInteger(); // generic parameter count
-			signature.ReadCompressedInteger(); // normal parameter count
-			return signature.ReadSignatureTypeCode();
-		}
-	}
-
-    public bool HasReturnValue => ReturnValue != SignatureTypeCode.Void;
 
 	public SignatureTypeCode[] GetLocalVariableTypes() {
 		var body = _peReader.GetMethodBody(_method.RelativeVirtualAddress);

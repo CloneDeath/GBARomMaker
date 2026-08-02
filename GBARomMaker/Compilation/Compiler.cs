@@ -29,6 +29,8 @@ public class Compiler {
 			code.AddLabel(label);
 			return;
 		}
+
+		if (tokens.Length == 0) return; // empty line
 		
 		var tokenQueue = new TokenQueue(tokens, line);
 		var operation = tokenQueue.Dequeue();

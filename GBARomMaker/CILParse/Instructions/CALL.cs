@@ -34,7 +34,7 @@ public class CALL : CILInstruction {
 			current.Pop();
 		}
 		if (targetMethod.HasReturnValue) {
-			if (targetMethod.ReturnValue != SignatureTypeCode.Int32) throw new NotImplementedException("Only return types of int supported");
+			if (targetMethod.ReturnType != SignatureTypeCode.Int32) throw new NotImplementedException("Only return types of int supported");
 			current.Push(SignatureTypeCode.Int32);
 		}
 	}

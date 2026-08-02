@@ -512,6 +512,7 @@ public class CILToArmTranspiler {
 	private void DeclareMethod(ARMProgram assembly, ICILMethod method) {
 		assembly.Add(0, [
 			$"{GetLabelForMethod(method)}:",
+			$"@ {method.ReturnType} {method.FullName}({string.Join(", ", method.GetArgumentTypes())})",
 			"push sp!, { r0, r1, r2, r3, r4, r7, r9, r10, r11, r12, lr }",
 			$"add r7, sp, #{11 * 4}"
 		]);
@@ -680,5 +681,4 @@ public class CILToArmTranspiler {
 	private string GetLabelForMethod(ICILMethod method) {
 		return $"method_{method.FullName}".Replace(".", "_").Replace("<", "_").Replace(">", "_").Replace("$", "_");
 	}
-	
 }
