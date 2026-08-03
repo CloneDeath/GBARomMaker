@@ -131,6 +131,36 @@ gba_float_add_j8:
 	teqeq   r0, r1
 	orrne   r0, r0, #0x400000
 	bx      lr
+
+gba_float_to_int:
+	lsl     r2, r0, #1
+	cmp     r2, #0x7f000000
+	bcc     gba_float_to_int_j0
+	mov     r3, #0x9e
+	subs    r2, r3, r2, lsr #24
+	bls     gba_float_to_int_j1
+	lsl     r3, r0, #8
+	orr     r3, r3, #0x80000000
+	tst     r0, #0x80000000
+	lsr     r0, r3, r2
+	rsbne   r0, r0, #0
+	bx      lr
+gba_float_to_int_j0:
+	mov     r0, #0
+	bx      lr
+gba_float_to_int_j1:
+	cmn     r2, #0x61
+	bne     gba_float_to_int_j2
+	lsls    r2, r0, #9
+	bne     gba_float_to_int_j3
+gba_float_to_int_j2:
+	ands    r0, r0, #0x80000000
+	mvneq   r0, #0x80000000
+	bx      lr
+gba_float_to_int_j3:
+	mov     r0, #0
+	bx      lr
+
 	"
 	.Split("\n", StringSplitOptions.RemoveEmptyEntries);
 	}

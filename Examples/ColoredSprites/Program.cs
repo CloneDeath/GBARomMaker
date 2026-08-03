@@ -32,7 +32,7 @@ unsafe {
 		}
 		y += 1.5f;
 		sprite.Y = (byte)y;
-		DisplayController.SetPixel(x, 50, Colors.Green);
+		DisplayController.SetPixel(x, x, Colors.Green);
 		Interrupt.WaitVBlank();
 	};
 }

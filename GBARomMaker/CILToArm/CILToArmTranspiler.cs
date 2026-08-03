@@ -107,29 +107,80 @@ public class CILToArmTranspiler {
 			var instruction = instructionWithMetadata.Instruction;
 			var opcode = instruction.OpCode.Name;
 			switch (opcode) {
-				case "nop":
-				case "conv.i": {
+				case "nop": {
 					assembly.Add(instruction.GetBytes().Length, [
 						"nop"
 					]);
 					break;
 				}
+				case "conv.i": {
+					var topOfStackType = instructionWithMetadata.StackTypes?.FirstOrDefault() ?? throw new InvalidOperationException($"Stack not deep enough for an add! {instructionWithMetadata}");
+					var stackTypeIsInt32Compatible = topOfStackType == SignatureTypeCode.Int32
+						|| topOfStackType == SignatureTypeCode.Pointer
+						|| topOfStackType == SignatureTypeCode.Byte;
+					if (stackTypeIsInt32Compatible) {
+						assembly.Add(instruction.GetBytes().Length, [
+							$"nop @ <{topOfStackType}> is int32 compatible"
+						]);
+					} else if (topOfStackType == SignatureTypeCode.Single) {
+						assembly.Add(instruction.GetBytes().Length, [
+							"pop sp!, { r0 }",
+							$"bl gba_float_to_int @ <{topOfStackType}> to int32",
+							"push sp!, { r0 }"
+						]);
+					} else {
+						throw new NotImplementedException($"CIL 'conv.i' not supported for type {topOfStackType}. {instructionWithMetadata}");
+					}
+					break;
+				}
 				case "conv.u1": {
-					assembly.Add(instruction.GetBytes().Length, [
-						"pop sp!, { r1 }",
-						"ldr r2, =0xFF",
-						"and r0, r1, r2",
-						"push sp!, { r0 }"
-					]);
+					var topOfStackType = instructionWithMetadata.StackTypes?.FirstOrDefault() ?? throw new InvalidOperationException($"Stack not deep enough for an add! {instructionWithMetadata}");
+					var stackTypeIsInt32Compatible = topOfStackType == SignatureTypeCode.Int32
+						|| topOfStackType == SignatureTypeCode.Pointer
+						|| topOfStackType == SignatureTypeCode.Byte;
+					if (stackTypeIsInt32Compatible) {
+						assembly.Add(instruction.GetBytes().Length, [
+							"pop sp!, { r1 }",
+							"ldr r2, =0xFF",
+							"and r0, r1, r2",
+							"push sp!, { r0 }"
+						]);
+					} else if (topOfStackType == SignatureTypeCode.Single) {
+						assembly.Add(instruction.GetBytes().Length, [
+							"pop sp!, { r0 }",
+							$"bl gba_float_to_int @ <{topOfStackType}> to int32",
+							"ldr r1, =0xFF",
+							"and r0, r0, r1",
+							"push sp!, { r0 }"
+						]);
+					} else {
+						throw new NotImplementedException($"CIL 'conv.u1' not supported for type {topOfStackType}. {instructionWithMetadata}");
+					}
 					break;
 				}
 				case "conv.u2": {
-					assembly.Add(instruction.GetBytes().Length, [
-						"pop sp!, { r1 }",
-						"ldr r2, =0xFFFF",
-						"and r0, r1, r2",
-						"push sp!, { r0 }"
-					]);
+					var topOfStackType = instructionWithMetadata.StackTypes?.FirstOrDefault() ?? throw new InvalidOperationException($"Stack not deep enough for an add! {instructionWithMetadata}");
+					var stackTypeIsInt32Compatible = topOfStackType == SignatureTypeCode.Int32
+						|| topOfStackType == SignatureTypeCode.Pointer
+						|| topOfStackType == SignatureTypeCode.Byte;
+					if (stackTypeIsInt32Compatible) {
+						assembly.Add(instruction.GetBytes().Length, [
+							"pop sp!, { r1 }",
+							"ldr r2, =0xFFFF",
+							"and r0, r1, r2",
+							"push sp!, { r0 }"
+						]);
+					} else if (topOfStackType == SignatureTypeCode.Single) {
+						assembly.Add(instruction.GetBytes().Length, [
+							"pop sp!, { r0 }",
+							$"bl gba_float_to_int @ <{topOfStackType}> to int32",
+							"ldr r1, =0xFFFF",
+							"and r0, r0, r1",
+							"push sp!, { r0 }"
+						]);
+					} else {
+						throw new NotImplementedException($"CIL 'conv.u2' not supported for type {topOfStackType}. {instructionWithMetadata}");
+					}
 					break;
 				}
 				case "dup": {

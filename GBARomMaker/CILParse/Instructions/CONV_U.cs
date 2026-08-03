@@ -44,7 +44,13 @@ public class CONV_U : CILInstruction {
 
 	public void ModifyStack(CILFactory factory, ICILMethod method, Stack<SignatureTypeCode> current) {
 		current.Pop();
-		current.Push(SignatureTypeCode.Int32);
+		current.Push(Bytes switch {
+			1 => SignatureTypeCode.Byte,
+			2 => SignatureTypeCode.Int16,
+			4 => SignatureTypeCode.Int32,
+			8 => SignatureTypeCode.Int64,
+			_ => throw new Exception("Invalid number of bytes")
+		});
 	}
 
     public bool AlwaysBranches => false;

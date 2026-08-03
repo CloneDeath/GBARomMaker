@@ -44,7 +44,7 @@ public class ControlFlowGraph {
 		}
 
 		// Populate Stack
-		_instructions[0].StackTypes = new SignatureTypeCode[0];
+		_instructions[0].StackTypes = new Stack<SignatureTypeCode>();
 		var toPopulate = new Queue<InstructionMetadata>(_instructions.ToArray());
 		while (toPopulate.Any()) {
 			var current = toPopulate.Dequeue();

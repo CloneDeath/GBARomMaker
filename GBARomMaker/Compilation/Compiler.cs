@@ -356,6 +356,9 @@ public class Compiler {
 		{ "cmp", (string line, TokenQueue tokens, ARMMachineCode code) => {
 			LoadTestOperation(line, tokens, code, ALUOperation.CMP);
 		}},
+		{ "cmn", (string line, TokenQueue tokens, ARMMachineCode code) => {
+			LoadTestOperation(line, tokens, code, ALUOperation.CMN);
+		}},
 		{ "teq", (string line, TokenQueue tokens, ARMMachineCode code) => {
 			LoadTestOperation(line, tokens, code, ALUOperation.TEQ);
 		}},
