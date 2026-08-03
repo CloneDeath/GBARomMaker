@@ -47,6 +47,20 @@ public class OperationCharacterQueue {
 		["NV"] = Condition.NV,
 	};
 
+	public bool DequeueFlagIfPresent(string flag) {
+		if (_index + flag.Length > _operation.Length) {
+			return false;
+		}
+
+		var next = _operation[_index .. (_index + flag.Length)];
+		if (flag == next) {
+			_index += flag.Length;
+			return true;
+		}
+
+		return false;
+	}
+
 	public Condition DequeueCondition() {
 		if (_index + 2 > _operation.Length) {
 			return Condition.Always;

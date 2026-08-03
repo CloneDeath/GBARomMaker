@@ -10,9 +10,12 @@ public abstract class Compiler_test {
 		[TestCase("stmia sp!, { r0 }", new byte[] { 0x01, 0x00, 0xAD, 0xE8 })]
 		[TestCase("ldmdb sp!, { r0, r1 }", new byte[] { 0x03, 0x00, 0x3D, 0xE9 })]
 		[TestCase("bx lr", new byte[] { 0x1E, 0xFF, 0x2F, 0xE1 })]
+		[TestCase("swi 0x050000", new byte[] { 0x00, 0x00, 0x05, 0xEF })]
+
+		// tests
 		[TestCase("cmp r0, r1", new byte[] { 0x01, 0x00, 0x50, 0xE1 })]
 		[TestCase("cmp r0, #10", new byte[] { 0x0A, 0x00, 0x50, 0xE3 })]
-		[TestCase("swi 0x050000", new byte[] { 0x00, 0x00, 0x05, 0xEF })]
+		[TestCase("teqne r2, r3", new byte[] { 0x03, 0x00, 0x32, 0x11 })]
 
 		// str variations
 		[TestCase("str r0, [r1, #0]", new byte[] { 0x00, 0x00, 0x81, 0xE5 })]
@@ -46,11 +49,13 @@ public abstract class Compiler_test {
 		[TestCase("mov r1, #0x1F @ Red", new byte[] { 0x1F, 0x10, 0xA0, 0xE3 })]
 		[TestCase("movlt r0, #1", new byte[] { 0x01, 0x00, 0xA0, 0xB3 })]
 		[TestCase("mvn r2, r2", new byte[] { 0x02, 0x20, 0xE0, 0xE1 })]
+		[TestCase("mvnsne ip, r2, asr #24", new byte[] { 0x42, 0xCC, 0xF0, 0x11 })]
 		
 		// lsl is a psudocommand for mov with logical shift left
 		[TestCase("mov r2, r0, lsl r1", new byte[] { 0x10, 0x21, 0xA0, 0xE1 })]
 		[TestCase("lsl r2, r0, r1", new byte[] { 0x10, 0x21, 0xA0, 0xE1 })]
 		[TestCase("lsls r2, r0, #1", new byte[] { 0x80, 0x20, 0xB0, 0xE1 })]
+		[TestCase("lslsne r3, r1, #1", new byte[] { 0x81, 0x30, 0xB0, 0x11 })]
 		public void CompiledAssemblyIsCorrect(string line, byte[] expectedData) {
 			var compiler = new Compiler();
 

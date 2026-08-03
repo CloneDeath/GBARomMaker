@@ -384,23 +384,14 @@ public class Compiler {
 			LoadALUOperation(line, tokens, code, ALUOperation.BIC);
 		}},
 
+		// Test
 		{ "cmp", (string line, TokenQueue tokens, ARMMachineCode code) => {
-			tokens.Operation.DequeueValue("cmp");
-			var condition = tokens.Operation.DequeueCondition();
-			tokens.Operation.AssertEmpty();
-
-			var op1 = tokens.DequeueRegister();
-			tokens.DequeueComma();
-			var op2 = tokens.DequeueAluOp2();
-			tokens.AssertEmpty();
-			code.Add(new DataProcessing {
-				Operation = ALUOperation.CMP,
-				SetConditionCodes = true,
-				Op1Register = op1,
-				Op2 = op2,
-				Condition = condition
-			});
+			LoadTestOperation(line, tokens, code, ALUOperation.CMP);
 		}},
+		{ "teq", (string line, TokenQueue tokens, ARMMachineCode code) => {
+			LoadTestOperation(line, tokens, code, ALUOperation.TEQ);
+		}},
+
 		{ "mov", (string line, TokenQueue tokens, ARMMachineCode code) => {
 			tokens.Operation.DequeueValue("mov");
 			var condition = tokens.Operation.DequeueCondition();
@@ -435,8 +426,8 @@ public class Compiler {
 		}},
 		{ "lsl", (string line, TokenQueue tokens, ARMMachineCode code) => {
 			tokens.Operation.DequeueValue("lsl");
+			var setConditionCodes = tokens.Operation.DequeueFlagIfPresent("s");
 			var condition = tokens.Operation.DequeueCondition();
-			var setConditionCodes = tokens.Operation.TryDequeue(1, out var flag) && flag == "s";
 			tokens.Operation.AssertEmpty();
 
 			var destinationRegister = tokens.DequeueRegister();
@@ -467,6 +458,24 @@ public class Compiler {
 			});
 		}},
 	};
+	
+	public static void LoadTestOperation(string line, TokenQueue tokens, ARMMachineCode code, ALUOperation operation) {
+		tokens.Operation.DequeueValue(operation.ToString());
+		var condition = tokens.Operation.DequeueCondition();
+		tokens.Operation.AssertEmpty();
+
+		var op1 = tokens.DequeueRegister();
+		tokens.DequeueComma();
+		var op2 = tokens.DequeueAluOp2();
+		tokens.AssertEmpty();
+		code.Add(new DataProcessing {
+			Operation = operation,
+			SetConditionCodes = true,
+			Op1Register = op1,
+			Op2 = op2,
+			Condition = condition
+		});
+	}
 
 	public static void LoadALUOperation(string line, TokenQueue tokens, ARMMachineCode code, ALUOperation operation) {
 		tokens.Operation.DequeueValue(operation.ToString());
