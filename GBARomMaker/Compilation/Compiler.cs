@@ -403,6 +403,27 @@ public class Compiler {
 		{ "lsr", (string line, TokenQueue tokens, ARMMachineCode code) => {
 			LoadLogicalShiftOperation(line, tokens, code, ShiftType.LSR);
 		}},
+		{ "rrx", (string line, TokenQueue tokens, ARMMachineCode code) => {
+			tokens.Operation.DequeueValue("rrx");
+			var condition = tokens.Operation.DequeueCondition();
+			tokens.Operation.AssertEmpty();
+
+			var destinationRegister = tokens.DequeueRegister();
+			tokens.DequeueComma();
+			var op2Register = tokens.DequeueRegister();
+			var op2 = new ARM.ALU.Register(op2Register) {
+				ShiftType = ShiftType.ROR,
+				ShiftByRegister = false,
+				ShiftAmount = 0
+			};
+			tokens.AssertEmpty();
+			code.Add(new DataProcessing {
+				Condition = condition,
+				Operation = ALUOperation.MOV,
+				DestinationRegister = destinationRegister,
+				Op2 = op2
+			});
+		}},
 
 		// branch
 		{ "bx", (string line, TokenQueue tokens, ARMMachineCode code) => {

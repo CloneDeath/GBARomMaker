@@ -97,7 +97,7 @@ gba_float_add_j1:
 	lsl     r3, r1, #1
 	mvns    r4, r2, asr #24
 	mvnsne  r4, r3, asr #24
-	beq     gba_fload_add_j8
+	beq     gba_float_add_j8
 	teq     r2, r3
 	beq     gba_float_add_j9
 	teq     r2, #0

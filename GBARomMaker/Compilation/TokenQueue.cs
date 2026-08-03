@@ -32,13 +32,27 @@ public class TokenQueue : IEnumerable<string> {
 			if (!_tokenQueue.Any()) return new Register(op2Register);
 			DequeueComma();
 
+			if (Peek() == "rrx") {
+				Dequeue();
+				DequeueToken("#");
+				var amount = DequeueImmediate();
+				if (amount != 1) throw new Exception($"rrx is only valid with immediate value 1, got {amount}. Line '{_line}'");
+
+				// RRX#1 is encoded as an ROR#0
+				return new Register(op2Register) {
+					ShiftAmount = 0,
+					ShiftType = ShiftType.ROR,
+					ShiftByRegister = false
+				};
+			}
+
 			var shiftType = DequeueShiftType();
 
 			next = _tokenQueue.Dequeue();
 			if (next == "#") {
 				var immediate = DequeueImmediate();
 				return new Register(op2Register) {
-					ShiftAmount = (byte)immediate,					
+					ShiftAmount = (byte)immediate,
 					ShiftType = shiftType,
 					ShiftByRegister = false
 				};
@@ -98,9 +112,11 @@ public class TokenQueue : IEnumerable<string> {
 		if (_tokenQueue.Any()) throw new Exception($"Too many arguments for '{Operation}'. Line '{_line}'");
 	}
 	
-	public void DequeueComma() {
-		var seperator = Dequeue();
-		if (seperator != ",") throw new Exception($"Expected a comma between arguments, got '{seperator}'. Line '{_line}'");
+	public void DequeueComma() => DequeueToken(",");
+
+	public void DequeueToken(string token) {
+		var next = Dequeue();
+		if (next != token) throw new Exception($"Expected a '{token}' between arguments, got '{next}'. Line '{_line}'");
 	}
 
 	public ShiftType DequeueShiftType() {
