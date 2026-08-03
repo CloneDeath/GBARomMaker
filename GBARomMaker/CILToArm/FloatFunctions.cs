@@ -13,8 +13,8 @@ gba_float_add:
 	lsls    r2, r0, #1
 	lslsne  r3, r1, #1
 	teqne   r2, r3
-	mvnsne  ip, r2, asr #24
-	mvnsne  ip, r3, asr #24
+	mvnsne  r4, r2, asr #24
+	mvnsne  r4, r3, asr #24
 	beq     gba_float_add_j1
 	lsr     r2, r2, #24
 	rsbs    r3, r2, r3, lsr #24
@@ -66,7 +66,7 @@ gba_float_add_j4:
 	subs    r2, r2, #1
 	cmpcs   r0, #0x800000
 	bcs     gba_float_add_j5
-	lsrs    ip, r0, #12
+	lsrs    r4, r0, #12
 	lsleq   r0, r0, #12
 	subeq   r2, r2, #12
 	tst     r0, #0xff0000
@@ -95,8 +95,8 @@ gba_float_add_j2:
 	b       gba_float_add_j7
 gba_float_add_j1:
 	lsl     r3, r1, #1
-	mvns    ip, r2, asr #24
-	mvnsne  ip, r3, asr #24
+	mvns    r4, r2, asr #24
+	mvnsne  r4, r3, asr #24
 	beq     gba_fload_add_j8
 	teq     r2, r3
 	beq     gba_float_add_j9

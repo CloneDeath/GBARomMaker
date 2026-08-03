@@ -299,39 +299,7 @@ public class Compiler {
 		{ "pop", (string line, TokenQueue tokens, ARMMachineCode code) => {
 			LoadBlockDataTransfer("pop", line, tokens, code);
 		}},
-		{ "bx", (string line, TokenQueue tokens, ARMMachineCode code) => {
-			tokens.Operation.DequeueValue("bx");
-			var condition = tokens.Operation.DequeueCondition();
-			tokens.Operation.AssertEmpty();
 
-			var register = tokens.DequeueRegister();
-			tokens.AssertEmpty();
-			code.Add(new BranchExchange {
-				OpCode = BranchExchangeOpCode.BX,
-				Register = register,
-				Condition = condition
-			});
-		}},
-		{ "b", (string line, TokenQueue tokens, ARMMachineCode code) => {
-			tokens.Operation.DequeueValue("b");
-			var condition = tokens.Operation.DequeueCondition();
-			var gotCondition = tokens.Operation.Index == 3;
-			Instruction instruction = Instruction.B;
-			if (!gotCondition) {
-				if (tokens.Operation.TryDequeue(1, out var flag) && flag == "l") {
-					instruction = Instruction.BL;
-					condition = tokens.Operation.DequeueCondition();
-				}
-			}
-			tokens.Operation.AssertEmpty();
-
-			var branchTarget = tokens.Dequeue();
-			tokens.AssertEmpty();
-			code.AddNeedsLabel(new Branch {
-				Instruction = instruction,
-				Condition = condition
-			}, branchTarget);
-		}},
 		{ "mul", (string line, TokenQueue tokens, ARMMachineCode code) => {
 			tokens.Operation.DequeueValue("mul");
 			var condition = tokens.Operation.DequeueCondition();
@@ -391,6 +359,9 @@ public class Compiler {
 		{ "teq", (string line, TokenQueue tokens, ARMMachineCode code) => {
 			LoadTestOperation(line, tokens, code, ALUOperation.TEQ);
 		}},
+		{ "tst", (string line, TokenQueue tokens, ARMMachineCode code) => {
+			LoadTestOperation(line, tokens, code, ALUOperation.TST);
+		}},
 
 		{ "mov", (string line, TokenQueue tokens, ARMMachineCode code) => {
 			tokens.Operation.DequeueValue("mov");
@@ -402,14 +373,15 @@ public class Compiler {
 			var op2 = tokens.DequeueAluOp2();
 			tokens.AssertEmpty();
 			code.Add(new DataProcessing {
+				Condition = condition,
 				Operation = ALUOperation.MOV,
 				DestinationRegister = destinationRegister,
 				Op2 = op2,
-				Condition = condition
 			});
 		}},
 		{ "mvn", (string line, TokenQueue tokens, ARMMachineCode code) => {
 			tokens.Operation.DequeueValue("mvn");
+			var setConditionCodes = tokens.Operation.DequeueFlagIfPresent("s");
 			var condition = tokens.Operation.DequeueCondition();
 			tokens.Operation.AssertEmpty();
 
@@ -418,46 +390,89 @@ public class Compiler {
 			var op2 = tokens.DequeueAluOp2();
 			tokens.AssertEmpty();
 			code.Add(new DataProcessing {
+				Condition = condition,
 				Operation = ALUOperation.MVN,
 				DestinationRegister = destinationRegister,
 				Op2 = op2,
-				Condition = condition
+				SetConditionCodes = setConditionCodes
 			});
 		}},
 		{ "lsl", (string line, TokenQueue tokens, ARMMachineCode code) => {
-			tokens.Operation.DequeueValue("lsl");
-			var setConditionCodes = tokens.Operation.DequeueFlagIfPresent("s");
+			LoadLogicalShiftOperation(line, tokens, code, ShiftType.LSL);
+		}},
+		{ "lsr", (string line, TokenQueue tokens, ARMMachineCode code) => {
+			LoadLogicalShiftOperation(line, tokens, code, ShiftType.LSR);
+		}},
+
+		// branch
+		{ "bx", (string line, TokenQueue tokens, ARMMachineCode code) => {
+			tokens.Operation.DequeueValue("bx");
 			var condition = tokens.Operation.DequeueCondition();
 			tokens.Operation.AssertEmpty();
 
-			var destinationRegister = tokens.DequeueRegister();
-			tokens.DequeueComma();
-			var op2Register = tokens.DequeueRegister();
-			var op2 = new ARM.ALU.Register(op2Register) {
-				ShiftType = ShiftType.LSL
-			};
-
-			tokens.DequeueComma();
-			var next = tokens.Dequeue();
-			if (next == "#") {
-				var immediate = tokens.DequeueImmediate();
-				op2.ShiftByRegister = false;
-				op2.ShiftAmount = (byte)immediate;
-			} else {
-				var shiftRegister = tokens.ParseRegister(next);
-				op2.ShiftByRegister = true;
-				op2.ShiftRegister = shiftRegister;
-			}
+			var register = tokens.DequeueRegister();
 			tokens.AssertEmpty();
-			code.Add(new DataProcessing {
-				Condition = condition,
-				Operation = ALUOperation.MOV,
-				DestinationRegister = destinationRegister,
-				SetConditionCodes = setConditionCodes,
-				Op2 = op2
+			code.Add(new BranchExchange {
+				OpCode = BranchExchangeOpCode.BX,
+				Register = register,
+				Condition = condition
 			});
 		}},
+		{ "b", (string line, TokenQueue tokens, ARMMachineCode code) => {
+			tokens.Operation.DequeueValue("b");
+			var condition = tokens.Operation.DequeueCondition();
+			var gotCondition = tokens.Operation.Index == 3;
+			Instruction instruction = Instruction.B;
+			if (!gotCondition) {
+				if (tokens.Operation.TryDequeue(1, out var flag) && flag == "l") {
+					instruction = Instruction.BL;
+					condition = tokens.Operation.DequeueCondition();
+				}
+			}
+			tokens.Operation.AssertEmpty();
+
+			var branchTarget = tokens.Dequeue();
+			tokens.AssertEmpty();
+			code.AddNeedsLabel(new Branch {
+				Instruction = instruction,
+				Condition = condition
+			}, branchTarget);
+		}},
 	};
+
+	public static void LoadLogicalShiftOperation(string line, TokenQueue tokens, ARMMachineCode code, ShiftType shiftType) {
+		tokens.Operation.DequeueValue(shiftType.ToString());
+		var setConditionCodes = tokens.Operation.DequeueFlagIfPresent("s");
+		var condition = tokens.Operation.DequeueCondition();
+		tokens.Operation.AssertEmpty();
+
+		var destinationRegister = tokens.DequeueRegister();
+		tokens.DequeueComma();
+		var op2Register = tokens.DequeueRegister();
+		var op2 = new ARM.ALU.Register(op2Register) {
+			ShiftType = shiftType
+		};
+
+		tokens.DequeueComma();
+		var next = tokens.Dequeue();
+		if (next == "#") {
+			var immediate = tokens.DequeueImmediate();
+			op2.ShiftByRegister = false;
+			op2.ShiftAmount = (byte)immediate;
+		} else {
+			var shiftRegister = tokens.ParseRegister(next);
+			op2.ShiftByRegister = true;
+			op2.ShiftRegister = shiftRegister;
+		}
+		tokens.AssertEmpty();
+		code.Add(new DataProcessing {
+			Condition = condition,
+			Operation = ALUOperation.MOV,
+			DestinationRegister = destinationRegister,
+			SetConditionCodes = setConditionCodes,
+			Op2 = op2
+		});
+	}
 	
 	public static void LoadTestOperation(string line, TokenQueue tokens, ARMMachineCode code, ALUOperation operation) {
 		tokens.Operation.DequeueValue(operation.ToString());
@@ -480,6 +495,7 @@ public class Compiler {
 	public static void LoadALUOperation(string line, TokenQueue tokens, ARMMachineCode code, ALUOperation operation) {
 		tokens.Operation.DequeueValue(operation.ToString());
 		var condition = tokens.Operation.DequeueCondition();
+		var setConditionCodes = tokens.Operation.DequeueFlagIfPresent("s");
 		tokens.Operation.AssertEmpty();
 
 		var destinationRegister = tokens.DequeueRegister();
@@ -489,11 +505,12 @@ public class Compiler {
 		var op2 = tokens.DequeueAluOp2();
 		tokens.AssertEmpty();
 		code.Add(new DataProcessing {
+			Condition = condition,
 			Operation = operation,
 			DestinationRegister = destinationRegister,
 			Op1Register = op1,
 			Op2 = op2,
-			Condition = condition
+			SetConditionCodes = setConditionCodes
 		});
 	}
 

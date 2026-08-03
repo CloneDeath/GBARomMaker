@@ -33,8 +33,18 @@ public class TokenQueue : IEnumerable<string> {
 			DequeueComma();
 
 			var shiftType = DequeueShiftType();
-			var shiftRegister = DequeueRegister();
 
+			next = _tokenQueue.Dequeue();
+			if (next == "#") {
+				var immediate = DequeueImmediate();
+				return new Register(op2Register) {
+					ShiftAmount = (byte)immediate,					
+					ShiftType = shiftType,
+					ShiftByRegister = false
+				};
+			}
+
+			var shiftRegister = ParseRegister(next);
 			return new Register(op2Register) {
 				ShiftRegister = shiftRegister,
 				ShiftType = shiftType,
@@ -49,6 +59,7 @@ public class TokenQueue : IEnumerable<string> {
 
 	public byte ParseRegister(string register) {
 		return register switch {
+			"ip" => 12,
 			"sp" => 13,
 			"lr" => 14,
 			"pc" => 15,
