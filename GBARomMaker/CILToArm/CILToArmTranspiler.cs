@@ -739,6 +739,15 @@ public class CILToArmTranspiler {
 			return;
 		}
 
+		if (method.FullName == "System.MathF.Sin") {
+			assembly.Add(instruction.GetBytes().Length, [
+				"pop sp!, { r0 }",
+				"bl gba_sin",
+				"push sp!, { r0 }"
+			]);
+			return;
+		}
+
 		if (method.IsNativeInvoke) {
 			if (method.NativeInvokeTarget != "WaitVBlank") throw new Exception("Unrecognized native invoke target");
 			assembly.Add(instruction.GetBytes().Length, [

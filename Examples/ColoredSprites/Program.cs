@@ -28,8 +28,8 @@ unsafe {
 		if (x >= 232) {
 			x = 0;
 		}
-		float y = (x / 100f);
-		sprite.Y = (byte)y;
+		float y = (x / 100f) * 3.145f;
+		sprite.Y = (byte)((System.MathF.Sin(y) * 50) + 80);
 		DisplayController.SetPixel(x, x, Colors.Green);
 		Interrupt.WaitVBlank();
 	};

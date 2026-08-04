@@ -445,6 +445,50 @@ gba_float_div_j7:
 	bics    r3, r1, #0x80000000
 	bne     gba_float_mul_j12
 	b       gba_float_mul_j9
+
+gba_sin:
+	push sp!, { r9, r10, r11, lr }
+	@ approx using: sin(x) ≈ x - x^3/6 + x^5/120
+	
+	@ r9, r10, r11 = x, x^3, x^5
+	mov r9, r0
+	mov r1, r9
+	bl gba_float_mul
+	mov r1, r9
+	bl gba_float_mul
+	mov r10, r0 @ x^3
+	mov r1, r9
+	bl gba_float_mul
+	mov r1, r9
+	bl gba_float_mul
+	mov r11, r0 @ x^5
+	
+	@ r10 = x^3/6
+	ldr r0, =6
+	bl gba_int_to_float
+	mov r1, r0
+	mov r0, r10
+	bl gba_float_div
+	mov r10, r0
+
+	@ r11 = x^5/120
+	ldr r0, =120
+	bl gba_int_to_float
+	mov r1, r0
+	mov r0, r11
+	bl gba_float_div
+	mov r11, r0
+
+	@ subtract and add
+	mov r0, r9
+	mov r1, r10
+	bl gba_float_subtract
+	mov r1, r11
+	bl gba_float_add
+
+	pop sp!, { r9, r10, r11, lr }
+	bx lr
+	
 	"
 	.Split("\n", StringSplitOptions.RemoveEmptyEntries);
 	}
