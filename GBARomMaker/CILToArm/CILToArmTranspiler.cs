@@ -114,7 +114,7 @@ public class CILToArmTranspiler {
 					break;
 				}
 				case "conv.i": {
-					var topOfStackType = instructionWithMetadata.StackTypes?.FirstOrDefault() ?? throw new InvalidOperationException($"Stack not deep enough for an add! {instructionWithMetadata}");
+					var topOfStackType = instructionWithMetadata.StackTypes?.FirstOrDefault() ?? throw new InvalidOperationException($"Stack not deep enough for a conv.i! {instructionWithMetadata}");
 					var stackTypeIsInt32Compatible = topOfStackType == SignatureTypeCode.Int32
 						|| topOfStackType == SignatureTypeCode.Pointer
 						|| topOfStackType == SignatureTypeCode.Byte;
@@ -134,7 +134,7 @@ public class CILToArmTranspiler {
 					break;
 				}
 				case "conv.u1": {
-					var topOfStackType = instructionWithMetadata.StackTypes?.FirstOrDefault() ?? throw new InvalidOperationException($"Stack not deep enough for an add! {instructionWithMetadata}");
+					var topOfStackType = instructionWithMetadata.StackTypes?.FirstOrDefault() ?? throw new InvalidOperationException($"Stack not deep enough for a conv.u1! {instructionWithMetadata}");
 					var stackTypeIsInt32Compatible = topOfStackType == SignatureTypeCode.Int32
 						|| topOfStackType == SignatureTypeCode.Pointer
 						|| topOfStackType == SignatureTypeCode.Byte;
@@ -159,7 +159,7 @@ public class CILToArmTranspiler {
 					break;
 				}
 				case "conv.u2": {
-					var topOfStackType = instructionWithMetadata.StackTypes?.FirstOrDefault() ?? throw new InvalidOperationException($"Stack not deep enough for an add! {instructionWithMetadata}");
+					var topOfStackType = instructionWithMetadata.StackTypes?.FirstOrDefault() ?? throw new InvalidOperationException($"Stack not deep enough for a conv.u2! {instructionWithMetadata}");
 					var stackTypeIsInt32Compatible = topOfStackType == SignatureTypeCode.Int32
 						|| topOfStackType == SignatureTypeCode.Pointer
 						|| topOfStackType == SignatureTypeCode.Byte;
@@ -183,6 +183,26 @@ public class CILToArmTranspiler {
 					}
 					break;
 				}
+				case "conv.r4": {
+					var topOfStackType = instructionWithMetadata.StackTypes?.FirstOrDefault() ?? throw new InvalidOperationException($"Stack not deep enough for a conv.r4! {instructionWithMetadata}");
+					var stackTypeIsInt32Compatible = topOfStackType == SignatureTypeCode.Int32
+						|| topOfStackType == SignatureTypeCode.Pointer
+						|| topOfStackType == SignatureTypeCode.Byte;
+					if (stackTypeIsInt32Compatible) {
+						assembly.Add(instruction.GetBytes().Length, [
+							"pop sp!, { r0 }",
+							$"bl gba_int_to_float @ <{topOfStackType}> to float",
+							"push sp!, { r0 }"
+						]);
+					} else if (topOfStackType == SignatureTypeCode.Single) {
+						assembly.Add(instruction.GetBytes().Length, [
+							$"nop @ <{topOfStackType}> to float",
+						]);
+					} else {
+						throw new NotImplementedException($"CIL 'conv.r4' not supported for type {topOfStackType}. {instructionWithMetadata}");
+					}
+					break;
+				}				
 				case "dup": {
 					assembly.Add(instruction.GetBytes().Length, [
 						"ldr r0, [sp]",
