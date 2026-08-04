@@ -573,11 +573,52 @@ public class CILToArmTranspiler {
 					break;
 				}
 				case "mul": {
-					assembly.Add(instruction.GetBytes().Length, [
-						"pop sp!, { r1, r2 }",
-						"mul r0, r1, r2",
-						"push sp!, { r0 }"
-					]);
+					var relevantStack = instructionWithMetadata.StackTypes?.Take(2).ToList() ?? throw new InvalidOperationException($"Stack not deep enough for an add! {instructionWithMetadata}");
+					var stackTypeA = relevantStack[0];
+					var stackTypeB = relevantStack[1];
+	
+					var stackTypeAIsInt32Compatible = stackTypeA == SignatureTypeCode.Int32
+						|| stackTypeA == SignatureTypeCode.Pointer
+						|| stackTypeA == SignatureTypeCode.Byte;
+
+					var stackTypeBIsInt32Compatible = stackTypeB == SignatureTypeCode.Int32
+						|| stackTypeB == SignatureTypeCode.Pointer
+						|| stackTypeB == SignatureTypeCode.Byte;
+
+					if (stackTypeAIsInt32Compatible && stackTypeBIsInt32Compatible) {
+						assembly.Add(instruction.GetBytes().Length, [
+							"pop sp!, { r1, r2 }",
+							"mul r0, r1, r2",
+							"push sp!, { r0 }"
+						]);
+					} else {
+						throw new NotImplementedException($"CIL 'mul' not supported for types {stackTypeA} * {stackTypeB}. {instructionWithMetadata}");
+					}
+					break;
+				}
+				case "div": {
+					var relevantStack = instructionWithMetadata.StackTypes?.Take(2).ToList() ?? throw new InvalidOperationException($"Stack not deep enough for an add! {instructionWithMetadata}");
+					var stackTypeA = relevantStack[0];
+					var stackTypeB = relevantStack[1];
+	
+					var stackTypeAIsInt32Compatible = stackTypeA == SignatureTypeCode.Int32
+						|| stackTypeA == SignatureTypeCode.Pointer
+						|| stackTypeA == SignatureTypeCode.Byte;
+
+					var stackTypeBIsInt32Compatible = stackTypeB == SignatureTypeCode.Int32
+						|| stackTypeB == SignatureTypeCode.Pointer
+						|| stackTypeB == SignatureTypeCode.Byte;
+
+					if (stackTypeAIsInt32Compatible && stackTypeBIsInt32Compatible) {
+						// https://problemkaputt.de/gbatek-bios-arithmetic-functions.htm
+						assembly.Add(instruction.GetBytes().Length, [
+							"pop sp!, { r0, r1 } @ val2 (denom), val1 (number)",
+							"swi 0x07", // using 7 instead of 6, as the number/denom are swapped
+							"push sp!, { r0 }"
+						]);
+					} else {
+						throw new NotImplementedException($"CIL 'div' not supported for types {stackTypeA} / {stackTypeB}. {instructionWithMetadata}");
+					}
 					break;
 				}
 				case "shl": {
