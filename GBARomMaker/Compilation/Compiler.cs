@@ -300,6 +300,7 @@ public class Compiler {
 			LoadBlockDataTransfer("pop", line, tokens, code);
 		}},
 
+		// Multiplication
 		{ "mul", (string line, TokenQueue tokens, ARMMachineCode code) => {
 			tokens.Operation.DequeueValue("mul");
 			var condition = tokens.Operation.DequeueCondition();
@@ -312,11 +313,33 @@ public class Compiler {
 			var op2 = tokens.DequeueRegister();
 			tokens.AssertEmpty();
 			code.Add(new Multiply {
+				Condition = condition,
 				Opcode = MULOperation.MUL,
 				DestinationRegister = destinationRegister,
 				Op1Register = op1,
 				Op2Register = op2,
-				Condition = condition
+			});
+		}},
+		{ "umull", (string line, TokenQueue tokens, ARMMachineCode code) => {
+			tokens.Operation.DequeueValue("umull");
+			var condition = tokens.Operation.DequeueCondition();
+			tokens.Operation.AssertEmpty();
+
+			var rdLo = tokens.DequeueRegister();
+			tokens.DequeueComma();
+			var rdHi = tokens.DequeueRegister();
+			tokens.DequeueComma();
+			var rm = tokens.DequeueRegister();
+			tokens.DequeueComma();
+			var rs = tokens.DequeueRegister();
+			tokens.AssertEmpty();
+			code.Add(new Multiply {
+				Condition = condition,
+				Opcode = MULOperation.UMULL,
+				DestinationRegister = rdHi,
+				AccumulateRegister = rdLo,
+				Op1Register = rm,
+				Op2Register = rs,
 			});
 		}},
 
@@ -520,8 +543,8 @@ public class Compiler {
 
 	public static void LoadALUOperation(string line, TokenQueue tokens, ARMMachineCode code, ALUOperation operation) {
 		tokens.Operation.DequeueValue(operation.ToString());
-		var condition = tokens.Operation.DequeueCondition();
 		var setConditionCodes = tokens.Operation.DequeueFlagIfPresent("s");
+		var condition = tokens.Operation.DequeueCondition();
 		tokens.Operation.AssertEmpty();
 
 		var destinationRegister = tokens.DequeueRegister();

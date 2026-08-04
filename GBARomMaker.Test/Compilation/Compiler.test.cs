@@ -46,7 +46,6 @@ public abstract class Compiler_test {
 		[TestCase("push sp!, { r1 }",  new byte[] { 0x02, 0x00, 0x2D, 0xE9 })]
 
 		// ALU
-		[TestCase("mul r0,r1,r2", new byte[] { 0x91, 0x02, 0x00, 0xE0 })]
 		[TestCase("orr r0, r1, r2", new byte[] { 0x02, 0x00, 0x81, 0xE1 })]
 		[TestCase("mov r1, #0x1F @ Red", new byte[] { 0x1F, 0x10, 0xA0, 0xE3 })]
 		[TestCase("movs r4, r0", new byte[] { 0x00, 0x40, 0xB0, 0xE1 })]
@@ -54,6 +53,11 @@ public abstract class Compiler_test {
 		[TestCase("mvn r2, r2", new byte[] { 0x02, 0x20, 0xE0, 0xE1 })]
 		[TestCase("mvnsne ip, r2, asr #24", new byte[] { 0x42, 0xCC, 0xF0, 0x11 })]
 		[TestCase("rsbs r3, r2, r3, lsr #24", new byte[] { 0x23, 0x3C, 0x72, 0xE0 })]
+		[TestCase("andsne r3, r4, r1, lsr #23", new byte[] { 0xA1, 0x3B, 0x14, 0x10 })]
+
+		// MUL
+		[TestCase("mul r0,r1,r2", new byte[] { 0x91, 0x02, 0x00, 0xE0 })]
+		[TestCase("umull r3, r1, r0, r1", new byte[] { 0x90, 0x31, 0x81, 0xE0 })]
 		
 		// lsl/lsr is a psudocommand for mov with logical shift left/right
 		[TestCase("mov r2, r0, lsl r1", new byte[] { 0x10, 0x21, 0xA0, 0xE1 })]
