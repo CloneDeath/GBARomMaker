@@ -433,6 +433,7 @@ public class Compiler {
 		}},
 		{ "rrx", (string line, TokenQueue tokens, ARMMachineCode code) => {
 			tokens.Operation.DequeueValue("rrx");
+			var setConditionCodes = tokens.Operation.DequeueFlagIfPresent("s");
 			var condition = tokens.Operation.DequeueCondition();
 			tokens.Operation.AssertEmpty();
 
@@ -449,7 +450,8 @@ public class Compiler {
 				Condition = condition,
 				Operation = ALUOperation.MOV,
 				DestinationRegister = destinationRegister,
-				Op2 = op2
+				Op2 = op2,
+				SetConditionCodes = setConditionCodes
 			});
 		}},
 

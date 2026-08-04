@@ -70,6 +70,7 @@ public abstract class Compiler_test {
 		// rrx is a special mov alias, is it only ever has a value of 1 (which maps to ror#0)
 		[TestCase("mov r1, r1, rrx #1", new byte[] { 0x61, 0x10, 0xA0, 0xE1 })]
 		[TestCase("rrx r1, r1", new byte[] { 0x61, 0x10, 0xA0, 0xE1 })]
+		[TestCase("rrxs r0, r1", new byte[] { 0x61, 0x00, 0xB0, 0xE1 })]
 		public void CompiledAssemblyIsCorrect(string line, byte[] expectedData) {
 			var compiler = new Compiler();
 
