@@ -25,10 +25,10 @@ unsafe {
 	byte x = 0;
 	while(true){
 		sprite.X = x++;
-		if (x >= 232) {
+		if (x > 100) {
 			x = 0;
 		}
-		float y = (x / 100f) * 3.145f;
+		float y = ((x % 100) / 100f) * 3.145f;
 		sprite.Y = (byte)((System.MathF.Sin(y) * 50) + 80);
 		DisplayController.SetPixel(x, x, Colors.Green);
 		Interrupt.WaitVBlank();
