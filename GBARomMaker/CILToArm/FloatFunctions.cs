@@ -169,7 +169,7 @@ gba_int_to_float:
 	ands	r3, r0, #0x80000000
 	rsbmi	r0, r0, #0
 gba_int_to_float_j0:
-	movs	ip, r0
+	movs	r4, r0
 	bxeq	lr
 	orr	r3, r3, #0x4b000000
 	mov	r1, r0
@@ -190,8 +190,8 @@ gba_long_to_float:
 	rsbs	r0, r0, #0
 	rsc	r1, r1, #0
 gba_long_to_float_j1:
-	movs	ip, r1
-	moveq	ip, r0
+	movs	r4, r1
+	moveq	r4, r0
 	moveq	r1, r0
 	moveq	r0, #0
 	orr	r3, r3, #0x5b000000
@@ -199,35 +199,35 @@ gba_long_to_float_j1:
 gba_long_to_float_j0:
 	sub	r3, r3, #0x800000
 	mov	r2, #23
-	cmp	ip, #0x10000
-	lsrcs	ip, ip, #16
+	cmp	r4, #0x10000
+	lsrcs	r4, r4, #16
 	subcs	r2, r2, #16
-	cmp	ip, #0x100
-	lsrcs	ip, ip, #8
+	cmp	r4, #0x100
+	lsrcs	r4, r4, #8
 	subcs	r2, r2, #8
-	cmp	ip, #16
-	lsrcs	ip, ip, #4
+	cmp	r4, #16
+	lsrcs	r4, r4, #4
 	subcs	r2, r2, #4
-	cmp	ip, #4
+	cmp	r4, #4
 	subcs	r2, r2, #2
-	subcc	r2, r2, ip, lsr #1
-	subs	r2, r2, ip, lsr #3
+	subcc	r2, r2, r4, lsr #1
+	subs	r2, r2, r4, lsr #3
 	sub	r3, r3, r2, lsl #23
 	blt	gba_long_to_float_j2
 	add	r3, r3, r1, lsl r2
-	lsl	ip, r0, r2
+	lsl	r4, r0, r2
 	rsb	r2, r2, #32
-	cmp	ip, #0x80000000
+	cmp	r4, #0x80000000
 	adc	r0, r3, r0, lsr r2
 	biceq	r0, r0, #1
 	bx	lr
 gba_long_to_float_j2:
 	add	r2, r2, #32
-	lsl	ip, r1, r2
+	lsl	r4, r1, r2
 	rsb	r2, r2, #32
-	orrs	r0, r0, ip, lsl #1
+	orrs	r0, r0, r4, lsl #1
 	adc	r0, r3, r1, lsr r2
-	biceq	r0, r0, ip, lsr #31
+	biceq	r0, r0, r4, lsr #31
 	bx	lr
 	"
 	.Split("\n", StringSplitOptions.RemoveEmptyEntries);

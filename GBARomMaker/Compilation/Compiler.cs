@@ -369,6 +369,7 @@ public class Compiler {
 		{ "mov", (string line, TokenQueue tokens, ARMMachineCode code) => {
 			tokens.Operation.DequeueValue("mov");
 			var condition = tokens.Operation.DequeueCondition();
+			var setConditionCodes = tokens.Operation.DequeueFlagIfPresent("s");
 			tokens.Operation.AssertEmpty();
 
 			var destinationRegister = tokens.DequeueRegister();
@@ -380,6 +381,7 @@ public class Compiler {
 				Operation = ALUOperation.MOV,
 				DestinationRegister = destinationRegister,
 				Op2 = op2,
+				SetConditionCodes = setConditionCodes
 			});
 		}},
 		{ "mvn", (string line, TokenQueue tokens, ARMMachineCode code) => {
