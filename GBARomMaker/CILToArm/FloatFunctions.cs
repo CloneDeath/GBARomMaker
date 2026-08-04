@@ -229,6 +229,222 @@ gba_long_to_float_j2:
 	adc	r0, r3, r1, lsr r2
 	biceq	r0, r0, r4, lsr #31
 	bx	lr
+
+gba_float_mul:
+	mov     r4, #0xff
+	ands    r2, r4, r0, lsr #23
+	andsne  r3, r4, r1, lsr #23
+	teqne   r2, r4
+	teqne   r3, r4
+	beq     gba_float_mul_j0
+gba_float_mul_j6:
+	add     r2, r2, r3
+	eor     r4, r0, r1
+	lsls    r0, r0, #9
+	lslsne  r1, r1, #9
+	beq     gba_float_mul_j1
+	mov     r3, #0x8000000
+	orr     r0, r3, r0, lsr #5
+	orr     r1, r3, r1, lsr #5
+	umull   r3, r1, r0, r1
+	and     r0, r4, #0x80000000
+	cmp     r1, #0x800000
+	lslcc   r1, r1, #1
+	orrcc   r1, r1, r3, lsr #31
+	lslcc   r3, r3, #1
+	orr     r0, r0, r1
+	sbc     r2, r2, #0x7f
+	cmp     r2, #0xfd
+	bhi     gba_float_mul_j2
+	cmp     r3, #0x80000000
+	adc     r0, r0, r2, lsl #23
+	biceq   r0, r0, #1
+	bx      lr
+gba_float_mul_j1:
+	teq     r0, #0
+	and     r4, r4, #0x80000000
+	lsleq   r1, r1, #9
+	orr     r0, r4, r0, lsr #9
+	orr     r0, r0, r1, lsr #9
+	subs    r2, r2, #0x7f
+	rsbsgt  r3, r2, #0xff
+	orrgt   r0, r0, r2, lsl #23
+	bxgt    lr
+	orr     r0, r0, #0x800000
+	mov     r3, #0
+	subs    r2, r2, #1
+gba_float_mul_j2:
+	bgt     gba_float_mul_j3
+	cmn     r2, #25
+	andle   r0, r0, #0x80000000
+	bxle    lr
+	rsb     r2, r2, #0
+	lsls    r1, r0, #1
+	lsr     r1, r1, r2
+	rsb     r2, r2, #32
+	lsl     r4, r0, r2
+	rrxs    r0, r1
+	adc     r0, r0, #0
+	orrs    r3, r3, r4, lsl #1
+	biceq   r0, r0, r4, lsr #31
+	bx      lr
+gba_float_mul_j8:
+	teq     r2, #0
+	and     r4, r0, #0x80000000
+gba_float_mul_j4:
+	lsleq   r0, r0, #1
+	tsteq   r0, #8388608    @ 0x800000
+	subeq   r2, r2, #1
+	beq     gba_float_mul_j4
+	orr     r0, r0, r4
+	teq     r3, #0
+	and     r4, r1, #0x80000000
+gba_float_mul_j5:
+	lsleq   r1, r1, #1
+	tsteq   r1, #8388608    @ 0x800000
+	subeq   r3, r3, #1
+	beq     gba_float_mul_j5
+	orr     r1, r1, r4
+	b       gba_float_mul_j6
+gba_float_mul_j0:
+	and     r3, r4, r1, lsr #23
+	teq     r2, r4
+	teqne   r3, r4
+	beq     gba_float_mul_j7
+	bics    r4, r0, #0x80000000
+	bicsne  r4, r1, #0x80000000
+	bne     gba_float_mul_j8
+gba_float_mul_j12:
+	eor     r0, r0, r1
+	and     r0, r0, #0x80000000
+	bx      lr
+gba_float_mul_j7:
+	teq     r0, #0
+	teqne   r0, #0x80000000
+	moveq   r0, r1
+	teqne   r1, #0
+	teqne   r1, #0x80000000
+	beq     gba_float_mul_j9
+	teq     r2, r4
+	bne     gba_float_mul_j10
+	lsls    r2, r0, #9
+	bne     gba_float_mul_j9
+gba_float_mul_j10:
+	teq     r3, r4
+	bne     gba_float_mul_j11
+	lsls    r3, r1, #9
+	movne   r0, r1
+	bne     gba_float_mul_j9
+gba_float_mul_j11:
+	eor     r0, r0, r1
+gba_float_mul_j3:
+	and     r0, r0, #0x80000000
+	orr     r0, r0, #0x7f000000
+	orr     r0, r0, #0x800000
+	bx      lr
+gba_float_mul_j9:
+	orr     r0, r0, #0x7f000000
+	orr     r0, r0, #0xc00000
+	bx      lr
+
+gba_float_div:
+	mov     r4, #0xff
+	ands    r2, r4, r0, lsr #23
+	andsne  r3, r4, r1, lsr #23
+	teqne   r2, r4
+	teqne   r3, r4
+	beq     gba_float_div_j0
+gba_float_div_j5:
+	sub     r2, r2, r3
+	eor     r4, r0, r1
+	lsls    r1, r1, #9
+	lsl     r0, r0, #9
+	beq     gba_float_div_j2
+	mov     r3, #0x10000000
+	orr     r1, r3, r1, lsr #4
+	orr     r3, r3, r0, lsr #4
+	and     r0, r4, #0x80000000
+	cmp     r3, r1
+	lslcc   r3, r3, #1
+	adc     r2, r2, #0x7d
+	mov     r4, #0x800000
+gba_float_div_j1:
+	cmp     r3, r1
+	subcs   r3, r3, r1
+	orrcs   r0, r0, r4
+	cmp     r3, r1, lsr #1
+	subcs   r3, r3, r1, lsr #1
+	orrcs   r0, r0, r4, lsr #1
+	cmp     r3, r1, lsr #2
+	subcs   r3, r3, r1, lsr #2
+	orrcs   r0, r0, r4, lsr #2
+	cmp     r3, r1, lsr #3
+	subcs   r3, r3, r1, lsr #3
+	orrcs   r0, r0, r4, lsr #3
+	lsls    r3, r3, #4
+	lsrsne  r4, r4, #4
+	bne     gba_float_div_j1
+	cmp     r2, #0xfd
+	bhi     gba_float_mul_j2
+	cmp     r3, r1
+	adc     r0, r0, r2, lsl #23
+	biceq   r0, r0, #1
+	bx      lr
+gba_float_div_j2:
+	and     r4, r4, #0x80000000
+	orr     r0, r4, r0, lsr #9
+	adds    r2, r2, #0x7f
+	rsbsgt  r3, r2, #0xff
+	orrgt   r0, r0, r2, lsl #23
+	bxgt    lr
+	orr     r0, r0, #0x800000
+	mov     r3, #0
+	subs    r2, r2, #1
+	b       gba_float_mul_j2
+gba_float_div_j8:
+	teq     r2, #0
+	and     r4, r0, #0x80000000
+gba_float_div_j3:
+	lsleq   r0, r0, #1
+	tsteq   r0, #0x800000
+	subeq   r2, r2, #1
+	beq     gba_float_div_j3
+	orr     r0, r0, r4
+	teq     r3, #0
+	and     r4, r1, #0x80000000
+gba_float_div_j4:
+	lsleq   r1, r1, #1
+	tsteq   r1, #0x800000
+	subeq   r3, r3, #1
+	beq     gba_float_div_j4
+	orr     r1, r1, r4
+	b       gba_float_div_j5
+gba_float_div_j0:
+	and     r3, r4, r1, lsr #23
+	teq     r2, r4
+	bne     gba_float_div_j6
+	lsls    r2, r0, #9
+	bne     gba_float_mul_j9
+	teq     r3, r4
+	bne     gba_float_mul_j11
+	mov     r0, r1
+	b       gba_float_mul_j9
+gba_float_div_j6:
+	teq     r3, r4
+	bne     gba_float_div_j7
+	lsls    r3, r1, #9
+	beq     gba_float_mul_j12
+	mov     r0, r1
+	b       gba_float_mul_j9
+gba_float_div_j7:
+	bics    r4, r0, #0x80000000
+	bicsne  r4, r1, #0x80000000
+	bne     gba_float_div_j8
+	bics    r2, r0, #0x80000000
+	bne     gba_float_mul_j11
+	bics    r3, r1, #0x80000000
+	bne     gba_float_mul_j12
+	b       gba_float_mul_j9
 	"
 	.Split("\n", StringSplitOptions.RemoveEmptyEntries);
 	}

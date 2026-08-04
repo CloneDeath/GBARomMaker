@@ -616,6 +616,13 @@ public class CILToArmTranspiler {
 							"swi 0x07", // using 7 instead of 6, as the number/denom are swapped
 							"push sp!, { r0 }"
 						]);
+					} else if (stackTypeA == SignatureTypeCode.Single && stackTypeB == SignatureTypeCode.Single) {
+						assembly.Add(instruction.GetBytes().Length, [
+							"pop sp!, { r1, r2 } @ val2 (denom), val1 (number)",
+							"mov r0, r2",
+							"bl gba_float_div",
+							"push sp!, { r0 }"
+						]);
 					} else {
 						throw new NotImplementedException($"CIL 'div' not supported for types {stackTypeA} / {stackTypeB}. {instructionWithMetadata}");
 					}
