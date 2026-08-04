@@ -19,6 +19,7 @@ public class CILParser {
 		[CALL.Definition],
 		[CALLVIRT.Definition],
 		[CONV.Definition],
+		CONV_R.Definitions,
 		CONV_U.Definitions,
 		[DUP.Definition],
 		LDARG.Definitions,
