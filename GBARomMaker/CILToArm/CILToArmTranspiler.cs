@@ -591,6 +591,12 @@ public class CILToArmTranspiler {
 							"mul r0, r1, r2",
 							"push sp!, { r0 }"
 						]);
+					} else if (stackTypeA == SignatureTypeCode.Single && stackTypeB == SignatureTypeCode.Single) {
+						assembly.Add(instruction.GetBytes().Length, [
+							"pop sp!, { r0, r1 }",
+							"bl gba_float_mul",
+							"push sp!, { r0 }"
+						]);
 					} else {
 						throw new NotImplementedException($"CIL 'mul' not supported for types {stackTypeA} * {stackTypeB}. {instructionWithMetadata}");
 					}
