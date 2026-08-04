@@ -613,7 +613,7 @@ public class CILToArmTranspiler {
 						// https://problemkaputt.de/gbatek-bios-arithmetic-functions.htm
 						assembly.Add(instruction.GetBytes().Length, [
 							"pop sp!, { r0, r1 } @ val2 (denom), val1 (number)",
-							"swi 0x07", // using 7 instead of 6, as the number/denom are swapped
+							"swi 0x070000", // using 7 instead of 6, as the number/denom are swapped
 							"push sp!, { r0 }"
 						]);
 					} else if (stackTypeA == SignatureTypeCode.Single && stackTypeB == SignatureTypeCode.Single) {
