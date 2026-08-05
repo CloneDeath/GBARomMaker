@@ -7,9 +7,9 @@ public class Register : IOffset {
 
 	public Register() {}
 
-	public byte ShiftAmount { get; init; }
-	public ShiftType ShiftType { get; init; }
-	public byte OffsetRegister { get; init; }
+	public required byte ShiftAmount { get; init; }
+	public required ShiftType ShiftType { get; init; }
+	public required byte OffsetRegister { get; init; }
 
 	public byte[] ToBytes() {
 		var data = new byte[2] { 0, 0 };

@@ -48,6 +48,9 @@ public class CILToArmTranspiler {
 		foreach (var line in FloatFunctions.GetLines()) {
 			assembly.Add(new ARMLine(-1, header_line++, line));
 		}
+		foreach (var line in FloatFunctions.GetSinLookupTable()) {
+			assembly.Add(new ARMLine(-1, header_line++, line));
+		}
 
 		ConvertCILToASM(assembly, entrypoint);
 
@@ -773,7 +776,7 @@ public class CILToArmTranspiler {
 		if (method.FullName == "System.MathF.Sin") {
 			assembly.Add(instruction.GetBytes().Length, [
 				"pop sp!, { r0 }",
-				"bl gba_sin",
+				"bl gba_float_sin",
 				"push sp!, { r0 }"
 			]);
 			return;

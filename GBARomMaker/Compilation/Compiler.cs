@@ -30,6 +30,18 @@ public class Compiler {
 			return;
 		}
 
+		if (tokens.Length >= 2 && tokens[0] == "." && tokens[1] == "word") {
+			var wordQueue = new TokenQueue(tokens, line);
+			wordQueue.DequeueToken(".");
+			wordQueue.DequeueToken("word");
+			var immediate = wordQueue.DequeueImmediate();
+			wordQueue.AssertEmpty();
+			code.Add(new Word {
+				Value = BitConverter.GetBytes(immediate)
+			});
+			return;
+		}
+
 		if (tokens.Length == 0) return; // empty line
 		
 		var tokenQueue = new TokenQueue(tokens, line);

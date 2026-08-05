@@ -1,11 +1,12 @@
 using System;
+using System.Collections.Generic;
 
 namespace GBARomMaker.CILToArm;
 
 // https://fossies.org/linux/gcc/libgcc/config/arm/ieee754-sf.S
 public static class FloatFunctions {
 	public static string[] GetLines() {
-		return @"
+		return (@"
 gba_float_subtract:
 	eor     r1, r1, #0x80000000 
 
@@ -446,51 +447,56 @@ gba_float_div_j7:
 	bne     gba_float_mul_j12
 	b       gba_float_mul_j9
 
-gba_sin:
-	push sp!, { r9, r10, r11, lr }
-	@ approx using: sin(x) ≈ x - x^3/6 + x^5/120
-	
-	@ r9, r10, r11 = x, x^3, x^5
-	mov r9, r0
-	mov r1, r9
-	bl gba_float_mul
-	mov r1, r9
-	bl gba_float_mul
-	mov r10, r0 @ x^3
-	mov r1, r9
-	bl gba_float_mul
-	mov r1, r9
-	bl gba_float_mul
-	mov r11, r0 @ x^5
-	
-	@ r10 = x^3/6
-	ldr r0, =6
-	bl gba_int_to_float
-	mov r1, r0
-	mov r0, r10
-	bl gba_float_div
-	mov r10, r0
+gba_float_sin:
+	push sp!, { r9, r10, lr }
+	mov r9, r0 @ input
 
-	@ r11 = x^5/120
-	ldr r0, =120
+	@ calculate pi / 180
+	ldr r0, =gba_float_pi
+	ldr r10, [r0]
+	ldr r0, =180
 	bl gba_int_to_float
-	mov r1, r0
-	mov r0, r11
-	bl gba_float_div
-	mov r11, r0
-
-	@ subtract and add
-	mov r0, r9
 	mov r1, r10
-	bl gba_float_subtract
-	mov r1, r11
-	bl gba_float_add
+	bl gba_float_div
 
-	pop sp!, { r9, r10, r11, lr }
+	@ input * (pi/180)
+	mov r1, r0
+	mov r0, r9
+	bl gba_float_mul
+	bl gba_float_to_int
+
+	@@ clamp r0 between 0 and 360
+	ldr r1, =360
+	swi 0x060000 @ div
+	mov r0, r1
+
+	@@ r0 = int degrees, for lookup table
+	ldr r1, =gba_float_sin_lookup
+	ldr r2, [r1, r0, lsl #2]
+	mov r0, r2
+
+	pop sp!, { r9, r10, lr }
 	bx lr
-	
-	"
-	.Split("\n", StringSplitOptions.RemoveEmptyEntries);
+" 
++ @$"
+gba_float_pi:
+	.word {GetHexString(MathF.PI)}
+	").Split("\n", StringSplitOptions.RemoveEmptyEntries);
 	}
 
+	public static string[] GetSinLookupTable() {
+		var words = new List<string> {
+			"gba_float_sin_lookup:"
+		};
+		for (var i = 0; i < 360; i++) {
+			var sin = MathF.Sin((i/360f) * 2 * MathF.PI);
+			words.Add($".word {GetHexString(sin)}");
+		}
+		return words.ToArray();
+	}
+
+	private static string GetHexString(float v) {
+		var bytes = BitConverter.GetBytes(v);
+		return $"0x{BitConverter.ToUInt32(bytes):X8}";
+	}
 }
