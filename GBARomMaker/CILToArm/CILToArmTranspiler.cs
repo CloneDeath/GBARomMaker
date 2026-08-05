@@ -634,6 +634,31 @@ public class CILToArmTranspiler {
 					}
 					break;
 				}
+				case "rem": {
+					var relevantStack = instructionWithMetadata.StackTypes?.Take(2).ToList() ?? throw new InvalidOperationException($"Stack not deep enough for an add! {instructionWithMetadata}");
+					var stackTypeA = relevantStack[0];
+					var stackTypeB = relevantStack[1];
+	
+					var stackTypeAIsInt32Compatible = stackTypeA == SignatureTypeCode.Int32
+						|| stackTypeA == SignatureTypeCode.Pointer
+						|| stackTypeA == SignatureTypeCode.Byte;
+
+					var stackTypeBIsInt32Compatible = stackTypeB == SignatureTypeCode.Int32
+						|| stackTypeB == SignatureTypeCode.Pointer
+						|| stackTypeB == SignatureTypeCode.Byte;
+
+					if (stackTypeAIsInt32Compatible && stackTypeBIsInt32Compatible) {
+						// https://problemkaputt.de/gbatek-bios-arithmetic-functions.htm
+						assembly.Add(instruction.GetBytes().Length, [
+							"pop sp!, { r0, r1 } @ val2 (denom), val1 (number)",
+							"swi 0x070000", // using 7 instead of 6, as the number/denom are swapped
+							"push sp!, { r1 }"
+						]);
+					} else {
+						throw new NotImplementedException($"CIL 'div' not supported for types {stackTypeA} / {stackTypeB}. {instructionWithMetadata}");
+					}
+					break;
+				}
 				case "shl": {
 					assembly.Add(instruction.GetBytes().Length, [
 						"pop sp!, { r0, r1 } @ shiftAmount, value",

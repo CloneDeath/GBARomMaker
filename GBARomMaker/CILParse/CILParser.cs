@@ -34,6 +34,7 @@ public class CILParser {
 		[NEWOBJ.Definition],
 		[NOP.Definition],
 		[OR.Definition],
+		[REM.Definition],
 		[RET.Definition],
 		[SHL.Definition],
 		[STFLD.Definition],
