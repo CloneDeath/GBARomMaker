@@ -181,10 +181,43 @@ public class Compiler {
 			if (next != ",") throw new Exception($"Expected a comma between arguments, got '{next}'. Line '{line}'");
 
 			next = tokens.Dequeue();
-			if (next != "#") throw new NotImplementedException("Register Shifted Offsets not supported");
-			var immediate = tokens.DequeueSignedImmediate();
-			next = tokens.Dequeue();
-			if (next != "]") throw new Exception($"Expected a ] to end op, got '{next}'. Line '{line}'");
+			UpDown updown = UpDown.Up;
+			ARM.Memory.IOffset? offset = null;
+
+			// for half-word transfers...
+			bool immediateOffsetFlag = false;
+			byte immediateOffset = 0;
+			byte offsetRegister = 0;
+			
+			if (next == "#") {
+				var immediate = tokens.DequeueSignedImmediate();
+				updown = immediate < 0 ? UpDown.Down : UpDown.Up;
+				offset = new ARM.Memory.Immediate((uint)Math.Abs(immediate));
+				
+				// half words...
+				immediateOffsetFlag = true;
+				immediateOffset = (byte)Math.Abs(immediate);
+			} else {
+				var register = tokens.ParseRegister(next);
+
+				// half-words don't support shifted offsets
+				if (flag != "h") {
+					tokens.DequeueComma();
+					var shiftType = tokens.DequeueShiftType();
+					tokens.DequeueToken("#");
+					var shiftAmount = tokens.DequeueImmediate();
+					offset = new ARM.Memory.Register {
+						OffsetRegister = register,
+						ShiftAmount = (byte)shiftAmount,
+						ShiftType = shiftType
+					};
+				}
+
+				// half-words...
+				immediateOffsetFlag = false;
+				offsetRegister = register;
+			}
+			tokens.DequeueToken("]");
 			tokens.AssertEmpty();
 
 			code.Add(flag switch {
@@ -193,9 +226,9 @@ public class Compiler {
 					BaseRegister = baseRegister,
 					SourceDestinationRegister = destinationRegister,
 					LoadStore = ARM.Common.LoadStore.Load,
-					Offset = new ARM.Memory.Immediate((uint)Math.Abs(immediate)),
+					Offset = offset ?? throw new Exception("An offset wasn't provided!"),
 					PrePost = PrePost.Pre,
-					UpDown = immediate < 0 ? UpDown.Down : UpDown.Up,
+					UpDown = updown,
 					WriteBack = false,
 					Word = true
 				},
@@ -204,10 +237,11 @@ public class Compiler {
 					BaseRegister = baseRegister,
 					SourceDestinationRegister = destinationRegister,
 					OpCode = HOpCode.LDRH,
-					ImmediateOffsetFlag = true,
-					ImmediateOffset = (byte)Math.Abs(immediate),
+					ImmediateOffsetFlag = immediateOffsetFlag,
+					ImmediateOffset = immediateOffset,
+					OffsetRegister = offsetRegister,
 					PrePost = PrePost.Pre,
-					UpDown = immediate < 0 ? UpDown.Down : UpDown.Up,
+					UpDown = updown,
 					WriteBack = false
 				},
 				_ => throw new Exception($"Unexpected flag '{flag}'. Line '{line}'")
