@@ -781,6 +781,15 @@ public class CILToArmTranspiler {
 			]);
 			return;
 		}
+		
+		if (method.FullName == "System.MathF.Cos") {
+			assembly.Add(instruction.GetBytes().Length, [
+				"pop sp!, { r0 }",
+				"bl gba_float_cos",
+				"push sp!, { r0 }"
+			]);
+			return;
+		}
 
 		if (method.IsNativeInvoke) {
 			if (method.NativeInvokeTarget != "WaitVBlank") throw new Exception("Unrecognized native invoke target");

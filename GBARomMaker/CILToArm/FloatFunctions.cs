@@ -133,6 +133,11 @@ gba_float_add_j8:
 	orrne   r0, r0, #0x400000
 	bx      lr
 
+gba_float_abs:
+	lsls    r0, r0, #1
+	lsrs    r0, r0, #1
+	bx      lr
+
 gba_float_to_int:
 	lsl     r2, r0, #1
 	cmp     r2, #0x7f000000
@@ -469,12 +474,36 @@ gba_float_sin:
 	ldr r1, =360
 	swi 0x060000 @ div
 	mov r0, r1
+	cmp r0, #0
+	addlt r0, r0, #360
 
 	@@ r0 = int degrees, for lookup table
 	ldr r1, =gba_float_sin_lookup
 	ldr r2, [r1, r0, lsl #2]
 	mov r0, r2
 
+	pop sp!, { r9, r10, lr }
+	bx lr
+
+gba_float_cos:
+	push sp!, { r9, r10, lr }
+	mov r9, r0 @ input
+	
+	@ r0 = pi/2
+	ldr r0, =2
+	bl gba_int_to_float
+	mov r1, r0
+	ldr r2, =gba_float_pi
+	ldr r0, [r2]
+	bl gba_float_div
+
+	@ add input - pi/2
+	mov r1, r9
+	bl gba_float_subtract
+
+	@ get sin of x - pi/2 (=cos of x)
+	bl gba_float_sin
+	
 	pop sp!, { r9, r10, lr }
 	bx lr
 " 

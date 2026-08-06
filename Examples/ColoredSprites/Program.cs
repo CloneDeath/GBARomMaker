@@ -1,4 +1,5 @@
-﻿using GBA;
+﻿using System;
+using GBA;
 
 unsafe {
 	DisplayController.SetControl(new DisplayControl {
@@ -22,15 +23,17 @@ unsafe {
     sprite.TileIndex = 512; // Tile 512 => address 0x06014000
 
 	DisplayController.EnableVBlank();
-	byte x = 0;
+	float timer = 0;
 	while(true){
-		sprite.X = x++;
-		if (x > 100) {
-			x = 0;
+		timer += 1f / 60;
+		if (timer > 3) {
+			timer = 0;
 		}
-		float y = ((x % 100) / 100f) * 3.145f;
-		sprite.Y = (byte)((System.MathF.Sin(y) * 50) + 80);
-		DisplayController.SetPixel(x, x, Colors.Green);
+
+		var circles = timer / 3;
+		var radians = circles * 2 * MathF.PI;
+		sprite.Y = (byte)((System.MathF.Sin(radians) * 50) + 80);
+		sprite.X = (byte)((System.MathF.Cos(radians) * 50) + 80);
 		Interrupt.WaitVBlank();
 	};
 }
