@@ -6,7 +6,7 @@ namespace GBARomMaker.CILToArm;
 // https://fossies.org/linux/gcc/libgcc/config/arm/ieee754-sf.S
 public static class AsmFunctions {
 	public static string[] GetFloatFunctions() {
-		return (@"
+		return @"
 gba_float_subtract:
 	eor     r1, r1, #0x80000000 
 
@@ -451,7 +451,11 @@ gba_float_div_j7:
 	bics    r3, r1, #0x80000000
 	bne     gba_float_mul_j12
 	b       gba_float_mul_j9
+	".Split("\n", StringSplitOptions.RemoveEmptyEntries);
+	}
 
+	public static string[] GetSinFunctions() {
+return (@"
 gba_float_sin:
 	push sp!, { r9, r10, lr }
 	mov r9, r0 @ input

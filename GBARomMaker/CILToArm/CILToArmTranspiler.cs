@@ -38,18 +38,26 @@ public class CILToArmTranspiler {
 		foreach (var line in AsmFunctions.GetIRQHandler()) {
 			assembly.Add(new ARMLine(-1, header_line++, line));
 		}
-		foreach (var line in AsmFunctions.GetFloatFunctions()) {
-			assembly.Add(new ARMLine(-1, header_line++, line));
-		}
-		foreach (var line in AsmFunctions.GetSinLookupTable()) {
-			assembly.Add(new ARMLine(-1, header_line++, line));
-		}
 
 		ConvertCILToASM(assembly, entrypoint);
 
 		while (assembly.MethodsToTranspile.Any()) {
 			var method = assembly.MethodsToTranspile.Dequeue();
 			ConvertCILToASM(assembly, method);
+		}
+		
+		if (assembly.IncludeFloat || assembly.IncludeSin) {
+			foreach (var line in AsmFunctions.GetFloatFunctions()) {
+				assembly.Add(new ARMLine(-1, header_line++, line));
+			}
+		}
+		if (assembly.IncludeSin) {
+			foreach (var line in AsmFunctions.GetSinFunctions()) {
+				assembly.Add(new ARMLine(-1, header_line++, line));
+			}
+			foreach (var line in AsmFunctions.GetSinLookupTable()) {
+				assembly.Add(new ARMLine(-1, header_line++, line));
+			}
 		}
 		
 		assembly.Add(new ARMLine(-1, 1, $"ldr r8, =0x{assembly.HeapStart:X8} @ Heap Start -- WRAM External"));
@@ -120,6 +128,7 @@ public class CILToArmTranspiler {
 							$"nop @ <{topOfStackType}> is int32 compatible"
 						]);
 					} else if (topOfStackType == SignatureTypeCode.Single) {
+						assembly.IncludeFloat = true;
 						assembly.Add(instruction.GetBytes().Length, [
 							"pop sp!, { r0 }",
 							$"bl gba_float_to_int @ <{topOfStackType}> to int32",
@@ -143,6 +152,7 @@ public class CILToArmTranspiler {
 							"push sp!, { r0 }"
 						]);
 					} else if (topOfStackType == SignatureTypeCode.Single) {
+						assembly.IncludeFloat = true;
 						assembly.Add(instruction.GetBytes().Length, [
 							"pop sp!, { r0 }",
 							$"bl gba_float_to_int @ <{topOfStackType}> to int32",
@@ -168,6 +178,7 @@ public class CILToArmTranspiler {
 							"push sp!, { r0 }"
 						]);
 					} else if (topOfStackType == SignatureTypeCode.Single) {
+						assembly.IncludeFloat = true;
 						assembly.Add(instruction.GetBytes().Length, [
 							"pop sp!, { r0 }",
 							$"bl gba_float_to_int @ <{topOfStackType}> to int32",
@@ -192,6 +203,7 @@ public class CILToArmTranspiler {
 							"push sp!, { r0 }"
 						]);
 					} else if (topOfStackType == SignatureTypeCode.Single) {
+						assembly.IncludeFloat = true;
 						assembly.Add(instruction.GetBytes().Length, [
 							$"nop @ <{topOfStackType}> to float",
 						]);
@@ -549,6 +561,7 @@ public class CILToArmTranspiler {
 							"push sp!, { r0 }"
 						]);
 					} else if (stackTypeA == SignatureTypeCode.Single && stackTypeB == SignatureTypeCode.Single) {
+						assembly.IncludeFloat = true;
 						assembly.Add(instruction.GetBytes().Length, [
 							$"pop sp!, {{ r0, r1 }} @ <{stackTypeA}, {stackTypeB}>",
 							"bl gba_float_add",
@@ -603,6 +616,7 @@ public class CILToArmTranspiler {
 							"push sp!, { r0 }"
 						]);
 					} else if (stackTypeA == SignatureTypeCode.Single && stackTypeB == SignatureTypeCode.Single) {
+						assembly.IncludeFloat = true;
 						assembly.Add(instruction.GetBytes().Length, [
 							"pop sp!, { r0, r1 }",
 							"bl gba_float_mul",
@@ -634,6 +648,7 @@ public class CILToArmTranspiler {
 							"push sp!, { r0 }"
 						]);
 					} else if (stackTypeA == SignatureTypeCode.Single && stackTypeB == SignatureTypeCode.Single) {
+						assembly.IncludeFloat = true;
 						assembly.Add(instruction.GetBytes().Length, [
 							"pop sp!, { r1, r2 } @ val2 (denom), val1 (number)",
 							"mov r0, r2",
@@ -782,6 +797,7 @@ public class CILToArmTranspiler {
 		}
 
 		if (method.FullName == "System.MathF.Sin") {
+			assembly.IncludeSin = true;
 			assembly.Add(instruction.GetBytes().Length, [
 				"pop sp!, { r0 }",
 				"bl gba_float_sin",
@@ -791,6 +807,7 @@ public class CILToArmTranspiler {
 		}
 		
 		if (method.FullName == "System.MathF.Cos") {
+			assembly.IncludeSin = true;
 			assembly.Add(instruction.GetBytes().Length, [
 				"pop sp!, { r0 }",
 				"bl gba_float_cos",

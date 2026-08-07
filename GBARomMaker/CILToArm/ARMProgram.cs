@@ -11,6 +11,9 @@ public class ARMProgram : List<ARMLine> {
 	public int JumpCount = 0;
 	public int Offset { get; private set; } = 0;
 
+	public bool IncludeSin = false;
+	public bool IncludeFloat = false;
+
 	public Queue<ICILMethod> MethodsToTranspile { get; } = new();
 	public List<string> MethodsTranspiled { get; } = new();
 
