@@ -8,7 +8,7 @@ public unsafe class Sprite {
 		_index = index;
 	}
 
-	private ushort* current => OAM;
+	private ushort* current => OAM + (_index*4);
 
 	public ushort X {
 		get {

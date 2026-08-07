@@ -2,27 +2,31 @@
 using GBA;
 
 unsafe {
+	DisplayController.EnableVBlank();
 	DisplayController.SetControl(new DisplayControl {
 		BGMode = 3,
 		ScreenDisplayBG2 = true,
 		ScreenDisplayOBJ = true
 	});
-	DisplayController.SetPixel(10, 20, Colors.Red);
 
 	Palette.SetObject(0, 1, Colors.Red);
-    //((ushort*)0x05000200)[1] = Colors.Red.ToUShort();	
-	byte* tile = (byte*)0x06014000;
+	Palette.SetObject(0, 2, Colors.Green);
+	Palette.SetObject(0, 3, Colors.Blue);
+	for (byte y = 0; y < 8; y++) {
+	for (byte x = 0; x < 8; x++) {
+		CharacterData.SetColor(512, x, y, 1);
+		CharacterData.SetColor(513, x, y, 2);
+		CharacterData.SetColor(514, x, y, 3);
+	}
+	}
 
-	// 8x8, 4bpp: two pixels per byte, both palette index 1
-    for (int i = 0; i < 32; i++)
-        tile[i] = 0x11;
+	var spriteR = new Sprite(0) {
+		TileIndex = 512
+	};
+	var spriteG = new Sprite(1) {
+	//	TileIndex = 513
+	};
 
-	var sprite = new Sprite(0);
-	sprite.X = 8;
-	sprite.Y = 0;
-    sprite.TileIndex = 512; // Tile 512 => address 0x06014000
-
-	DisplayController.EnableVBlank();
 	float timer = 0;
 	while(true){
 		timer += 1f / 60;
@@ -32,9 +36,39 @@ unsafe {
 
 		var circles = timer / 3;
 		var radians = circles * 2 * MathF.PI;
-		sprite.Y = (byte)((System.MathF.Sin(radians) * 50) + 80);
-		sprite.X = (byte)((System.MathF.Cos(radians) * 50) + 80);
+		spriteR.Y = (byte)((System.MathF.Sin(radians) * 50) + 76);
+		spriteR.X = (byte)((System.MathF.Cos(radians) * 50) + 116);
 		Interrupt.WaitVBlank();
 	};
+
+
+
+	//var spriteR = new Sprite(0) {
+	//	TileIndex = 512
+	//};
+	//var spriteG = new Sprite(1) {
+	//	TileIndex = 513
+	//};
+	//var spriteB = new Sprite(2) {
+	//	TileIndex = 514
+	//};
+
+	//float timer = 0;
+	//while(true){
+	//	timer += 1f / 60;
+	//	if (timer > 3) {
+	//		timer = 0;
+	//	}
+
+	//	var circles = timer / 3;
+	//	var radians = circles * 2 * MathF.PI;
+	//	spriteR.Y = (byte)((System.MathF.Sin(radians) * 50) + 76);
+	//	spriteR.X = (byte)((System.MathF.Cos(radians) * 50) + 116);
+	//	spriteG.Y = (byte)((System.MathF.Sin(radians + (MathF.PI * 2f / 3)) * 50) + 76);
+	//	spriteG.X = (byte)((System.MathF.Cos(radians + (MathF.PI * 2f / 3)) * 50) + 116);
+	//	spriteB.Y = (byte)((System.MathF.Sin(radians + (MathF.PI * 4f / 3)) * 50) + 76);
+	//	spriteB.X = (byte)((System.MathF.Cos(radians + (MathF.PI * 4f / 3)) * 50) + 116);
+	//	Interrupt.WaitVBlank();
+	//};
 }
 

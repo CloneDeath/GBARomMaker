@@ -4,8 +4,8 @@ using System.Collections.Generic;
 namespace GBARomMaker.CILToArm;
 
 // https://fossies.org/linux/gcc/libgcc/config/arm/ieee754-sf.S
-public static class FloatFunctions {
-	public static string[] GetLines() {
+public static class AsmFunctions {
+	public static string[] GetFloatFunctions() {
 		return (@"
 gba_float_subtract:
 	eor     r1, r1, #0x80000000 
@@ -527,5 +527,19 @@ gba_float_pi:
 	private static string GetHexString(float v) {
 		var bytes = BitConverter.GetBytes(v);
 		return $"0x{BitConverter.ToUInt32(bytes):X8}";
+	}
+
+	public static string[] GetIRQHandler() {
+		return @"
+gba_irq_handler:
+	ldr r1, =0x03007FF8 @ ICF
+	ldrh r2, [r1]
+	orr r2, r2, #1
+	strh r2, [r1]
+	ldr r0, =1
+	ldr r1, =0x04000202 @ IRQ Ack
+	strh r0, [r1]
+	bx lr
+".Split("\n", StringSplitOptions.RemoveEmptyEntries);
 	}
 }

@@ -1,0 +1,27 @@
+using System.Collections.Generic;
+using System.Reflection.Emit;
+using System.Reflection.Metadata;
+using GBARomMaker.CIL;
+
+namespace GBARomMaker.CILParse.Instructions;
+
+public class NOT : CILInstruction {
+	public static CILInstructionDefinition Definition = new(0x66, 0, (_) => new NOT());
+
+	public OpCode OpCode => OpCodes.Not;
+
+    public byte[] GetBytes() {
+		return [0x66];
+    }
+
+    public string GetCIL(CILFactory factory, ICILMethod method) {
+		return "not";
+    }
+    
+	public void ModifyStack(CILFactory factory, ICILMethod method, Stack<SignatureTypeCode> current) {
+	}
+
+    public bool AlwaysBranches => false;
+	public bool SometimesBranches => false;
+	public int? BranchTarget => null;
+}

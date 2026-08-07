@@ -34,21 +34,14 @@ public class CILToArmTranspiler {
 			new ARMLine(-1, header_line++, "ldr r1, =0x03007FFC"),
 			new ARMLine(-1, header_line++, "str r0, [r1]"),
 			new ARMLine(-1, header_line++, $"b {GetLabelForMethod(entrypoint)}"),
-
-			new ARMLine(-1, header_line++, $"gba_irq_handler:"),
-			new ARMLine(-1, header_line++, $"ldr r1, =0x03007FF8 @ ICF"),
-			new ARMLine(-1, header_line++, $"ldrh r2, [r1]"),
-			new ARMLine(-1, header_line++, $"orr r2, r2, #1"),
-			new ARMLine(-1, header_line++, $"strh r2, [r1]"),
-			new ARMLine(-1, header_line++, $"ldr r0, =1"),
-			new ARMLine(-1, header_line++, $"ldr r1, =0x04000202 @ IRQ Ack"),
-			new ARMLine(-1, header_line++, $"strh r0, [r1]"),
-			new ARMLine(-1, header_line++, $"bx lr"),
 		};
-		foreach (var line in FloatFunctions.GetLines()) {
+		foreach (var line in AsmFunctions.GetIRQHandler()) {
 			assembly.Add(new ARMLine(-1, header_line++, line));
 		}
-		foreach (var line in FloatFunctions.GetSinLookupTable()) {
+		foreach (var line in AsmFunctions.GetFloatFunctions()) {
+			assembly.Add(new ARMLine(-1, header_line++, line));
+		}
+		foreach (var line in AsmFunctions.GetSinLookupTable()) {
 			assembly.Add(new ARMLine(-1, header_line++, line));
 		}
 
@@ -85,7 +78,8 @@ public class CILToArmTranspiler {
 
 		if (_showCil) {
 			Console.WriteLine($"{method.FullName}");
-			Console.WriteLine($"  locals: {string.Join(", ", method.GetLocalVariableTypes())}");
+			var locals = method.GetLocalVariableTypes();
+			if (locals.Any()) Console.WriteLine($"  locals: {string.Join(", ", method.GetLocalVariableTypes())}");
 			instructions.Print();
 			Console.WriteLine();
 		}
@@ -210,6 +204,12 @@ public class CILToArmTranspiler {
 					assembly.Add(instruction.GetBytes().Length, [
 						"ldr r0, [sp]",
 						"push sp!, { r0 }"
+					]);
+					break;
+				}
+				case "pop": {
+					assembly.Add(instruction.GetBytes().Length, [
+						"add sp, sp, #4",
 					]);
 					break;
 				}
@@ -457,7 +457,7 @@ public class CILToArmTranspiler {
 					break;
 				}
 				case "newobj": {
-					HandleNewObjInstruction(instruction, assembly);
+					HandleNewObjInstruction(instructionWithMetadata, assembly);
 					break;
 				}
 				case "br": {
@@ -571,6 +571,14 @@ public class CILToArmTranspiler {
 					assembly.Add(instruction.GetBytes().Length, [
 						"pop sp!, { r1, r2 }",
 						"orr r0, r1, r2",
+						"push sp!, { r0 }"
+					]);
+					break;
+				}
+				case "not": {
+					assembly.Add(instruction.GetBytes().Length, [
+						"pop sp!, { r0 }",
+						"mvn r0, r0",
 						"push sp!, { r0 }"
 					]);
 					break;
@@ -833,7 +841,8 @@ public class CILToArmTranspiler {
 		]);
 	}
 
-	private void HandleNewObjInstruction(CILInstruction instruction, ARMProgram assembly) {
+	private void HandleNewObjInstruction(InstructionMetadata metadata, ARMProgram assembly) {
+		var instruction = metadata.Instruction;
 		var newobj = (GBARomMaker.CILParse.Instructions.NEWOBJ)instruction;
 		var handle = MetadataTokens.EntityHandle(newobj.MetadataToken);
 		switch (handle.Kind) {
@@ -841,24 +850,40 @@ public class CILToArmTranspiler {
 				var method = _metadata.GetMethodDefinition((MethodDefinitionHandle)handle);
 				var methodRef = new CILMethodDefinition(_peReader, _metadata, method);
 				if (methodRef.Name != ".ctor") {
-					throw new Exception("Tried to initialize an object with something that isn't a contructor: " + methodRef.FullName);
+					throw new Exception($"Tried to initialize an object with something that isn't a contructor: {methodRef.FullName} -- {metadata}");
 				}
 
 				var classLayout = assembly.GetClassLayout(methodRef.Parent);
 
 				var target = GetLabelForMethod(methodRef);
-				assembly.Add(instruction.GetBytes().Length, [
-					"push sp!, { r8 } @ push object ref onto the stack...",
-					"push sp!, { r8 } @ push it again for the 'this' param of the constructor",
-					$"add r8, r8, #{classLayout.Size}",
-					$"bl {target}"
-				]);
+				if (methodRef.ParameterCount == 0) {
+					assembly.Add(instruction.GetBytes().Length, [
+						"push sp!, { r8 } @ push object ref onto the stack...",
+						"push sp!, { r8 } @ push it again for the 'this' param of the constructor",
+						$"add r8, r8, #{classLayout.Size}",
+						$"bl {target}"
+					]);
+				} else if (methodRef.ParameterCount <= 5) {
+					var registers = methodRef.ParameterCount == 1 
+						? "r0"
+						: $"r0-r{methodRef.ParameterCount - 1}";
+					assembly.Add(instruction.GetBytes().Length, [
+						$"pop sp!, {{ {registers} }}",
+						"push sp!, { r8 } @ push object ref onto the stack...",
+						"push sp!, { r8 } @ push it again for the 'this' param of the constructor",
+						$"add r8, r8, #{classLayout.Size}",
+						$"push sp!, {{ {registers} }}",
+						$"bl {target}"
+					]);
+				} else {
+					throw new Exception($"Only up to 5 args are supported... {metadata}");
+				}
 
 				assembly.MethodsToTranspile.Enqueue(methodRef);
 				return;
 			}
 			default: {
-				throw new NotImplementedException($"New Objects for {handle.Kind} constructors not yet implemented");
+				throw new NotImplementedException($"New Objects for {handle.Kind} constructors not yet implemented. {metadata}");
 			}
 		}
 	}
