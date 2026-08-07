@@ -12,13 +12,13 @@ public class StaticClassLayout {
 	public StaticClassLayout(CILTypeDefinition type, int startAddress) {
 		_type = type;
 		StartAddress = startAddress;
-		_fields = type.Fields;
+		_fields = type.StaticFields;
 	}
 
 	public string FullName => _type.FullName;
 
 	// +1 for the static constructor called bit
-	public int Size => (_type.FieldCount + 1) * 4;
+	public int Size => (_fields.Length + 1) * 4;
 
 	public int GetFieldOffset(CILFieldDefinition field) {
 		for (var i = 0; i < _fields.Length; i++) {

@@ -20,12 +20,6 @@ public class CILTypeDefinition : ICILType {
 	public string Name => _metadata.GetString(_self.Name);
 	public string FullName => $"{Namespace}.{Name}";
 
-	public int FieldCount {
-		get {
-			var fields = _self.GetFields().Select(f => _metadata.GetFieldDefinition(f));
-			return fields.Count();
-		}
-	}
 
     public CILMethodDefinition? StaticConstructor => _self.GetMethods()
 		.Select(m => new CILMethodDefinition(_peReader, _metadata, _metadata.GetMethodDefinition(m)))
@@ -37,9 +31,16 @@ public class CILTypeDefinition : ICILType {
 		return new CILMethodDefinition(_peReader, _metadata, method);		
 	}
 
-	public CILFieldDefinition[] Fields {
+	public CILFieldDefinition[] InstanceFields {
 		get {
-			var fields = _self.GetFields().Select(f => _metadata.GetFieldDefinition(f));
+			var fields = _self.GetFields().Select(f => _metadata.GetFieldDefinition(f)).Where(f => !f.Attributes.HasFlag(System.Reflection.FieldAttributes.Static));
+			return fields.Select(f => new CILFieldDefinition(_peReader, _metadata, f)).ToArray();
+		}
+	}
+
+	public CILFieldDefinition[] StaticFields {
+		get {
+			var fields = _self.GetFields().Select(f => _metadata.GetFieldDefinition(f)).Where(f => f.Attributes.HasFlag(System.Reflection.FieldAttributes.Static));
 			return fields.Select(f => new CILFieldDefinition(_peReader, _metadata, f)).ToArray();
 		}
 	}

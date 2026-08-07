@@ -9,11 +9,11 @@ public class ClassLayout {
 
 	public ClassLayout(CILTypeDefinition type) {
 		_type = type;
-		_fields = type.Fields;
+		_fields = type.InstanceFields;
 	}
 
 	public string FullName => _type.FullName;
-	public int Size => _type.FieldCount * 4;
+	public int Size => _fields.Length * 4;
 
 	public int GetFieldOffset(CILFieldDefinition field) {
 		for (var i = 0; i < _fields.Length; i++) {
