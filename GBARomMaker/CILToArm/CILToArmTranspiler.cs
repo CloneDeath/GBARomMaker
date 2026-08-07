@@ -396,7 +396,7 @@ public class CILToArmTranspiler {
 					break;
 				}
 				case "ldsfld": {
-					HandleLoadStaticFieldInstruction(instruction, assembly);
+					HandleLoadStaticFieldInstruction(instruction, assembly, method);
 					break;
 				}
 				case "stfld": {
@@ -404,7 +404,7 @@ public class CILToArmTranspiler {
 					break;
 				}
 				case "stsfld": {
-					HandleStoreStaticFieldInstruction(instruction, assembly);
+					HandleStoreStaticFieldInstruction(instruction, assembly, method);
 					break;
 				}
 				case "ret": {
@@ -720,7 +720,7 @@ public class CILToArmTranspiler {
 		]);
 	}
 	
-	private void HandleLoadStaticFieldInstruction(CILInstruction instruction, ARMProgram assembly) {
+	private void HandleLoadStaticFieldInstruction(CILInstruction instruction, ARMProgram assembly, ICILMethod method) {
 		var ldsfld = (GBARomMaker.CILParse.Instructions.LDSFLD)instruction;
 		var cilFactory = new CILFactory(_peReader, _metadata);
 		var field = cilFactory.GetFieldDefinition(ldsfld.MetadataToken);
@@ -730,7 +730,7 @@ public class CILToArmTranspiler {
 		assembly.Add(instruction.GetBytes().Length, [
 			$"ldr r0, =0x{staticClass.StartAddress:X8} @ static ${staticClass.FullName}",
 		]);
-		if (staticConstructor != null) {
+		if (staticConstructor != null && method.FullName != staticConstructor.FullName) {
 			assembly.MethodsToTranspile.Enqueue(staticConstructor);
 			assembly.Add(0, [
 				$"ldr r1, [r0]",
@@ -758,7 +758,7 @@ public class CILToArmTranspiler {
 		]);
 	}
 
-	private void HandleStoreStaticFieldInstruction(CILInstruction instruction, ARMProgram assembly) {
+	private void HandleStoreStaticFieldInstruction(CILInstruction instruction, ARMProgram assembly, ICILMethod method) {
 		var stsfld = (GBARomMaker.CILParse.Instructions.STSFLD)instruction;
 		var cilFactory = new CILFactory(_peReader, _metadata);
 		var field = cilFactory.GetFieldDefinition(stsfld.MetadataToken);
@@ -768,7 +768,7 @@ public class CILToArmTranspiler {
 		assembly.Add(instruction.GetBytes().Length, [
 			$"ldr r0, =0x{staticClass.StartAddress:X8} @ static ${staticClass.FullName}",
 		]);
-		if (staticConstructor != null) {
+		if (staticConstructor != null && method.FullName != staticConstructor.FullName) {
 			assembly.MethodsToTranspile.Enqueue(staticConstructor);
 			assembly.Add(0, [
 				$"ldr r1, [r0]",
