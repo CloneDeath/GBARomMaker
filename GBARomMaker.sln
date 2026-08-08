@@ -6,17 +6,17 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GBARomMaker.Test", "GBARomM
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Examples", "Examples", "{E8BD9518-B631-4626-B31E-226BAD71623F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RedPixel", "Examples\RedPixel\RedPixel.csproj", "{1437EFB7-8768-477A-8DD8-6E01459FE569}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RedPixel", "Examples\01-RedPixel\RedPixel.csproj", "{1437EFB7-8768-477A-8DD8-6E01459FE569}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RedLine", "Examples\RedLine\RedLine.csproj", "{6A1093E5-9111-4A67-A782-D1BD455175BC}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RedLine", "Examples\02-RedLine\RedLine.csproj", "{6A1093E5-9111-4A67-A782-D1BD455175BC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ColoredSprites", "Examples\ColoredSprites\ColoredSprites.csproj", "{B8A552B1-0E78-4718-8F3B-D8D39F46F6AC}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RedSquare", "Examples\03-RedSquare\RedSquare.csproj", "{6F661C33-99AF-4D7D-9735-3707DF900E00}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RedSquare", "Examples\RedSquare\RedSquare.csproj", "{6F661C33-99AF-4D7D-9735-3707DF900E00}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ColorFill", "Examples\04-ColorFill\ColorFill.csproj", "{551F1254-9043-4CD7-A915-FC00EF0E24C9}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ColorFill", "Examples\ColorFill\ColorFill.csproj", "{551F1254-9043-4CD7-A915-FC00EF0E24C9}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ColoredSprites", "Examples\05-ColoredSprites\ColoredSprites.csproj", "{B8A552B1-0E78-4718-8F3B-D8D39F46F6AC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SpriteArray", "Examples\SpriteArray\SpriteArray.csproj", "{ECF43E0B-C20C-4E23-A515-187BB1911B46}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SpriteArray", "Examples\06-SpriteArray\SpriteArray.csproj", "{ECF43E0B-C20C-4E23-A515-187BB1911B46}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
