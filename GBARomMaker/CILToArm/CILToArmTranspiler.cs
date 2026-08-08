@@ -106,8 +106,11 @@ public class CILToArmTranspiler {
 		// Program Counter = pc/r15
 
 		var handlers = new ICILToArmHandler[] {
+			new CONV_I(),
+			new DUP(),
 			new NOP(),
-			new CONV_I()
+			new POP(),
+			new STELEM_REF(),
 		};
 
 		foreach (var instructionWithMetadata in instructions.Instructions) {
@@ -200,19 +203,6 @@ public class CILToArmTranspiler {
 					}
 					break;
 				}				
-				case "dup": {
-					assembly.Add(instruction.GetBytes().Length, [
-						"ldr r0, [sp]",
-						"push sp!, { r0 }"
-					]);
-					break;
-				}
-				case "pop": {
-					assembly.Add(instruction.GetBytes().Length, [
-						"add sp, sp, #4",
-					]);
-					break;
-				}
 				case "ldc.i4.m1":
 				case "ldc.i4.0":
 				case "ldc.i4.1":
