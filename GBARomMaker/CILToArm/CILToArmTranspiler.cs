@@ -107,9 +107,13 @@ public class CILToArmTranspiler {
 
 		var handlers = new ICILToArmHandler[] {
 			new CONV_I(),
+			new CONV_U1(),
 			new DUP(),
+			new LDLEN(),
+			new NEWARR(factory),
 			new NOP(),
 			new POP(),
+			new SHL(),
 			new STELEM_REF(),
 		};
 
@@ -130,32 +134,6 @@ public class CILToArmTranspiler {
 
 			var opcode = instruction.OpCode.Name;
 			switch (opcode) {
-				case "conv.u1": {
-					var topOfStackType = instructionWithMetadata.StackTypes?.FirstOrDefault() ?? throw new InvalidOperationException($"Stack not deep enough for a conv.u1! {instructionWithMetadata}");
-					var stackTypeIsInt32Compatible = topOfStackType == SignatureTypeCode.Int32
-						|| topOfStackType == SignatureTypeCode.Pointer
-						|| topOfStackType == SignatureTypeCode.Byte;
-					if (stackTypeIsInt32Compatible) {
-						assembly.Add(instruction.GetBytes().Length, [
-							"pop sp!, { r1 }",
-							"ldr r2, =0xFF",
-							"and r0, r1, r2",
-							"push sp!, { r0 }"
-						]);
-					} else if (topOfStackType == SignatureTypeCode.Single) {
-						assembly.IncludeFloat = true;
-						assembly.Add(instruction.GetBytes().Length, [
-							"pop sp!, { r0 }",
-							$"bl gba_float_to_int @ <{topOfStackType}> to int32",
-							"ldr r1, =0xFF",
-							"and r0, r0, r1",
-							"push sp!, { r0 }"
-						]);
-					} else {
-						throw new NotImplementedException($"CIL 'conv.u1' not supported for type {topOfStackType}. {instructionWithMetadata}");
-					}
-					break;
-				}
 				case "conv.u2": {
 					var topOfStackType = instructionWithMetadata.StackTypes?.FirstOrDefault() ?? throw new InvalidOperationException($"Stack not deep enough for a conv.u2! {instructionWithMetadata}");
 					var stackTypeIsInt32Compatible = topOfStackType == SignatureTypeCode.Int32
@@ -434,18 +412,6 @@ public class CILToArmTranspiler {
 					HandleNewObjInstruction(instructionWithMetadata, assembly);
 					break;
 				}
-				case "newarr": {
-					var newarr = (GBARomMaker.CILParse.Instructions.NEWARR)instruction;
-					var typeDefinition = factory.GetTypeDefinition(newarr.MetadataToken);
-					assembly.Add(instruction.GetBytes().Length, [
-						"pop sp!, { r0 }",
-						$"push sp!, {{ r8 }} @ newarr {typeDefinition.FullName}",
-						"ldr r1, =4",
-						"mul r0, r0, r1",
-						"add r8, r8, r0"
-					]);
-					break;
-				}
 				case "br": {
 					var br = (GBARomMaker.CILParse.Instructions.BR)instruction;
 					var label = $"jump_{assembly.JumpCount++}";
@@ -667,14 +633,6 @@ public class CILToArmTranspiler {
 					} else {
 						throw new NotImplementedException($"CIL 'div' not supported for types {stackTypeA} / {stackTypeB}. {instructionWithMetadata}");
 					}
-					break;
-				}
-				case "shl": {
-					assembly.Add(instruction.GetBytes().Length, [
-						"pop sp!, { r0, r1 } @ shiftAmount, value",
-						"lsl r2, r1, r0",
-						"push sp!, { r2 }"
-					]);
 					break;
 				}
 				default: throw new Exception($"Couldn't convert CIL instruction to ARM7 ASM: '{opcode}'.");
