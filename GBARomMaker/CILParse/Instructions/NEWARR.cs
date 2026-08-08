@@ -27,7 +27,7 @@ public class NEWARR : CILInstruction {
 		return "newarr " + targetType.FullName;
 	}
 
-    public void ModifyStack(CILFactory factory, ICILMethod method, Stack<SignatureTypeCode> current) {
+    public void ModifyStack(CILFactory factory, ICILMethod method, Stack<ISignatureType> current) {
 		current.Pop(); // numElems
 		current.Push(SignatureTypeCode.SZArray);
 	}

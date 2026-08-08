@@ -2,7 +2,6 @@ using System;
 using GBARomMaker.CIL;
 using System.Linq;
 using System.Reflection.Emit;
-using System.Reflection.Metadata;
 using System.Collections.Generic;
 
 namespace GBARomMaker.CILParse.Instructions;
@@ -29,7 +28,7 @@ public class BR : CILInstruction {
 		return "br " + Target;
     }
 
-	public void ModifyStack(CILFactory factory, ICILMethod method, Stack<SignatureTypeCode> current) {
+	public void ModifyStack(CILFactory factory, ICILMethod method, Stack<ISignatureType> current) {
 	}
     public bool AlwaysBranches => true;
 	public bool SometimesBranches => false;
@@ -53,7 +52,7 @@ public class BR_S : CILInstruction {
 		return "br.s " + Target;
     }
 
-	public void ModifyStack(CILFactory factory, ICILMethod method, Stack<SignatureTypeCode> current) {
+	public void ModifyStack(CILFactory factory, ICILMethod method, Stack<ISignatureType> current) {
 	}
     public bool AlwaysBranches => true;
 	public bool SometimesBranches => false;

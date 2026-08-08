@@ -2,7 +2,6 @@ using System;
 using GBARomMaker.CIL;
 using System.Linq;
 using System.Reflection.Emit;
-using System.Reflection.Metadata;
 using System.Collections.Generic;
 
 namespace GBARomMaker.CILParse.Instructions;
@@ -27,7 +26,7 @@ public class STSFLD : CILInstruction {
 		return $"stsfld {field.FullName}";
 	}
 
-	public void ModifyStack(CILFactory factory, ICILMethod method, Stack<SignatureTypeCode> current) {
+	public void ModifyStack(CILFactory factory, ICILMethod method, Stack<ISignatureType> current) {
 		current.Pop();
 	}
     public bool AlwaysBranches => false;

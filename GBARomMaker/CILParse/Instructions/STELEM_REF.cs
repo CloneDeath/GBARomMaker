@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.Reflection.Emit;
-using System.Reflection.Metadata;
 using GBARomMaker.CIL;
 
 namespace GBARomMaker.CILParse.Instructions;
@@ -18,7 +17,7 @@ public class STELEM_REF : CILInstruction {
 		return "stelem.ref";
     }
     
-	public void ModifyStack(CILFactory factory, ICILMethod method, Stack<SignatureTypeCode> current) {
+	public void ModifyStack(CILFactory factory, ICILMethod method, Stack<ISignatureType> current) {
 		current.Pop();
 		current.Pop();
 		current.Pop();

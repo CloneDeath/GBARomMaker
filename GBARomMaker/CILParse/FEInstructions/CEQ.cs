@@ -18,10 +18,10 @@ public class CEQ : CILInstruction {
 		return "ceq";
     }
 
-	public void ModifyStack(CILFactory factory, ICILMethod method, Stack<SignatureTypeCode> current) {
+	public void ModifyStack(CILFactory factory, ICILMethod method, Stack<ISignatureType> current) {
 		current.Pop();
 		current.Pop();
-		current.Push(SignatureTypeCode.Int32);
+		current.Push(new SignatureType(SignatureTypeCode.Int32));
 	}
     public bool AlwaysBranches => false;
 	public bool SometimesBranches => false;

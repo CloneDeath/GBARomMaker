@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Reflection.Emit;
 using System.Reflection.Metadata;
@@ -5,22 +6,27 @@ using GBARomMaker.CIL;
 
 namespace GBARomMaker.CILParse.Instructions;
 
-public class LDLEN : CILInstruction {
-	public static CILInstructionDefinition Definition = new(0x8E, 0, (_) => new LDLEN());
+public class LDELEM_REF : CILInstruction {
+	public static CILInstructionDefinition Definition = new(0x9A, 0, (_) => new LDELEM_REF());
 
-	public OpCode OpCode => OpCodes.Ldlen;
+	public OpCode OpCode => OpCodes.Ldelem_Ref;
 
     public byte[] GetBytes() {
-		return [0x8E];
+		return [0x9A];
     }
 
     public string GetCIL(CILFactory factory, ICILMethod method) {
-		return "ldlen";
+		return "ldelem.ref";
     }
     
 	public void ModifyStack(CILFactory factory, ICILMethod method, Stack<ISignatureType> current) {
-		current.Pop();
-		current.Push(new SignatureType(SignatureTypeCode.UInt32));
+		current.Pop(); // index
+		var type = current.Pop(); // array
+		if (type.Code != SignatureTypeCode.Array) {
+			throw new Exception($"Attempted to load array element from type {type.Code}");
+		}
+		var arrayType = (ArrayType)type;
+		current.Push(arrayType.InnerType);
 	}
 
     public bool AlwaysBranches => false;

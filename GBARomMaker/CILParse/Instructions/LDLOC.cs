@@ -1,7 +1,6 @@
 using System;
 using GBARomMaker.CIL;
 using System.Reflection.Emit;
-using System.Reflection.Metadata;
 using System.Collections.Generic;
 
 namespace GBARomMaker.CILParse.Instructions;
@@ -45,8 +44,8 @@ public class LDLOC : CILInstruction {
 		return $"ldloc.{Location} // <{method.GetLocalVariableTypes()[Location]}>";
     }
     
-	public void ModifyStack(CILFactory factory, ICILMethod method, Stack<SignatureTypeCode> current) {
-		current.Push(method.GetLocalVariableTypes()[Location]);
+	public void ModifyStack(CILFactory factory, ICILMethod method, Stack<ISignatureType> current) {
+		current.Push(new SignatureType(method.GetLocalVariableTypes()[Location]));
 	}
 
     public bool AlwaysBranches => false;
@@ -67,8 +66,8 @@ public class LDLOC_S : CILInstruction {
 
 	public string GetCIL(CILFactory factory, ICILMethod method) => $"ldloc.s {Location} // <{method.GetLocalVariableTypes()[Location]}>";
     
-	public void ModifyStack(CILFactory factory, ICILMethod method, Stack<SignatureTypeCode> current) {
-		current.Push(method.GetLocalVariableTypes()[Location]);
+	public void ModifyStack(CILFactory factory, ICILMethod method, Stack<ISignatureType> current) {
+		current.Push(new SignatureType(method.GetLocalVariableTypes()[Location]));
 	}
 
     public bool AlwaysBranches => false;

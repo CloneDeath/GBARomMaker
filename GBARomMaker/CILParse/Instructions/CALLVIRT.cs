@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Emit;
-using System.Reflection.Metadata;
 using GBARomMaker.CIL;
 
 namespace GBARomMaker.CILParse.Instructions;
@@ -27,14 +26,14 @@ public class CALLVIRT : CILInstruction {
 		return "callvirt " + targetMethod.FullName;
 	}
 
-    public void ModifyStack(CILFactory factory, ICILMethod method, Stack<SignatureTypeCode> current) {
+    public void ModifyStack(CILFactory factory, ICILMethod method, Stack<ISignatureType> current) {
 		var targetMethod = factory.GetMethodDefinition(MetadataToken);
 		var args = targetMethod.ParameterCount + (targetMethod.IsInstance ? 1 : 0);
 		for (var i = 0; i < args; i++) {
 			current.Pop();
 		}
 		if (targetMethod.HasReturnValue) {
-			current.Push(targetMethod.ReturnType);
+			current.Push(new SignatureType(targetMethod.ReturnType));
 		}
 	}
 

@@ -42,15 +42,15 @@ public class CONV_I : CILInstruction {
 		return $"conv.i{Bytes}";
     }
 
-	public void ModifyStack(CILFactory factory, ICILMethod method, Stack<SignatureTypeCode> current) {
+	public void ModifyStack(CILFactory factory, ICILMethod method, Stack<ISignatureType> current) {
 		current.Pop();
-		current.Push(Bytes switch {
+		current.Push(new SignatureType(Bytes switch {
 			1 => SignatureTypeCode.Byte,
 			2 => SignatureTypeCode.Int16,
 			4 => SignatureTypeCode.Int32,
 			8 => SignatureTypeCode.Int64,
 			_ => throw new Exception("Invalid number of bytes")
-		});
+		}));
 	}
 
     public bool AlwaysBranches => false;

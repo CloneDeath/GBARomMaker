@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.Reflection.Emit;
-using System.Reflection.Metadata;
 using GBARomMaker.CIL;
 
 namespace GBARomMaker.CILParse.Instructions;
@@ -18,7 +17,7 @@ public class DUP : CILInstruction {
 		return "dup";
     }
 
-    public void ModifyStack(CILFactory factory, ICILMethod method, Stack<SignatureTypeCode> current) {
+    public void ModifyStack(CILFactory factory, ICILMethod method, Stack<ISignatureType> current) {
 		var type = current.Peek();
 		current.Push(type);
 	}

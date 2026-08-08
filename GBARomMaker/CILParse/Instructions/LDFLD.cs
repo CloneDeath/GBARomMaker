@@ -2,7 +2,6 @@ using System;
 using GBARomMaker.CIL;
 using System.Linq;
 using System.Reflection.Emit;
-using System.Reflection.Metadata;
 using System.Collections.Generic;
 
 namespace GBARomMaker.CILParse.Instructions;
@@ -27,9 +26,9 @@ public class LDFLD : CILInstruction {
 		return $"ldfld {field.FullName}";
 	}
     
-	public void ModifyStack(CILFactory factory, ICILMethod method, Stack<SignatureTypeCode> current) {
+	public void ModifyStack(CILFactory factory, ICILMethod method, Stack<ISignatureType> current) {
 		var field = factory.GetFieldDefinition(MetadataToken);
-		current.Push(field.Type);
+		current.Push(new SignatureType(field.Type));
 	}
 
     public bool AlwaysBranches => false;

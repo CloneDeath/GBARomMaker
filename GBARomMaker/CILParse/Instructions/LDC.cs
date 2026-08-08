@@ -40,8 +40,8 @@ public class LDC_I4 : CILInstruction {
 		return $"ldc.i4 0x{Data:X8}";
 	}
 
-    public void ModifyStack(CILFactory factory, ICILMethod method, Stack<SignatureTypeCode> current) {
-		current.Push(SignatureTypeCode.Int32);
+    public void ModifyStack(CILFactory factory, ICILMethod method, Stack<ISignatureType> current) {
+		current.Push(new SignatureType(SignatureTypeCode.Int32));
 	}
 
     public bool AlwaysBranches => false;
@@ -97,8 +97,8 @@ public class LDC_I4_X : CILInstruction {
 		return $"ldc.i4.{sign}";
 	}
 
-    public void ModifyStack(CILFactory factory, ICILMethod method, Stack<SignatureTypeCode> current) {
-		current.Push(SignatureTypeCode.Int32);
+    public void ModifyStack(CILFactory factory, ICILMethod method, Stack<ISignatureType> current) {
+		current.Push(new SignatureType(SignatureTypeCode.Int32));
 	}
 
     public bool AlwaysBranches => false;
@@ -120,8 +120,8 @@ public class LDC_I4_S : CILInstruction {
 		return $"ldc.i4.s 0x{Data:X2}";
 	}
 
-    public void ModifyStack(CILFactory factory, ICILMethod method, Stack<SignatureTypeCode> current) {
-		current.Push(SignatureTypeCode.Int32);
+    public void ModifyStack(CILFactory factory, ICILMethod method, Stack<ISignatureType> current) {
+		current.Push(new SignatureType(SignatureTypeCode.Int32));
 	}
 
     public bool AlwaysBranches => false;
@@ -147,8 +147,8 @@ public class LDC_R4 : CILInstruction {
 		return $"ldc.r4 {Data}";
 	}
 
-    public void ModifyStack(CILFactory factory, ICILMethod method, Stack<SignatureTypeCode> current) {
-		current.Push(SignatureTypeCode.Single);
+    public void ModifyStack(CILFactory factory, ICILMethod method, Stack<ISignatureType> current) {
+		current.Push(new SignatureType(SignatureTypeCode.Single));
 	}
 
     public bool AlwaysBranches => false;
@@ -170,8 +170,8 @@ public class LDC_R8 : CILInstruction {
 		return $"ldc.r8 {Data}";
 	}
 
-    public void ModifyStack(CILFactory factory, ICILMethod method, Stack<SignatureTypeCode> current) {
-		current.Push(SignatureTypeCode.Double);
+    public void ModifyStack(CILFactory factory, ICILMethod method, Stack<ISignatureType> current) {
+		current.Push(new SignatureType(SignatureTypeCode.Double));
 	}
 
     public bool AlwaysBranches => false;

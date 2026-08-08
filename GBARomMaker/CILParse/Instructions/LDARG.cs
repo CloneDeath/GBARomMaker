@@ -42,18 +42,18 @@ public class LDARG : CILInstruction {
 		return "ldarg." + Argument;
     }
 
-    public void ModifyStack(CILFactory factory, ICILMethod method, Stack<SignatureTypeCode> current) {
+    public void ModifyStack(CILFactory factory, ICILMethod method, Stack<ISignatureType> current) {
 		if (!method.IsInstance) {
-			current.Push(method.GetArgumentTypes()[Argument]);
+			current.Push(new SignatureType(method.GetArgumentTypes()[Argument]));
 			return;
 		}
 
 		if (Argument == 0) {
-			current.Push(SignatureTypeCode.Pointer);
+			current.Push(new SignatureType(SignatureTypeCode.Pointer));
 			return;
 		}
 
-		current.Push(method.GetArgumentTypes()[Argument - 1]);
+		current.Push(new SignatureType(method.GetArgumentTypes()[Argument - 1]));
 	}
 
     public bool AlwaysBranches => false;

@@ -10,7 +10,7 @@ public class CONV_I : ICILToArmHandler {
 	public OpCode[] Handles => [OpCodes.Conv_I, OpCodes.Conv_I4];
 
 	public ArmCode Handle(InstructionMetadata instruction) {
-		var topOfStackType = instruction.StackTypes?.FirstOrDefault() ?? throw new InvalidOperationException($"Stack not deep enough for a conv.i! {instruction}");
+		var topOfStackType = instruction.StackTypes?.FirstOrDefault()?.Code ?? throw new InvalidOperationException($"Stack not deep enough for a conv.i! {instruction}");
 		var stackTypeIsInt32Compatible = topOfStackType == SignatureTypeCode.Int32
 			|| topOfStackType == SignatureTypeCode.UInt32
 			|| topOfStackType == SignatureTypeCode.Pointer

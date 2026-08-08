@@ -136,7 +136,7 @@ public class CILToArmTranspiler {
 			var opcode = instruction.OpCode.Name;
 			switch (opcode) {
 				case "conv.r4": {
-					var topOfStackType = instructionWithMetadata.StackTypes?.FirstOrDefault() ?? throw new InvalidOperationException($"Stack not deep enough for a conv.r4! {instructionWithMetadata}");
+					var topOfStackType = instructionWithMetadata.StackTypes?.FirstOrDefault()?.Code ?? throw new InvalidOperationException($"Stack not deep enough for a conv.r4! {instructionWithMetadata}");
 					var stackTypeIsInt32Compatible = topOfStackType == SignatureTypeCode.Int32
 						|| topOfStackType == SignatureTypeCode.Pointer
 						|| topOfStackType == SignatureTypeCode.Byte;
@@ -457,8 +457,8 @@ public class CILToArmTranspiler {
 				}
 				case "add": {
 					var relevantStack = instructionWithMetadata.StackTypes?.Take(2).ToList() ?? throw new InvalidOperationException($"Stack not deep enough for an add! {instructionWithMetadata}");
-					var stackTypeA = relevantStack[0];
-					var stackTypeB = relevantStack[1];
+					var stackTypeA = relevantStack[0].Code;
+					var stackTypeB = relevantStack[1].Code;
 	
 					var stackTypeAIsInt32Compatible = stackTypeA == SignatureTypeCode.Int32
 						|| stackTypeA == SignatureTypeCode.Pointer
@@ -523,8 +523,8 @@ public class CILToArmTranspiler {
 				}
 				case "mul": {
 					var relevantStack = instructionWithMetadata.StackTypes?.Take(2).ToList() ?? throw new InvalidOperationException($"Stack not deep enough for an add! {instructionWithMetadata}");
-					var stackTypeA = relevantStack[0];
-					var stackTypeB = relevantStack[1];
+					var stackTypeA = relevantStack[0].Code;
+					var stackTypeB = relevantStack[1].Code;
 	
 					var stackTypeAIsInt32Compatible = stackTypeA == SignatureTypeCode.Int32
 						|| stackTypeA == SignatureTypeCode.Pointer
@@ -554,8 +554,8 @@ public class CILToArmTranspiler {
 				}
 				case "div": {
 					var relevantStack = instructionWithMetadata.StackTypes?.Take(2).ToList() ?? throw new InvalidOperationException($"Stack not deep enough for an add! {instructionWithMetadata}");
-					var stackTypeA = relevantStack[0];
-					var stackTypeB = relevantStack[1];
+					var stackTypeA = relevantStack[0].Code;
+					var stackTypeB = relevantStack[1].Code;
 	
 					var stackTypeAIsInt32Compatible = stackTypeA == SignatureTypeCode.Int32
 						|| stackTypeA == SignatureTypeCode.Pointer
@@ -587,8 +587,8 @@ public class CILToArmTranspiler {
 				}
 				case "rem": {
 					var relevantStack = instructionWithMetadata.StackTypes?.Take(2).ToList() ?? throw new InvalidOperationException($"Stack not deep enough for an add! {instructionWithMetadata}");
-					var stackTypeA = relevantStack[0];
-					var stackTypeB = relevantStack[1];
+					var stackTypeA = relevantStack[0].Code;
+					var stackTypeB = relevantStack[1].Code;
 	
 					var stackTypeAIsInt32Compatible = stackTypeA == SignatureTypeCode.Int32
 						|| stackTypeA == SignatureTypeCode.Pointer

@@ -27,13 +27,13 @@ public class NEWOBJ : CILInstruction {
 		return "newobj " + targetMethod.FullName;
 	}
 
-    public void ModifyStack(CILFactory factory, ICILMethod method, Stack<SignatureTypeCode> current) {
+    public void ModifyStack(CILFactory factory, ICILMethod method, Stack<ISignatureType> current) {
 		var targetMethod = factory.GetMethodDefinition(MetadataToken);
 		var args = targetMethod.ParameterCount;
 		for (var i = 0; i < args; i++) {
 			current.Pop();
 		}
-		current.Push(SignatureTypeCode.Object);
+		current.Push(new SignatureType(SignatureTypeCode.Object));
 	}
 
     public bool AlwaysBranches => false;

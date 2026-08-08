@@ -11,7 +11,17 @@ unsafe {
 
 	Sprite[] sprites = new Sprite[30];
 	for (byte i = 0; i < sprites.Length; i++) {
+		byte palletIndex = (byte)(i + 1);
+		Palette.SetObject(0, palletIndex, new Color { Red = i });
+
+		for (byte y = 0; y < 8; y++) {
+		for (byte x = 0; x < 8; x++) {
+			CharacterData.SetColor(512 + i, x, y, palletIndex);
+		}
+		}
 		sprites[i] = new Sprite(i);
+		sprites[i].X = (byte)(i * 8);
+		sprites[i].Y = 76;
 	}
 	
 	Palette.SetObject(0, 1, Colors.Red);
