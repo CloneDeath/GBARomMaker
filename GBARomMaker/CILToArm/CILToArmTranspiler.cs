@@ -84,9 +84,9 @@ public class CILToArmTranspiler {
 
 		DeclareMethod(assembly, method);
 
+		var locals = method.GetLocalVariableTypes();
 		if (_showCil) {
 			Console.WriteLine($"{method.FullName}");
-			var locals = method.GetLocalVariableTypes();
 			if (locals.Any()) Console.WriteLine($"  locals: {string.Join(", ", method.GetLocalVariableTypes())}");
 			instructions.Print();
 			Console.WriteLine();
@@ -97,13 +97,9 @@ public class CILToArmTranspiler {
 		// Free Register 3 = r2
 		// Free Register 4 = r3
 		// Free Register 5 = r4
-		// Return Register = r6 <- NOT SAVED to stack when going between methods.
-		// Function Stack  = r7
+		// Temporary = r6 <- NOT SAVED to stack when going between methods. Used for storing fp and ret
+		// Frame Pointer = r7
 		// Heap Pointer    = r8 <- Temporary until we implement malloc/free
-		// Local 0         = r9
-		// Local 1         = r10
-		// Local 2         = r11
-		// Local 3         = r12
 		// Stack Pointer   = sp/r13
 		// Link Register   = lr/r14
 		// Program Counter = pc/r15
@@ -284,27 +280,18 @@ public class CILToArmTranspiler {
 				case "stloc.2":
 				case "stloc.3": {
 					var location = int.Parse(opcode[6].ToString()); // stloc.X
-					var register = location + 9;
 					assembly.Add(instruction.GetBytes().Length, [
-						$"pop sp!, {{ r{register} }} @ local {location}"
+						"pop sp!, { r0 }",
+						$"str r0, [r7, #-{(location+1) * 4}] @ local { location }"
 					]);;
 					break;
 				}
 				case "stloc.s": {
 					var stlocs = (GBARomMaker.CILParse.Instructions.STLOC_S)instruction;
 					var location = stlocs.Location;
-					if (location <= 3) {
-						var register = location + 9;
-						assembly.Add(instruction.GetBytes().Length, [
-							$"pop sp!, {{ r{register} }} @ local {location}"
-						]);
-						break;
-					}
-					var offset = (location - 4) * 4;
 					assembly.Add(instruction.GetBytes().Length, [
-						"ldr r0, =0x03000000",
-						"pop sp!, { r1 }",
-						$"str r1, [r0, #{offset}] @ local {location}",
+						"pop sp!, { r0 }",
+						$"str r0, [r7, #-{(location+1) * 4}] @ local { location }",
 					]);;
 					break;
 				}
@@ -313,27 +300,18 @@ public class CILToArmTranspiler {
 				case "ldloc.2":
 				case "ldloc.3": {
 					var location = int.Parse(opcode[6].ToString()); // ldloc.X
-					var register = location + 9;
 					assembly.Add(instruction.GetBytes().Length, [
-						$"push sp!, {{ r{register} }} @ local {location}"
+						$"ldr r0, [r7, #-{(location+1) * 4}] @ local { location }",
+						"push sp!, { r0 }"
 					]);
 					break;
 				}
 				case "ldloc.s": {
 					var ldlocs = (GBARomMaker.CILParse.Instructions.LDLOC_S)instruction;
 					var location = ldlocs.Location;
-					if (location <= 3) {
-						var register = location + 9;
-						assembly.Add(instruction.GetBytes().Length, [
-							$"push sp!, {{ r{register} }} @ local {location}"
-						]);
-						break;
-					}
-					var offset = (location - 4) * 4;
 					assembly.Add(instruction.GetBytes().Length, [
-						"ldr r0, =0x03000000",
-						$"ldr r1, [r0, #{offset}] @ local {location}",
-						"push sp!, { r1 }"
+						$"ldr r0, [r7, #-{(location+1) * 4}] @ local { location }",
+						"push sp!, { r0 }"
 					]);;
 					break;
 				}
@@ -408,10 +386,12 @@ public class CILToArmTranspiler {
 					break;
 				}
 				case "ret": {
+					var localCount = method.GetLocalVariableTypes().Count();
 					assembly.Add(instruction.GetBytes().Length, [
 						method.HasReturnValue ? "pop sp!, { r6 } @ return value" : "nop @ no return value",
-						$"sub sp, r7, #{11 * 4}",
-						"pop sp!, { r0, r1, r2, r3, r4, r7, r9, r10, r11, r12, lr }",
+						$"sub sp, r7, #{localCount * 4}",
+						"ldmdb sp, { r0, r1, r2, r3, r4, r7, lr }",
+						$"add sp, sp, #{localCount * 4}"
 					]);
 					// pop any method parameters
 					if (method.ParameterCount > 0 || method.IsInstance) {
@@ -700,11 +680,22 @@ public class CILToArmTranspiler {
 	}
 
 	private void DeclareMethod(ARMProgram assembly, ICILMethod method) {
+		var localCount = method.GetLocalVariableTypes().Count();
 		assembly.Add(0, [
 			$"{GetLabelForMethod(method)}:",
 			$"@ {method.ReturnType} {method.FullName}({string.Join(", ", method.GetArgumentTypes())})",
-			"push sp!, { r0, r1, r2, r3, r4, r7, r9, r10, r11, r12, lr }",
-			$"add r7, sp, #{11 * 4}"
+		]);
+		if (localCount > 0) {
+			var locals =  string.Join(", ", method.GetLocalVariableTypes());
+			assembly.Add(0, [
+				$"@\tlocals: {locals}",
+			]);
+		}
+		assembly.Add(0, [
+			"mov r6, sp",
+			$"sub sp, sp, #{localCount * 4}",
+			"push sp!, { r0, r1, r2, r3, r4, r7, lr }",
+			"mov r7, r6"
 		]);
 	}
 

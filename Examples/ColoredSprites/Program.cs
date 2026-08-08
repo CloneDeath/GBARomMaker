@@ -20,12 +20,15 @@ unsafe {
 	}
 	}
 
+	DisplayController.SetPixel(100, 100, Colors.Red);
 	var spriteR = new Sprite(0) {
 		TileIndex = 512
 	};
+	DisplayController.SetPixel(101, 101, Colors.Red);
 	var spriteG = new Sprite(1) {
-	//	TileIndex = 513
+		TileIndex = 513
 	};
+	DisplayController.SetPixel(102, 102, Colors.Red);
 
 	float timer = 0;
 	while(true){

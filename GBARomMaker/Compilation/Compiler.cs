@@ -625,10 +625,10 @@ public class Compiler {
 
 		var next = tokens.Operation.TryDequeue(1, out var ud) ? ud : null;
 		UpDown upDown;
-		if (operation == "pop" || next == "i") {
-			upDown = UpDown.Up;
-		} else if (operation == "push" || next == "d") {
+		if (operation == "push" || next == "d") {
 			upDown = UpDown.Down;
+		} else if (operation == "pop" || next == "i" || next == null) {
+			upDown = UpDown.Up;
 		} else {
 			throw new NotSupportedException($"Could not interpret Up/Down bit for Block Data Transfer command. Line '{line}'");
 		}
@@ -637,7 +637,7 @@ public class Compiler {
 		PrePost prePost;
 		if (operation == "push" || next == "b") {
 			prePost = PrePost.Pre;
-		} else if (operation == "pop" || next == "a") {
+		} else if (operation == "pop" || next == "a" || next == null) {
 			prePost = PrePost.Post;
 		} else {
 			throw new NotSupportedException($"Could not interpret Pre/Post bit for Block Data Transfer command. Line '{line}'");
