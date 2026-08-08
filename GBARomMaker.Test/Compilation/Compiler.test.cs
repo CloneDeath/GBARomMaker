@@ -22,6 +22,7 @@ public abstract class Compiler_test {
 
 		// str variations
 		[TestCase("str r0, [r1, #0]", new byte[] { 0x00, 0x00, 0x81, 0xE5 })]
+		[TestCase("str r2, [r0, r1]", new byte[] { 0x01, 0x20, 0x80, 0xE7 })]
 		[TestCase("strne r1, [r0]", new byte[] { 0x00, 0x10, 0x80, 0x15 })]
 		[TestCase("strh r1, [r0]", new byte[]{ 0xB0, 0x10, 0xC0, 0xE1 })]
 		[TestCase("strb r0, [r1]", new byte[] { 0x00, 0x00, 0xC1, 0xE5 })]
