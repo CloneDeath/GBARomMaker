@@ -18,10 +18,23 @@ public class CILFactory {
 		var typeDefinition = _metadata.GetTypeDefinition(handle);
 		return new CILTypeDefinition(_peReader, _metadata, typeDefinition);
 	}
-
+	
 	public CILTypeReference GetTypeReference(TypeReferenceHandle handle) {
 		var typeReference = _metadata.GetTypeReference(handle);
 		return new CILTypeReference(_peReader, _metadata, typeReference);
+	}
+
+	public ICILType GetTypeDefinition(int metadataToken) {
+		var handle = MetadataTokens.EntityHandle(metadataToken);
+		switch (handle.Kind) {
+			case HandleKind.TypeDefinition: {
+				return GetTypeDefinition((TypeDefinitionHandle)handle);
+			}
+			case HandleKind.TypeReference: {
+				return GetTypeReference((TypeReferenceHandle)handle);
+			}
+			default: throw new NotImplementedException($"Tried to extract Type from {handle.Kind}");
+		}
 	}
 
     public ICILMethod GetMethodDefinition(int metadataToken) {

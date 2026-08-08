@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Reflection.Metadata;
@@ -66,20 +67,33 @@ public class CILMethodDefinition : ICILMethod {
 		if (header.IsGeneric) signatureReader.ReadCompressedInteger(); // generic param count
 		var localVariableCount = signatureReader.ReadCompressedInteger();
 
+		var encounteredTypes = new List<SignatureTypeCode>();
+
 		var types = new List<SignatureTypeCode>();
 		for (int i = 0; i < localVariableCount; i++) {
 			var type = signatureReader.ReadSignatureTypeCode();
-			if (type == SignatureTypeCode.TypeHandle) {
+			encounteredTypes.Add(type);
+			if (type == SignatureTypeCode.SZArray) {
+ 				// todo figure out the actual of the type we just referenced
+				var skipped = signatureReader.ReadSignatureTypeCode();
+				encounteredTypes.Add(skipped);
+				if (skipped == SignatureTypeCode.TypeHandle) {
+					var innerType = signatureReader.ReadSignatureTypeCode();
+					encounteredTypes.Add(innerType);
+				}
+			} else if (type == SignatureTypeCode.TypeHandle) {
 				// https://learn.microsoft.com/en-us/dotnet/api/system.reflection.metadata.signaturetypecode?view=net-11.0-pp
-				signatureReader.ReadSignatureTypeCode(); // todo figure out the actual of the type we just referenced
-				types.Add(type);
+				// todo figure out the actual of the type we just referenced
+				var skipped = signatureReader.ReadSignatureTypeCode();
+				encounteredTypes.Add(skipped);
 			} else if (type == SignatureTypeCode.Pointer) {
-				signatureReader.ReadSignatureTypeCode();
-				types.Add(type); // todo Do we need the referenced type too?
-			} else {
-				types.Add(type);
+				// todo Do we need the referenced type too?
+				var skipped = signatureReader.ReadSignatureTypeCode();
+				encounteredTypes.Add(skipped);
 			}
+			types.Add(type);
 		}
+		if (signatureReader.RemainingBytes != 0) throw new Exception($"Failed to read all {localVariableCount} local variables. {signatureReader.RemainingBytes} bytes remain.\n\tParsed: [{string.Join(", ", types)}]\n\t Found: [{string.Join(", ", encounteredTypes)}]");
 		return types.ToArray();
 	}
 }

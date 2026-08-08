@@ -452,6 +452,18 @@ public class CILToArmTranspiler {
 					HandleNewObjInstruction(instructionWithMetadata, assembly);
 					break;
 				}
+				case "newarr": {
+					var newarr = (GBARomMaker.CILParse.Instructions.NEWARR)instruction;
+					var typeDefinition = factory.GetTypeDefinition(newarr.MetadataToken);
+					assembly.Add(instruction.GetBytes().Length, [
+						"pop sp!, { r0 }",
+						$"push sp!, {{ r8 }} @ newarr {typeDefinition.FullName}",
+						"ldr r1, =4",
+						"mul r0, r0, r1",
+						"add r8, r8, r0"
+					]);
+					break;
+				}
 				case "br": {
 					var br = (GBARomMaker.CILParse.Instructions.BR)instruction;
 					var label = $"jump_{assembly.JumpCount++}";
@@ -538,6 +550,16 @@ public class CILToArmTranspiler {
 						assembly.Add(instruction.GetBytes().Length, [
 							$"pop sp!, {{ r1, r2 }} @ <{stackTypeA}, {stackTypeB}>",
 							"add r0,r1,r2",
+							"push sp!, { r0 }"
+						]);
+					} else if (stackTypeAIsInt32Compatible && stackTypeB == SignatureTypeCode.Single) {
+						assembly.IncludeFloat = true;
+						assembly.Add(instruction.GetBytes().Length, [
+							$"pop sp!, {{ r0, r1 }} @ <{stackTypeA}, {stackTypeB}>",
+							"push sp!, { r1 }",
+							"bl gba_int_to_float",
+							"pop sp!, { r1 }",
+							"bl gba_float_add",
 							"push sp!, { r0 }"
 						]);
 					} else if (stackTypeA == SignatureTypeCode.Single && stackTypeB == SignatureTypeCode.Single) {
