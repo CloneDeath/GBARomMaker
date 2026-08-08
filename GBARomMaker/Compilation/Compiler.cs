@@ -48,9 +48,9 @@ public class Compiler {
 		var operation = tokenQueue.Dequeue();
 
 		var operations = new List<IOperationAssembler> {
-			new Ldr(),
+			new LoadStoreMemoryOperation("ldr"),
+			new LoadStoreMemoryOperation("str"),
 			new Nop(),
-			new Str(),
 		}.OrderByDescending(op => op.Operation.Length).ToList();
 
 		var handler = operations.FirstOrDefault(op => operation.ToLower().StartsWith(op.Operation));
