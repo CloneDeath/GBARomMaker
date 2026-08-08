@@ -9,3 +9,8 @@ public interface ISignatureType {
 public class SignatureType(SignatureTypeCode code) : ISignatureType {
 	public SignatureTypeCode Code => code;
 }
+
+public class ArraySignatureType(ISignatureType innerType) : ISignatureType {
+	public SignatureTypeCode Code => SignatureTypeCode.SZArray;
+	public ISignatureType InnerType => innerType;
+}

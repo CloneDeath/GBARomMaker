@@ -29,7 +29,9 @@ public class NEWARR : CILInstruction {
 
     public void ModifyStack(CILFactory factory, ICILMethod method, Stack<ISignatureType> current) {
 		current.Pop(); // numElems
-		current.Push(SignatureTypeCode.SZArray);
+		// todo, figure out how to get the inner type
+		var innerType = new SignatureType(SignatureTypeCode.Object);
+		current.Push(new ArraySignatureType(innerType));
 	}
 
     public bool AlwaysBranches => false;

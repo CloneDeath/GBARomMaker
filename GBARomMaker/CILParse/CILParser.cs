@@ -27,6 +27,7 @@ public class CILParser {
 		[DUP.Definition],
 		LDARG.Definitions,
 		LDC.Definitions,
+		[LDELEM_REF.Definition],
 		[LDFLD.Definition],
 		[LDSFLD.Definition],
 		LDIND.Definitions,

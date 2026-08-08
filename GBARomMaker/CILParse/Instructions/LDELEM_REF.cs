@@ -22,10 +22,10 @@ public class LDELEM_REF : CILInstruction {
 	public void ModifyStack(CILFactory factory, ICILMethod method, Stack<ISignatureType> current) {
 		current.Pop(); // index
 		var type = current.Pop(); // array
-		if (type.Code != SignatureTypeCode.Array) {
+		if (type.Code != SignatureTypeCode.SZArray) {
 			throw new Exception($"Attempted to load array element from type {type.Code}");
 		}
-		var arrayType = (ArrayType)type;
+		var arrayType = (ArraySignatureType)type;
 		current.Push(arrayType.InnerType);
 	}
 
