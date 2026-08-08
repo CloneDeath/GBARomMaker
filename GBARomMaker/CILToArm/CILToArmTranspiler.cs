@@ -7,6 +7,7 @@ using System.Reflection.PortableExecutable;
 using GBARomMaker.CIL;
 using GBARomMaker.CILParse;
 using GBARomMaker.CILToArm.ControlFlow;
+using GBARomMaker.CILToArm.Handlers;
 
 namespace GBARomMaker.CILToArm;
 
@@ -104,16 +105,26 @@ public class CILToArmTranspiler {
 		// Link Register   = lr/r14
 		// Program Counter = pc/r15
 
+		var handlers = new ICILToArmHandler[] {
+			new NOP()
+		};
+
 		foreach (var instructionWithMetadata in instructions.Instructions) {
 			var instruction = instructionWithMetadata.Instruction;
+
+			var handlerCandidates = handlers.Where(h => h.Handles.Contains(instruction.OpCode));
+			if (handlerCandidates.Count() > 1) {
+				throw new Exception($"Found multiple handlers for opcode {instruction.OpCode}. Found {string.Join(", ", handlerCandidates)}");
+			}
+			if (handlerCandidates.Any()) {
+				var handler = handlerCandidates.First();
+				var result = handler.Handle(instructionWithMetadata);
+				assembly.Add(instruction.GetBytes().Length, result);
+				continue;
+			}
+
 			var opcode = instruction.OpCode.Name;
 			switch (opcode) {
-				case "nop": {
-					assembly.Add(instruction.GetBytes().Length, [
-						"nop"
-					]);
-					break;
-				}
 				case "conv.i": {
 					var topOfStackType = instructionWithMetadata.StackTypes?.FirstOrDefault() ?? throw new InvalidOperationException($"Stack not deep enough for a conv.i! {instructionWithMetadata}");
 					var stackTypeIsInt32Compatible = topOfStackType == SignatureTypeCode.Int32
