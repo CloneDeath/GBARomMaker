@@ -20,15 +20,15 @@ unsafe {
 	}
 	}
 
-	DisplayController.SetPixel(100, 100, Colors.Red);
 	var spriteR = new Sprite(0) {
 		TileIndex = 512
 	};
-	DisplayController.SetPixel(101, 101, Colors.Red);
 	var spriteG = new Sprite(1) {
 		TileIndex = 513
 	};
-	DisplayController.SetPixel(102, 102, Colors.Red);
+	var spriteB = new Sprite(2) {
+		TileIndex = 514
+	};
 
 	float timer = 0;
 	while(true){
@@ -41,37 +41,11 @@ unsafe {
 		var radians = circles * 2 * MathF.PI;
 		spriteR.Y = (byte)((System.MathF.Sin(radians) * 50) + 76);
 		spriteR.X = (byte)((System.MathF.Cos(radians) * 50) + 116);
+		spriteG.Y = (byte)((System.MathF.Sin(radians + (MathF.PI * 2f / 3)) * 50) + 76);
+		spriteG.X = (byte)((System.MathF.Cos(radians + (MathF.PI * 2f / 3)) * 50) + 116);
+		spriteB.Y = (byte)((System.MathF.Sin(radians + (MathF.PI * 4f / 3)) * 50) + 76);
+		spriteB.X = (byte)((System.MathF.Cos(radians + (MathF.PI * 4f / 3)) * 50) + 116);
 		Interrupt.WaitVBlank();
 	};
-
-
-
-	//var spriteR = new Sprite(0) {
-	//	TileIndex = 512
-	//};
-	//var spriteG = new Sprite(1) {
-	//	TileIndex = 513
-	//};
-	//var spriteB = new Sprite(2) {
-	//	TileIndex = 514
-	//};
-
-	//float timer = 0;
-	//while(true){
-	//	timer += 1f / 60;
-	//	if (timer > 3) {
-	//		timer = 0;
-	//	}
-
-	//	var circles = timer / 3;
-	//	var radians = circles * 2 * MathF.PI;
-	//	spriteR.Y = (byte)((System.MathF.Sin(radians) * 50) + 76);
-	//	spriteR.X = (byte)((System.MathF.Cos(radians) * 50) + 116);
-	//	spriteG.Y = (byte)((System.MathF.Sin(radians + (MathF.PI * 2f / 3)) * 50) + 76);
-	//	spriteG.X = (byte)((System.MathF.Cos(radians + (MathF.PI * 2f / 3)) * 50) + 116);
-	//	spriteB.Y = (byte)((System.MathF.Sin(radians + (MathF.PI * 4f / 3)) * 50) + 76);
-	//	spriteB.X = (byte)((System.MathF.Cos(radians + (MathF.PI * 4f / 3)) * 50) + 116);
-	//	Interrupt.WaitVBlank();
-	//};
 }
 
