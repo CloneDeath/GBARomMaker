@@ -1,6 +1,7 @@
 using GBARomMaker.ARM;
 using GBARomMaker.ARM.ALU;
 using GBARomMaker.ARM.Common;
+using GBARomMaker.Compilation.Operations;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -46,9 +47,20 @@ public class Compiler {
 		
 		var tokenQueue = new TokenQueue(tokens, line);
 		var operation = tokenQueue.Dequeue();
-		foreach (var handler in _operationMap) {
-			if (operation.ToLower().StartsWith(handler.Key)) {
-				handler.Value(line, tokenQueue, code);
+
+		var operations = new List<IOperationAssembler> {
+			new Nop()
+		}.OrderByDescending(op => op.Operation.Length).ToList();
+
+		var handler = operations.FirstOrDefault(op => operation.ToLower().StartsWith(op.Operation));
+		if (handler != null) {
+			handler.Assemble(line, tokenQueue, code);
+			return;
+		}
+
+		foreach (var opHandler in _operationMap) {
+			if (operation.ToLower().StartsWith(opHandler.Key)) {
+				opHandler.Value(line, tokenQueue, code);
 				return;
 			}
 		}
@@ -58,16 +70,6 @@ public class Compiler {
 	private delegate void AddOperations(string line, TokenQueue tokens, ARMMachineCode code);
 
 	private Dictionary<string, AddOperations> _operationMap = new() {
-		{ "nop", (string line, TokenQueue tokens, ARMMachineCode code) => {
-			tokens.Operation.DequeueValue("nop");
-			tokens.Operation.AssertEmpty();
-			tokens.AssertEmpty();
-			code.Add(new DataProcessing {
-				Operation = ALUOperation.MOV,
-				DestinationRegister = 0,
-				Op2 = new Register(0)
-			});
-		}},
 		{ "swi", (string line, TokenQueue tokens, ARMMachineCode code) => {
 			tokens.Operation.DequeueValue("swi");
 			var condition = tokens.Operation.DequeueCondition();
