@@ -6,9 +6,7 @@ namespace GBARomMaker.CILToArm.Handlers;
 public class NOP : ICILToArmHandler {
 	public OpCode[] Handles => [OpCodes.Nop];
 
-	public string[] Handle(InstructionMetadata instruction) {
-		return [
-			"nop"
-		];
+	public ArmCode Handle(InstructionMetadata instruction) {
+		return new ArmCode("nop");
 	}
 }

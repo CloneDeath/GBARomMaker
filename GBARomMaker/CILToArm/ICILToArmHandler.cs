@@ -5,5 +5,5 @@ namespace GBARomMaker.CILToArm;
 
 public interface ICILToArmHandler {
 	public OpCode[] Handles { get; }
-	public string[] Handle(InstructionMetadata instruction);
+	public ArmCode Handle(InstructionMetadata instruction);
 }

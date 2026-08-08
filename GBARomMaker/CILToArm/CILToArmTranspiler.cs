@@ -106,7 +106,8 @@ public class CILToArmTranspiler {
 		// Program Counter = pc/r15
 
 		var handlers = new ICILToArmHandler[] {
-			new NOP()
+			new NOP(),
+			new CONV_I()
 		};
 
 		foreach (var instructionWithMetadata in instructions.Instructions) {
@@ -119,33 +120,13 @@ public class CILToArmTranspiler {
 			if (handlerCandidates.Any()) {
 				var handler = handlerCandidates.First();
 				var result = handler.Handle(instructionWithMetadata);
-				assembly.Add(instruction.GetBytes().Length, result);
+				assembly.Add(instruction.GetBytes().Length, result.Assembly);
+				assembly.IncludeFloat |= result.IncludeFloat;
 				continue;
 			}
 
 			var opcode = instruction.OpCode.Name;
 			switch (opcode) {
-				case "conv.i": {
-					var topOfStackType = instructionWithMetadata.StackTypes?.FirstOrDefault() ?? throw new InvalidOperationException($"Stack not deep enough for a conv.i! {instructionWithMetadata}");
-					var stackTypeIsInt32Compatible = topOfStackType == SignatureTypeCode.Int32
-						|| topOfStackType == SignatureTypeCode.Pointer
-						|| topOfStackType == SignatureTypeCode.Byte;
-					if (stackTypeIsInt32Compatible) {
-						assembly.Add(instruction.GetBytes().Length, [
-							$"nop @ <{topOfStackType}> is int32 compatible"
-						]);
-					} else if (topOfStackType == SignatureTypeCode.Single) {
-						assembly.IncludeFloat = true;
-						assembly.Add(instruction.GetBytes().Length, [
-							"pop sp!, { r0 }",
-							$"bl gba_float_to_int @ <{topOfStackType}> to int32",
-							"push sp!, { r0 }"
-						]);
-					} else {
-						throw new NotImplementedException($"CIL 'conv.i' not supported for type {topOfStackType}. {instructionWithMetadata}");
-					}
-					break;
-				}
 				case "conv.u1": {
 					var topOfStackType = instructionWithMetadata.StackTypes?.FirstOrDefault() ?? throw new InvalidOperationException($"Stack not deep enough for a conv.u1! {instructionWithMetadata}");
 					var stackTypeIsInt32Compatible = topOfStackType == SignatureTypeCode.Int32
