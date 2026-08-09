@@ -109,7 +109,7 @@ public class TokenQueue : IEnumerable<string> {
 	public string Peek() => _tokenQueue.Peek();
 
 	public void AssertEmpty() {
-		if (_tokenQueue.Any()) throw new Exception($"Too many arguments for '{Operation}'. Line '{_line}'");
+		if (_tokenQueue.Any()) throw new Exception($"Too many arguments for '{Operation}'. Peek: '{_tokenQueue.Peek()}'. Line '{_line}'");
 	}
 	
 	public void DequeueComma() => DequeueToken(",");

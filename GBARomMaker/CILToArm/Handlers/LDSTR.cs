@@ -22,7 +22,7 @@ public class LDSTR(CILFactory factory) : ICILToArmHandler {
 		};
 
 		foreach (var c in str) {
-			code.Add($"ldr r1, =0x{c:X4} @ {c}");
+			code.Add($"ldr r1, =0x{((ushort)c):X4} @ {c}");
 			code.Add("strh r1, [r0], #2");
 		}
 

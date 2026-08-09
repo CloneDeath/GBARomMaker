@@ -42,85 +42,83 @@ public class LoadStoreMemoryOperation(string operation) : IOperationAssembler {
 
 		var baseRegister = tokens.DequeueRegister();
 		var next = tokens.Dequeue();
-		if (next == "]") {
-			tokens.AssertEmpty();
-			code.Add(flag == "h"
-				? new MemoryHalf {
-					Condition = condition,
-					BaseRegister = baseRegister,
-					SourceDestinationRegister = sourceDestinationRegister,
-					OpCode = HOpCodeType,
-					ImmediateOffsetFlag = true,
-					ImmediateOffset = 0,
-					PrePost = PrePost.Pre,
-					UpDown = UpDown.Up,
-					WriteBack = false
-				}
-				: new SingleDataTransfer {
-					Condition = condition,
-					BaseRegister = baseRegister,
-					SourceDestinationRegister = sourceDestinationRegister,
-					LoadStore = LoadStoreType,
-					Offset = new ARM.Memory.Immediate(0),
-					PrePost = PrePost.Pre,
-					UpDown = UpDown.Up,
-					WriteBack = false,
-					Word = flag == "b" ? false : true
-				});
-			return;
-		}
 
-		if (next != ",") throw new Exception($"Expected a comma between arguments, got '{next}'. Line '{line}'");
-
-		next = tokens.Dequeue();
+		// shared
+		PrePost prePost = PrePost.Pre;
 		UpDown updown = UpDown.Up;
-		ARM.Memory.IOffset? offset = null;
-
-		// for half-word transfers...
+		
+		// for half-word transfers
 		bool immediateOffsetFlag = false;
 		byte immediateOffset = 0;
 		byte offsetRegister = 0;
-		
-		if (next == "#") {
-			var immediate = tokens.DequeueSignedImmediate();
-			updown = immediate < 0 ? UpDown.Down : UpDown.Up;
-			offset = new ARM.Memory.Immediate((uint)Math.Abs(immediate));
-			
-			// half words...
+
+		// for full-word transfers
+		ARM.Memory.IOffset? offset = null;
+
+		if (next == "]") {
 			immediateOffsetFlag = true;
-			immediateOffset = (byte)Math.Abs(immediate);
-		} else {
-			var register = tokens.ParseRegister(next);
+			immediateOffset = 0;
+			offset = new ARM.Memory.Immediate(0);
+			if (tokens.Any()) { // post index w/ writeback
+				prePost = PrePost.Post;
+				tokens.DequeueComma();
 
-			// half-words don't support shifted offsets
-			if (flag != "h") {
-				next = tokens.Peek();
-				if (next == "]") {
-					offset = new ARM.Memory.Register {
-						OffsetRegister = register,
-						ShiftAmount = 0,
-						ShiftType = ShiftType.LSL
-					};
-				} else {
-					tokens.DequeueComma();
-					var shiftType = tokens.DequeueShiftType();
-					tokens.DequeueToken("#");
-					var shiftAmount = tokens.DequeueImmediate();
-					offset = new ARM.Memory.Register {
-						OffsetRegister = register,
-						ShiftAmount = (byte)shiftAmount,
-						ShiftType = shiftType
-					};
-				}
+				tokens.DequeueToken("#");
+				
+				var immediate = tokens.DequeueSignedImmediate();
+				updown = immediate < 0 ? UpDown.Down : UpDown.Up;
+				offset = new ARM.Memory.Immediate((uint)Math.Abs(immediate));
+				
+				// half words...
+				immediateOffsetFlag = true;
+				immediateOffset = (byte)Math.Abs(immediate);
 			}
+		} else {
+			if (next != ",") throw new Exception($"Expected a comma between arguments, got '{next}'. Line '{line}'");
 
-			// half-words...
-			immediateOffsetFlag = false;
-			offsetRegister = register;
+			next = tokens.Dequeue();
+			
+			if (next == "#") {
+				var immediate = tokens.DequeueSignedImmediate();
+				updown = immediate < 0 ? UpDown.Down : UpDown.Up;
+				offset = new ARM.Memory.Immediate((uint)Math.Abs(immediate));
+				
+				// half words...
+				immediateOffsetFlag = true;
+				immediateOffset = (byte)Math.Abs(immediate);
+			} else {
+				var register = tokens.ParseRegister(next);
+
+				// half-words don't support shifted offsets
+				if (flag != "h") {
+					next = tokens.Peek();
+					if (next == "]") {
+						offset = new ARM.Memory.Register {
+							OffsetRegister = register,
+							ShiftAmount = 0,
+							ShiftType = ShiftType.LSL
+						};
+					} else {
+						tokens.DequeueComma();
+						var shiftType = tokens.DequeueShiftType();
+						tokens.DequeueToken("#");
+						var shiftAmount = tokens.DequeueImmediate();
+						offset = new ARM.Memory.Register {
+							OffsetRegister = register,
+							ShiftAmount = (byte)shiftAmount,
+							ShiftType = shiftType
+						};
+					}
+				}
+
+				// half-words...
+				immediateOffsetFlag = false;
+				offsetRegister = register;
+			}
+			tokens.DequeueToken("]");
 		}
-		tokens.DequeueToken("]");
-		tokens.AssertEmpty();
 
+		tokens.AssertEmpty();
 		code.Add(flag == "h"
 			? new MemoryHalf {
 				Condition = condition,
@@ -130,7 +128,7 @@ public class LoadStoreMemoryOperation(string operation) : IOperationAssembler {
 				ImmediateOffsetFlag = immediateOffsetFlag,
 				ImmediateOffset = immediateOffset,
 				OffsetRegister = offsetRegister,
-				PrePost = PrePost.Pre,
+				PrePost = prePost,
 				UpDown = updown,
 				WriteBack = false
 			}
@@ -140,12 +138,11 @@ public class LoadStoreMemoryOperation(string operation) : IOperationAssembler {
 				SourceDestinationRegister = sourceDestinationRegister,
 				LoadStore = LoadStoreType,
 				Offset = offset ?? throw new Exception("An offset wasn't provided!"),
-				PrePost = PrePost.Pre,
+				PrePost = prePost,
 				UpDown = updown,
 				WriteBack = false,
 				Word = flag == "b" ? false : true
 			});
-		return;
 	}
 
 	private void LdrMovPseudoCommand(string line, TokenQueue tokens, ARMMachineCode code, Condition condition, byte destinationRegister, string? flag) {

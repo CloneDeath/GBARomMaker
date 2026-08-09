@@ -36,7 +36,7 @@ public abstract class Compiler_test {
 		[TestCase("ldrne r1, =1", new byte[] { 0x01, 0x10, 0xA0, 0x13 })]
 		[TestCase("ldrh r2, [r3]", new byte[] { 0xB0, 0x20, 0xD3, 0xE1 })]
 		[TestCase("ldr r2, [r0, r1, lsl #2]", new byte[] { 0x01, 0x21, 0x90, 0xE7 })]
-		[TestCase("ldr r1, [r0], #4", new byte[] { 0x08, 0x10, 0x90, 0xE4 })]
+		[TestCase("ldr r1, [r0], #4", new byte[] { 0x04, 0x10, 0x90, 0xE4 })]
 
 		// nop
 		[TestCase("nop", new byte[] { 0x00, 0x00, 0xA0, 0xE1 })]
