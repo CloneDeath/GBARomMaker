@@ -3,7 +3,10 @@ using GBA;
 
 unsafe {
 	Console.WriteLine("hello world");
-	//DisplayController.EnableVBlank();
+	DisplayController.EnableVBlank();
+	while (true) {
+		Interrupt.WaitVBlank();
+	}
 	//DisplayController.SetControl(new DisplayControl {
 	//	BGMode = 3,
 	//	ScreenDisplayBG2 = true,

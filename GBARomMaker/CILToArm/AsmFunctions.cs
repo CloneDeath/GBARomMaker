@@ -548,19 +548,29 @@ gba_irq_handler:
 	}
 
 	public static string[] GetMGBALog() {
+		// https://www.mattgreer.dev/blog/gba-dev-logging/
+		// ERROR 0x101
+		// WARNING 0x102
+		// INFO 0x103
+		// DEBUG 0x104
 		return @"
 mgba_log:
 	ldr r1, [r0], #4 @ string length
 	ldr r3, =0x04FFF600 @ log buffer start
 
-	ldr r2, =0x5748 @ 'HW' (reversed)
+@mgba_log_loop:
+	ldrh r2, [r0], #2
 	strh r2, [r3], #2
+	ldrh r2, [r0], #2
+	strh r2, [r3], #2
+@	subs r1, r1, r1
+@	ble mgba_log_loop
 
 	@ send log
 	ldr r0, =0x04FFF700
-	ldr r1, =0x0101
+	ldr r1, =0x0104
 	strh r1, [r0]
 	bx lr
-".Split("\n", StringSplitOptions.RemoveEmptyEntries);;
+".Split("\n", StringSplitOptions.RemoveEmptyEntries);
 	}
 }
