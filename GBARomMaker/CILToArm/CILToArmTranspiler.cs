@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection.Metadata;
@@ -6,6 +7,7 @@ using System.Reflection.Metadata.Ecma335;
 using System.Reflection.PortableExecutable;
 using GBARomMaker.CIL;
 using GBARomMaker.CILParse;
+using GBARomMaker.CILToArm.CallHandlers;
 using GBARomMaker.CILToArm.ControlFlow;
 using GBARomMaker.CILToArm.Handlers;
 
@@ -34,7 +36,7 @@ public class CILToArmTranspiler {
 			new ARMLine(-1, header_line++, "ldr r0, =gba_irq_handler @ Install IRQ Handler"),
 			new ARMLine(-1, header_line++, "ldr r1, =0x03007FFC"),
 			new ARMLine(-1, header_line++, "str r0, [r1]"),
-			new ARMLine(-1, header_line++, "ldr r0, =0x4FFF780 @ Enable mGBA logs"),
+			new ARMLine(-1, header_line++, "ldr r0, =0x04FFF780 @ Enable mGBA logs"),
 			new ARMLine(-1, header_line++, "ldr r1, =0xC0DE"),
 			new ARMLine(-1, header_line++, "strh r1, [r0]"),
 			new ARMLine(-1, header_line++, $"b {GetLabelForMethod(entrypoint)}"),
@@ -60,6 +62,11 @@ public class CILToArmTranspiler {
 				assembly.Add(new ARMLine(-1, header_line++, line));
 			}
 			foreach (var line in AsmFunctions.GetSinLookupTable()) {
+				assembly.Add(new ARMLine(-1, header_line++, line));
+			}
+		}
+		if (assembly.IncludeMGBALog) {
+			foreach (var line in AsmFunctions.GetMGBALog()) {
 				assembly.Add(new ARMLine(-1, header_line++, line));
 			}
 		}
@@ -137,6 +144,8 @@ public class CILToArmTranspiler {
 				var result = handler.Handle(instructionWithMetadata);
 				assembly.Add(instruction.GetBytes().Length, result.Assembly);
 				assembly.IncludeFloat |= result.IncludeFloat;
+				assembly.IncludeSin |= result.IncludeSin;
+				assembly.IncludeMGBALog |= result.IncludeMGBALog;
 				continue;
 			}
 
@@ -345,11 +354,11 @@ public class CILToArmTranspiler {
 					break;
 				}
 				case "call": {
-					HandleCallInstruction(instruction, assembly);
+					HandleCallInstruction(instructionWithMetadata, assembly);
 					break;
 				}
 				case "callvirt": {
-					HandleCallvirtInstruction(instruction, assembly);
+					HandleCallvirtInstruction(instructionWithMetadata, assembly);
 					break;
 				}
 				case "newobj": {
@@ -681,35 +690,25 @@ public class CILToArmTranspiler {
 		]);
 	}
 
-	private void HandleCallInstruction(CILInstruction instruction, ARMProgram assembly) {
-		var call = (GBARomMaker.CILParse.Instructions.CALL)instruction;
+	private void HandleCallInstruction(InstructionMetadata instruction, ARMProgram assembly) {
+		var call = (GBARomMaker.CILParse.Instructions.CALL)instruction.Instruction;
 		var cilFactory = new CILFactory(_peReader, _metadata);
 		var method = cilFactory.GetMethodDefinition(call.MetadataToken);
 
-		if (method.FullName == "System.Object..ctor") {
-			assembly.Add(instruction.GetBytes().Length, [
-				$"add sp, sp, #4 @ Pop `this`; Calling '{method.FullName}'"
-			]);
-			return;
-		}
+		var handlers = new List<ICallHandler> {
+			new SystemConsoleWriteLine(),
+			new SystemMathFCos(),
+			new SystemMathFSin(),
+			new SystemObjectCtor(cilFactory),
+		};
 
-		if (method.FullName == "System.MathF.Sin") {
-			assembly.IncludeSin = true;
-			assembly.Add(instruction.GetBytes().Length, [
-				"pop sp!, { r0 }",
-				"bl gba_float_sin",
-				"push sp!, { r0 }"
-			]);
-			return;
-		}
-		
-		if (method.FullName == "System.MathF.Cos") {
-			assembly.IncludeSin = true;
-			assembly.Add(instruction.GetBytes().Length, [
-				"pop sp!, { r0 }",
-				"bl gba_float_cos",
-				"push sp!, { r0 }"
-			]);
+		var handler = handlers.FirstOrDefault(h => h.Handles == method.FullName);
+		if (handler != null) {
+			var code = handler.Handle(instruction);
+			assembly.Add(instruction.GetBytes().Length, code.Assembly);
+			assembly.IncludeFloat |= code.IncludeFloat;
+			assembly.IncludeSin |= code.IncludeSin;
+			assembly.IncludeMGBALog |= code.IncludeMGBALog;
 			return;
 		}
 
@@ -728,15 +727,25 @@ public class CILToArmTranspiler {
 		]);
 	}
 	
-	private void HandleCallvirtInstruction(CILInstruction instruction, ARMProgram assembly) {
-		var callvirt = (GBARomMaker.CILParse.Instructions.CALLVIRT)instruction;
+	private void HandleCallvirtInstruction(InstructionMetadata instruction, ARMProgram assembly) {
+		var callvirt = (GBARomMaker.CILParse.Instructions.CALLVIRT)instruction.Instruction;
 		var cilFactory = new CILFactory(_peReader, _metadata);
 		var method = cilFactory.GetMethodDefinition(callvirt.MetadataToken);
 
-		if (method.FullName == "System.Object..ctor") {
-			assembly.Add(instruction.GetBytes().Length, [
-				$"add sp, sp, #4 @ Pop `this`; Calling '{method.FullName}'"
-			]);
+		var handlers = new List<ICallHandler> {
+			new SystemConsoleWriteLine(),
+			new SystemMathFCos(),
+			new SystemMathFSin(),
+			new SystemObjectCtor(cilFactory),
+		};
+
+		var handler = handlers.FirstOrDefault(h => h.Handles == method.FullName);
+		if (handler != null) {
+			var code = handler.Handle(instruction);
+			assembly.Add(instruction.GetBytes().Length, code.Assembly);
+			assembly.IncludeFloat |= code.IncludeFloat;
+			assembly.IncludeSin |= code.IncludeSin;
+			assembly.IncludeMGBALog |= code.IncludeMGBALog;
 			return;
 		}
 

@@ -546,4 +546,21 @@ gba_irq_handler:
 	bx lr
 ".Split("\n", StringSplitOptions.RemoveEmptyEntries);
 	}
+
+	public static string[] GetMGBALog() {
+		return @"
+mgba_log:
+	ldr r1, [r0], #4 @ string length
+	ldr r3, =0x04FFF600 @ log buffer start
+
+	ldr r2, =0x5748 @ 'HW' (reversed)
+	strh r2, [r3], #2
+
+	@ send log
+	ldr r0, =0x04FFF700
+	ldr r1, =0x0101
+	strh r1, [r0]
+	bx lr
+".Split("\n", StringSplitOptions.RemoveEmptyEntries);;
+	}
 }

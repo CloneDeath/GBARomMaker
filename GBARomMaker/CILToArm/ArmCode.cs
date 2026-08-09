@@ -10,5 +10,8 @@ public class ArmCode {
 	}
 
 	public string[] Assembly { get; }
+
 	public bool IncludeFloat { get; set; } = false;
+	public bool IncludeSin { get; set; } = false;
+	public bool IncludeMGBALog { get; set; } = false;
 }
