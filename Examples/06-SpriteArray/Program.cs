@@ -14,14 +14,17 @@ unsafe {
 		byte palletIndex = (byte)(i + 1);
 		Palette.SetObject(0, palletIndex, new Color { Red = i });
 
+		byte tileIndex = (byte)(512 + i);
 		for (byte y = 0; y < 8; y++) {
 		for (byte x = 0; x < 8; x++) {
-			CharacterData.SetColor(512 + i, x, y, palletIndex);
+			CharacterData.SetColor(tileIndex, x, y, palletIndex);
 		}
 		}
-		sprites[i] = new Sprite(i);
-		sprites[i].X = (byte)(i * 8);
-		sprites[i].Y = 76;
+		sprites[i] = new Sprite(i) {
+			TileIndex = tileIndex,
+			X = (byte)(i * 8),
+			Y = 76
+		};
 	}
 	
 	Palette.SetObject(0, 1, Colors.Red);
