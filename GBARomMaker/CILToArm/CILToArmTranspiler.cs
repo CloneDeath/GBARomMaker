@@ -34,6 +34,9 @@ public class CILToArmTranspiler {
 			new ARMLine(-1, header_line++, "ldr r0, =gba_irq_handler @ Install IRQ Handler"),
 			new ARMLine(-1, header_line++, "ldr r1, =0x03007FFC"),
 			new ARMLine(-1, header_line++, "str r0, [r1]"),
+			new ARMLine(-1, header_line++, "ldr r0, =0x4FFF780 @ Enable mGBA logs"),
+			new ARMLine(-1, header_line++, "ldr r1, =0xC0DE"),
+			new ARMLine(-1, header_line++, "strh r1, [r0]"),
 			new ARMLine(-1, header_line++, $"b {GetLabelForMethod(entrypoint)}"),
 		};
 		foreach (var line in AsmFunctions.GetIRQHandler()) {
