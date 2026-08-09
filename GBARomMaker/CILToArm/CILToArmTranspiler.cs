@@ -111,8 +111,10 @@ public class CILToArmTranspiler {
 			new CONV_U1(),
 			new CONV_U2(),
 			new DUP(),
+			new LDC_I4_X(),
 			new LDELEM_REF(),
 			new LDLEN(),
+			new LDSTR(factory),
 			new NEWARR(factory),
 			new NOP(),
 			new POP(),
@@ -137,23 +139,6 @@ public class CILToArmTranspiler {
 
 			var opcode = instruction.OpCode.Name;
 			switch (opcode) {
-				case "ldc.i4.m1":
-				case "ldc.i4.0":
-				case "ldc.i4.1":
-				case "ldc.i4.2":
-				case "ldc.i4.3":
-				case "ldc.i4.4":
-				case "ldc.i4.5":
-				case "ldc.i4.6":
-				case "ldc.i4.7":
-				case "ldc.i4.8": {
-					var ldc = (GBARomMaker.CILParse.Instructions.LDC_I4_X)instruction;
-					assembly.Add(instruction.GetBytes().Length, [
-						$"ldr r0, =0x{ldc.Data:X2}",
-						"push sp!, { r0 }"
-					]);
-					break;
-				}
 				case "ldc.i4": {
 					var ldc = (GBARomMaker.CILParse.Instructions.LDC_I4)instruction;
 					assembly.Add(instruction.GetBytes().Length, [

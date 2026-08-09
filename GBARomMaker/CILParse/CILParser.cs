@@ -30,6 +30,7 @@ public class CILParser {
 		[LDELEM_REF.Definition],
 		[LDFLD.Definition],
 		[LDSFLD.Definition],
+		[LDSTR.Definition],
 		LDIND.Definitions,
 		[LDLEN.Definition],
 		LDLOC.Definitions,

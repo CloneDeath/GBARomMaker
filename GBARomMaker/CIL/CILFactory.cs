@@ -64,4 +64,9 @@ public class CILFactory {
 			default: throw new NotImplementedException($"Could not extract field from {handle.Kind}");
 		}
 	}
+
+	public string GetString(int metadataToken) {
+		var handle = MetadataTokens.UserStringHandle(metadataToken);
+		return _metadata.GetUserString(handle);
+	}
 }
