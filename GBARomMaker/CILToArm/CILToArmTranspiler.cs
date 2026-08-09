@@ -107,9 +107,11 @@ public class CILToArmTranspiler {
 
 		var handlers = new ICILToArmHandler[] {
 			new CONV_I(),
+			new CONV_R4(),
 			new CONV_U1(),
 			new CONV_U2(),
 			new DUP(),
+			new LDELEM_REF(),
 			new LDLEN(),
 			new NEWARR(factory),
 			new NOP(),
@@ -135,27 +137,6 @@ public class CILToArmTranspiler {
 
 			var opcode = instruction.OpCode.Name;
 			switch (opcode) {
-				case "conv.r4": {
-					var topOfStackType = instructionWithMetadata.StackTypes?.FirstOrDefault()?.Code ?? throw new InvalidOperationException($"Stack not deep enough for a conv.r4! {instructionWithMetadata}");
-					var stackTypeIsInt32Compatible = topOfStackType == SignatureTypeCode.Int32
-						|| topOfStackType == SignatureTypeCode.Pointer
-						|| topOfStackType == SignatureTypeCode.Byte;
-					if (stackTypeIsInt32Compatible) {
-						assembly.Add(instruction.GetBytes().Length, [
-							"pop sp!, { r0 }",
-							$"bl gba_int_to_float @ <{topOfStackType}> to float",
-							"push sp!, { r0 }"
-						]);
-					} else if (topOfStackType == SignatureTypeCode.Single) {
-						assembly.IncludeFloat = true;
-						assembly.Add(instruction.GetBytes().Length, [
-							$"nop @ <{topOfStackType}> to float",
-						]);
-					} else {
-						throw new NotImplementedException($"CIL 'conv.r4' not supported for type {topOfStackType}. {instructionWithMetadata}");
-					}
-					break;
-				}				
 				case "ldc.i4.m1":
 				case "ldc.i4.0":
 				case "ldc.i4.1":
