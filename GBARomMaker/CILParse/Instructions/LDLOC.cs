@@ -41,11 +41,11 @@ public class LDLOC : CILInstruction {
     }
 
     public string GetCIL(CILFactory factory, ICILMethod method) {
-		return $"ldloc.{Location} // <{method.GetLocalVariableTypes()[Location]}>";
+		return $"ldloc.{Location} // {method.GetLocalVariableTypes()[Location]}";
     }
     
 	public void ModifyStack(CILFactory factory, ICILMethod method, Stack<ISignatureType> current) {
-		current.Push(new SignatureType(method.GetLocalVariableTypes()[Location]));
+		current.Push(method.GetLocalVariableTypes()[Location]);
 	}
 
     public bool AlwaysBranches => false;
@@ -64,10 +64,10 @@ public class LDLOC_S : CILInstruction {
 
 	public byte[] GetBytes() => [0x11, Location];
 
-	public string GetCIL(CILFactory factory, ICILMethod method) => $"ldloc.s {Location} // <{method.GetLocalVariableTypes()[Location]}>";
+	public string GetCIL(CILFactory factory, ICILMethod method) => $"ldloc.s {Location} // {method.GetLocalVariableTypes()[Location]}";
     
 	public void ModifyStack(CILFactory factory, ICILMethod method, Stack<ISignatureType> current) {
-		current.Push(new SignatureType(method.GetLocalVariableTypes()[Location]));
+		current.Push(method.GetLocalVariableTypes()[Location]);
 	}
 
     public bool AlwaysBranches => false;

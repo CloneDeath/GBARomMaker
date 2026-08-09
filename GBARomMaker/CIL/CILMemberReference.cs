@@ -39,12 +39,12 @@ public class CILMemberReference : ICILMethod {
 	public byte[] BodyBytes => throw new NotImplementedException($"For {FullName}");
 	public bool IsInstance => _signature.IsInstance;
     public int ParameterCount => _signature.ParameterCount;
-	public SignatureTypeCode ReturnType => _signature.ReturnType;
-	public bool HasReturnValue => ReturnType != SignatureTypeCode.Void;
-	public SignatureTypeCode[] GetArgumentTypes() => _signature.ArgumentTypes;
+	public ISignatureType ReturnType => _signature.ReturnType;
+	public bool HasReturnValue => ReturnType.Code != SignatureTypeCode.Void;
+	public ISignatureType[] GetArgumentTypes() => _signature.ArgumentTypes;
 
 	public MemberReferenceKind Kind => _self.GetKind();
     public bool IsNativeInvoke => throw new NotImplementedException($"For {FullName}");
     public string NativeInvokeTarget => throw new NotImplementedException($"For {FullName}");
-    public SignatureTypeCode[] GetLocalVariableTypes() => throw new NotImplementedException($"For {FullName}");
+    public ISignatureType[] GetLocalVariableTypes() => throw new NotImplementedException($"For {FullName}");
 }

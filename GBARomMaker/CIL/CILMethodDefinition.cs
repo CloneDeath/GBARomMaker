@@ -26,9 +26,9 @@ public class CILMethodDefinition : ICILMethod {
 	public byte[] BodyBytes => _peReader.GetMethodBody(_method.RelativeVirtualAddress)?.GetILBytes() ?? [];
 	public bool IsInstance => _signature.IsInstance;
 	public int ParameterCount => _signature.ParameterCount;
-	public SignatureTypeCode ReturnType => _signature.ReturnType;
-	public bool HasReturnValue => ReturnType != SignatureTypeCode.Void;
-	public SignatureTypeCode[] GetArgumentTypes() => _signature.ArgumentTypes;
+	public ISignatureType ReturnType => _signature.ReturnType;
+	public bool HasReturnValue => ReturnType.Code != SignatureTypeCode.Void;
+	public ISignatureType[] GetArgumentTypes() => _signature.ArgumentTypes;
 
 	public bool IsConstructor => IsInstanceConstructor || IsStaticConstructor;
 	public bool IsInstanceConstructor => Name == ".ctor";
@@ -53,7 +53,7 @@ public class CILMethodDefinition : ICILMethod {
 		}
 	}
 
-	public SignatureTypeCode[] GetLocalVariableTypes() {
+	public ISignatureType[] GetLocalVariableTypes() {
 		var body = _peReader.GetMethodBody(_method.RelativeVirtualAddress);
 
 		if (body.LocalSignature.IsNil) {
@@ -61,39 +61,17 @@ public class CILMethodDefinition : ICILMethod {
 		}
 
 		var localSignature = _metadata.GetStandaloneSignature(body.LocalSignature);
-		var signatureReader = _metadata.GetBlobReader(localSignature.Signature);
+		var reader = _metadata.GetBlobReader(localSignature.Signature);
 
-		var header = signatureReader.ReadSignatureHeader();
-		if (header.IsGeneric) signatureReader.ReadCompressedInteger(); // generic param count
-		var localVariableCount = signatureReader.ReadCompressedInteger();
+		var header = reader.ReadSignatureHeader();
+		if (header.IsGeneric) reader.ReadCompressedInteger(); // generic param count
+		var localVariableCount = reader.ReadCompressedInteger();
 
-		var encounteredTypes = new List<SignatureTypeCode>();
-
-		var types = new List<SignatureTypeCode>();
+		var types = new List<ISignatureType>();
 		for (int i = 0; i < localVariableCount; i++) {
-			var type = signatureReader.ReadSignatureTypeCode();
-			encounteredTypes.Add(type);
-			if (type == SignatureTypeCode.SZArray) {
- 				// todo figure out the actual of the type we just referenced
-				var skipped = signatureReader.ReadSignatureTypeCode();
-				encounteredTypes.Add(skipped);
-				if (skipped == SignatureTypeCode.TypeHandle) {
-					var innerType = signatureReader.ReadSignatureTypeCode();
-					encounteredTypes.Add(innerType);
-				}
-			} else if (type == SignatureTypeCode.TypeHandle) {
-				// https://learn.microsoft.com/en-us/dotnet/api/system.reflection.metadata.signaturetypecode?view=net-11.0-pp
-				// todo figure out the actual of the type we just referenced
-				var skipped = signatureReader.ReadSignatureTypeCode();
-				encounteredTypes.Add(skipped);
-			} else if (type == SignatureTypeCode.Pointer) {
-				// todo Do we need the referenced type too?
-				var skipped = signatureReader.ReadSignatureTypeCode();
-				encounteredTypes.Add(skipped);
-			}
-			types.Add(type);
+			types.Add(SignatureType.Read(ref reader));
 		}
-		if (signatureReader.RemainingBytes != 0) throw new Exception($"Failed to read all {localVariableCount} local variables. {signatureReader.RemainingBytes} bytes remain.\n\tParsed: [{string.Join(", ", types)}]\n\t Found: [{string.Join(", ", encounteredTypes)}]");
+		if (reader.RemainingBytes != 0) throw new Exception($"Failed to read all {localVariableCount} local variables. {reader.RemainingBytes} bytes remain.\n\tParsed: [{string.Join(", ", types)}]");
 		return types.ToArray();
 	}
 }

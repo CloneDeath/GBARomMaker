@@ -33,7 +33,7 @@ public class CALL : CILInstruction {
 			current.Pop();
 		}
 		if (targetMethod.HasReturnValue) {
-			current.Push(new SignatureType(targetMethod.ReturnType));
+			current.Push(targetMethod.ReturnType);
 		}
 	}
 
