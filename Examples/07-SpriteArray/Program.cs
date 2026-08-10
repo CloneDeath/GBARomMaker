@@ -3,61 +3,40 @@ using GBA;
 
 unsafe {
 	DisplayController.EnableVBlank();
-	//DisplayController.SetControl(new DisplayControl {
-	//	BGMode = 3,
-	//	ScreenDisplayBG2 = true,
-	//	ScreenDisplayOBJ = true
-	//});
+	DisplayController.SetControl(new DisplayControl {
+		BGMode = 3,
+		ScreenDisplayBG2 = true,
+		ScreenDisplayOBJ = true
+	});
 
-	var x = new int[1] { 12 };
-	Console.WriteLine(x[0]);
-	while (true) {
-		Interrupt.WaitVBlank();
+	Sprite[] sprites = new Sprite[30];
+	for (byte i = 0; i < sprites.Length; i++) {
+		byte palletIndex = (byte)(i + 1);
+		Palette.SetObject(0, palletIndex, new Color { Red = 31 });
+
+		ushort tileIndex = (ushort)(512 + i);
+		for (byte y = 0; y < 8; y++) {
+		for (byte x = 0; x < 8; x++) {
+			CharacterData.SetColor(tileIndex, x, y, palletIndex);
+		}
+		}
+		Console.WriteLine("data:");
+		Console.WriteLine(palletIndex);
+		Console.WriteLine(tileIndex);
+		sprites[i] = new Sprite(i) {
+			TileIndex = tileIndex,
+			X = (byte)(i * 8),
+			Y = 76
+		};
 	}
-
-	//Sprite[] sprites = new Sprite[30];
-	//for (byte i = 0; i < sprites.Length; i++) {
-	//	byte palletIndex = (byte)(i + 1);
-	//	Palette.SetObject(0, palletIndex, new Color { Red = i });
-
-	//	byte tileIndex = (byte)(512 + i);
-	//	for (byte y = 0; y < 8; y++) {
-	//	for (byte x = 0; x < 8; x++) {
-	//		CharacterData.SetColor(tileIndex, x, y, palletIndex);
-	//	}
-	//	}
-	//	sprites[i] = new Sprite(i) {
-	//		TileIndex = tileIndex,
-	//		X = (byte)(i * 8),
-	//		Y = 76
-	//	};
-	//}
 	
-	//Palette.SetObject(0, 0, Colors.Red);
-	//Palette.SetObject(0, 1, Colors.Green);
-	//Palette.SetObject(0, 2, Colors.Blue);
-	//for (byte y = 0; y < 8; y++) {
-	//for (byte x = 0; x < 8; x++) {
-	//	CharacterData.SetColor(513, x, y, 1);
-	//}
-	//}
-
-	//var sprites = new Sprite[1];
-	//
-	//Console.WriteLine("begin");
-	//sprites[0] = new Sprite(0) {
-	//	TileIndex = 513,
-	//	Y = 76
-	//};
-
-	//int timer = 0;
-	//Console.WriteLine(sprites[0].Y);
-	//while(true){
-	//	timer += 1;
-	//	sprites[0].Y = 76;
-	//	sprites[0].X = (byte)(timer%232);
-	//	Interrupt.WaitVBlank();
-	//};
+	Console.WriteLine(sprites.Length);
+	Console.WriteLine(sprites[0].TileIndex);
+	Console.WriteLine(sprites[0].X);
+	Console.WriteLine(sprites[0].Y);
+	while(true) {
+		Interrupt.WaitVBlank();
+	};
 }
 
 static Color ColorFromHSV(float hue, float saturation, float value)
