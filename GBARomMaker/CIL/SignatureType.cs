@@ -29,6 +29,9 @@ public class SignatureType(SignatureTypeCode code) : ISignatureType {
 			// todo Do we need the referenced type too?
 			var skipped = reader.ReadSignatureTypeCode();
 			return new SignatureType(type);
+		} else if (type == SignatureTypeCode.GenericMethodParameter) {
+			var token = reader.ReadCompressedInteger();
+			return new GenericSignatureType(token);
 		}
 		return new SignatureType(type);
 	}
@@ -40,4 +43,11 @@ public class ArraySignatureType(ISignatureType innerType) : ISignatureType {
 
 
 	public override string ToString() => $"{Code}<{InnerType}>";
+}
+
+public class GenericSignatureType(int metadataToken) : ISignatureType {
+	public SignatureTypeCode Code => SignatureTypeCode.GenericMethodParameter;
+
+	public int MetadataToken => metadataToken;
+	public override string ToString() => $"{Code}<{MetadataToken}>";
 }
