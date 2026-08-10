@@ -1,5 +1,8 @@
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection.Emit;
+using System.Text;
 using GBARomMaker.CIL;
 using GBARomMaker.CILToArm.ControlFlow;
 
@@ -12,25 +15,34 @@ public class LDSTR(CILFactory factory) : ICILToArmHandler {
 		var ldstr = (GBARomMaker.CILParse.Instructions.LDSTR)instruction.Instruction;
 		var str = ldstr.GetString(factory);
 
-		var allocSize = 1 + (str.Length / 2) + (str.Length % 2);
+		var ascii = Encoding.ASCII.GetBytes(str);
+		var allocSize = 1 + (ascii.Length / 4) + ((ascii.Length % 4) == 0 ? 0 : 1);
 		var code = new List<string> {
 			"push sp!, { r8 }",
 			"mov r0, r8",
-			$"add r8, r8, #{allocSize} @ <len> + \"{str}\"",
-			$"ldr r1, ={str.Length}",
+			$"add r8, r8, #{allocSize * 4} @ <len> + \"{str}\"",
+			$"ldr r1, ={ascii.Length}",
 			"str r1, [r0], #4",
 		};
 
-		foreach (var c in str) {
-			code.Add($"ldr r1, =0x{((ushort)c):X4} @ {c}");
-			code.Add("strh r1, [r0], #2");
+		for (var i = 0; i < ascii.Length - 4; i += 4) {
+			var wordBytes = ascii[i .. (i+4)];
+			var word = BitConverter.ToUInt32(wordBytes);
+			var phrase = Encoding.ASCII.GetString(wordBytes);
+			code.Add($"ldr r1, =0x{word:X8} @ \"{phrase}\"");
+			code.Add("str r1, [r0], #4");
+		}
+		if (ascii.Length % 4 > 0) {
+			var remainingBytes = ascii.Length % 4;
+			var padBytes = 4 - (ascii.Length % 4);
+			var tailNib = ascii[^remainingBytes..].Concat(new byte[padBytes]).ToArray();
+			var finalWord = BitConverter.ToUInt32(tailNib);
+			var phrase = Encoding.ASCII.GetString(ascii[^remainingBytes..]);
+			code.Add($"ldr r1, =0x{finalWord:X8} @ \"{phrase}\"");
+			code.Add("str r1, [r0], #4");
+
 		}
 
-		var needsPadding = (str.Length % 2) != 0;
-		if (needsPadding) {
-			code.Add($"ldr r1, =0 @ 0 padding");
-			code.Add("strh r1, [r0], #2");
-		}
 		return new ArmCode(code.ToArray());
 	}
 }
