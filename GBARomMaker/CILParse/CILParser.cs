@@ -44,6 +44,7 @@ public class CILParser {
 		[REM.Definition],
 		[RET.Definition],
 		[SHL.Definition],
+		STELEM_IX.Definitions,
 		[STELEM_REF.Definition],
 		[STFLD.Definition],
 		STIND_IX.Definitions,
