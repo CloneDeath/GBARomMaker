@@ -23,7 +23,8 @@ public class CALL : CILInstruction {
 
 	public string GetCIL(CILFactory factory, ICILMethod method) {
 		var targetMethod = factory.GetMethodDefinition(MetadataToken);
-		return "call " + targetMethod.FullName;
+		var types = string.Join(", ", targetMethod.GetArgumentTypes());
+		return $"call {targetMethod.ReturnType} {targetMethod.FullName}({types})";
 	}
 
     public void ModifyStack(CILFactory factory, ICILMethod method, Stack<ISignatureType> current) {

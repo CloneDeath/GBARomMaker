@@ -692,51 +692,24 @@ public class CILToArmTranspiler {
 
 	private void HandleCallInstruction(InstructionMetadata instruction, ARMProgram assembly) {
 		var call = (GBARomMaker.CILParse.Instructions.CALL)instruction.Instruction;
-		var cilFactory = new CILFactory(_peReader, _metadata);
-		var method = cilFactory.GetMethodDefinition(call.MetadataToken);
-
-		var handlers = new List<ICallHandler> {
-			new SystemConsoleWriteLine(),
-			new SystemMathFCos(),
-			new SystemMathFSin(),
-			new SystemObjectCtor(cilFactory),
-		};
-
-		var handler = handlers.FirstOrDefault(h => h.Handles == method.FullName);
-		if (handler != null) {
-			var code = handler.Handle(instruction);
-			assembly.Add(instruction.GetBytes().Length, code.Assembly);
-			assembly.IncludeFloat |= code.IncludeFloat;
-			assembly.IncludeSin |= code.IncludeSin;
-			assembly.IncludeMGBALog |= code.IncludeMGBALog;
-			return;
-		}
-
-		if (method.IsNativeInvoke) {
-			if (method.NativeInvokeTarget != "WaitVBlank") throw new Exception("Unrecognized native invoke target");
-			assembly.Add(instruction.GetBytes().Length, [
-				"swi 0x050000 @ WaitVBlank",
-			]);
-			return;
-		}
-
-		assembly.MethodsToTranspile.Enqueue(method);
-		var target = GetLabelForMethod(method);
-		assembly.Add(instruction.GetBytes().Length, [
-			$"bl {target}"
-		]);
+		var factory = new CILFactory(_peReader, _metadata);
+		var method = factory.GetMethodDefinition(call.MetadataToken);
+		HandleCall(instruction, method, assembly, factory);
 	}
 	
 	private void HandleCallvirtInstruction(InstructionMetadata instruction, ARMProgram assembly) {
 		var callvirt = (GBARomMaker.CILParse.Instructions.CALLVIRT)instruction.Instruction;
-		var cilFactory = new CILFactory(_peReader, _metadata);
-		var method = cilFactory.GetMethodDefinition(callvirt.MetadataToken);
+		var factory = new CILFactory(_peReader, _metadata);
+		var method = factory.GetMethodDefinition(callvirt.MetadataToken);
+		HandleCall(instruction, method, assembly, factory);
+	}
 
+	private void HandleCall(InstructionMetadata instruction, ICILMethod method, ARMProgram assembly, CILFactory factory) {
 		var handlers = new List<ICallHandler> {
-			new SystemConsoleWriteLine(),
+			new SystemConsoleWriteLine(factory),
 			new SystemMathFCos(),
 			new SystemMathFSin(),
-			new SystemObjectCtor(cilFactory),
+			new SystemObjectCtor(factory),
 		};
 
 		var handler = handlers.FirstOrDefault(h => h.Handles == method.FullName);

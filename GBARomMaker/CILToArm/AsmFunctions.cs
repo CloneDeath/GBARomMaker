@@ -558,13 +558,11 @@ mgba_log:
 	ldr r1, [r0], #4 @ string length
 	ldr r3, =0x04FFF600 @ log buffer start
 
-@mgba_log_loop:
-	ldrh r2, [r0], #2
-	strh r2, [r3], #2
-	ldrh r2, [r0], #2
-	strh r2, [r3], #2
-@	subs r1, r1, r1
-@	ble mgba_log_loop
+mgba_log_loop:
+	ldr r2, [r0], #4
+	str r2, [r3], #4
+	subs r1, r1, #4
+	bgt mgba_log_loop
 
 	@ send log
 	ldr r0, =0x04FFF700

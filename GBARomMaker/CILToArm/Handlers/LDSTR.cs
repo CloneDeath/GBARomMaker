@@ -25,7 +25,7 @@ public class LDSTR(CILFactory factory) : ICILToArmHandler {
 			"str r1, [r0], #4",
 		};
 
-		for (var i = 0; i < ascii.Length - 4; i += 4) {
+		for (var i = 0; i <= ascii.Length - 4; i += 4) {
 			var wordBytes = ascii[i .. (i+4)];
 			var word = BitConverter.ToUInt32(wordBytes);
 			var phrase = Encoding.ASCII.GetString(wordBytes);
