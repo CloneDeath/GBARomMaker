@@ -553,22 +553,52 @@ gba_irq_handler:
 		// WARNING 0x102
 		// INFO 0x103
 		// DEBUG 0x104
-		return @"
-mgba_log:
+		return (@"
+mgba_log_string:
 	ldr r1, [r0], #4 @ string length
 	ldr r3, =0x04FFF600 @ log buffer start
 
-mgba_log_loop:
+mgba_log_string_loop:
 	ldr r2, [r0], #4
 	str r2, [r3], #4
 	subs r1, r1, #4
-	bgt mgba_log_loop
+	bgt mgba_log_string_loop
 
 	@ send log
 	ldr r0, =0x04FFF700
 	ldr r1, =0x0104
 	strh r1, [r0]
 	bx lr
-".Split("\n", StringSplitOptions.RemoveEmptyEntries);
+"
+
++ @"
+mgba_log_i4:
+	ldr r4, =0x04FFF600 @ log buffer start
+	ldr r5, =0 @ char count
+
+mgba_log_i4_push_char:
+	add r5, r5, #1
+	ldr r1, =10
+	swi 0x060000 @ div
+	add r2, r1, #48 @ char '0'
+	push sp!, { r2 }
+	cmp r0, #0
+	bne mgba_log_i4_push_char
+
+mgba_log_i4_print_char:
+	sub r5, r5, #1
+	pop sp!, { r2 }
+	strb r2, [r4], #1
+	cmp r5, #0
+	bne mgba_log_i4_print_char
+	
+	@ send log
+	ldr r0, =0x04FFF700
+	ldr r1, =0x0104
+	strh r1, [r0]
+	
+	bx lr
+
+").Split("\n", StringSplitOptions.RemoveEmptyEntries);
 	}
 }

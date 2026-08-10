@@ -19,7 +19,16 @@ public class SystemConsoleWriteLine(CILFactory factory) : ICallHandler {
 		if (arguments.Length == 1 && arguments[0].Code == SignatureTypeCode.String) {
 			return new ArmCode([
 				"pop sp!, { r0 }",
-				$"bl mgba_log @ {methodCall}",
+				$"bl mgba_log_string @ {methodCall}",
+			]) {
+				IncludeMGBALog = true
+			};
+		}
+
+		if (arguments.Length == 1 && arguments[0].Code == SignatureTypeCode.Int32) {
+			return new ArmCode([
+				"pop sp!, { r0 }",
+				$"bl mgba_log_i4 @ {methodCall}",
 			]) {
 				IncludeMGBALog = true
 			};

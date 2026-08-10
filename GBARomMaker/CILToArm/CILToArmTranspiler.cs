@@ -108,7 +108,8 @@ public class CILToArmTranspiler {
 		// Free Register 3 = r2
 		// Free Register 4 = r3
 		// Free Register 5 = r4
-		// Temporary = r6 <- NOT SAVED to stack when going between methods. Used for storing fp and ret
+		// Free Register 6 = r5
+		// Temporary = r6 <- NOT SAVED to stack when going between methods. Used for temporarily storing fp and ret
 		// Frame Pointer = r7
 		// Heap Pointer    = r8 <- Temporary until we implement malloc/free
 		// Stack Pointer   = sp/r13
