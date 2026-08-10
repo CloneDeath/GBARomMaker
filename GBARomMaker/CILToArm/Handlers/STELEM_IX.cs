@@ -3,8 +3,8 @@ using GBARomMaker.CILToArm.ControlFlow;
 
 namespace GBARomMaker.CILToArm.Handlers;
 
-public class STELEM_REF : ICILToArmHandler {
-	public OpCode[] Handles => [OpCodes.Stelem_Ref];
+public class STELEM_IX : ICILToArmHandler {
+	public OpCode[] Handles => [OpCodes.Stelem_I4];
 
 	public ArmCode Handle(InstructionMetadata instruction) {
 		return new ArmCode([
