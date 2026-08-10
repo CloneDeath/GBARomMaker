@@ -36,6 +36,7 @@ public class CILParser {
 		LDIND.Definitions,
 		[LDLEN.Definition],
 		LDLOC.Definitions,
+		[LDLOCA_S.Definition],
 		[MUL.Definition],
 		[NEWARR.Definition],
 		[NEWOBJ.Definition],

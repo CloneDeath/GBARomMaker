@@ -20,7 +20,9 @@ public class MethodSignatureBlob {
 		for (var i = 0; i < ParameterCount; i++) {
 			types.Add(SignatureType.Read(ref reader));
 		}
-		if (reader.RemainingBytes != 0) throw new Exception($"Failed to read all bytes from signature header. {reader.RemainingBytes} bytes remain.\n\tParsed: [{string.Join(", ", types)}]");
+		if (reader.RemainingBytes != 0) throw new Exception($"Failed to read all bytes from signature header. {reader.RemainingBytes} bytes remain."
+			+ $"\n\tReturnType: {ReturnType}"
+			+ $"\n\tArgumentTypes: [{string.Join(", ", types)}]");
 		ArgumentTypes = types.ToArray();
 	}
 

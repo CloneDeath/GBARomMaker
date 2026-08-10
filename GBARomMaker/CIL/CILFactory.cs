@@ -39,6 +39,10 @@ public class CILFactory {
 
     public ICILMethod GetMethodDefinition(int metadataToken) {
 		var handle = MetadataTokens.EntityHandle(metadataToken);
+		return GetMethodDefinition(handle);
+    }
+
+	public ICILMethod GetMethodDefinition(EntityHandle handle) {
 		switch (handle.Kind) {
 			case HandleKind.MethodDefinition: {
 				var method = _metadata.GetMethodDefinition((MethodDefinitionHandle)handle);
@@ -50,9 +54,13 @@ public class CILFactory {
 				if (memberRef.Kind != MemberReferenceKind.Method) throw new Exception($"Could not extract a Method from a member ref to a {memberRef.Kind}");
 				return memberRef;
 			}
+			case HandleKind.MethodSpecification: {
+				var member = _metadata.GetMethodSpecification((MethodSpecificationHandle)handle);
+				return GetMethodDefinition(member.Method);
+			}
 			default: throw new NotImplementedException($"Tried to extract Method from {handle.Kind}");
 		}
-    }
+	}
 
 	public CILFieldDefinition GetFieldDefinition(int metadataToken) {
 		var handle = MetadataTokens.EntityHandle(metadataToken);
