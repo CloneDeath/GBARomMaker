@@ -5,7 +5,11 @@ using System.Collections.Generic;
 
 namespace GBARomMaker.CILParse.Instructions;
 
-public class LDLOC : CILInstruction {
+public interface ILDLOC {
+	public uint Location { get; }
+}
+
+public class LDLOC : CILInstruction, ILDLOC {
 	public static CILInstructionDefinition[] Definitions = [
 		new(0x11, 1, (args) => new LDLOC_S(args[0])), // ldloc.s
 		new(0x06, 0, (_) => new LDLOC(0)), // ldloc.0
@@ -53,16 +57,16 @@ public class LDLOC : CILInstruction {
 	public int? BranchTarget => null;
 }
 
-public class LDLOC_S : CILInstruction {
+public class LDLOC_S : CILInstruction, ILDLOC {
 	public LDLOC_S(byte location) {
 		Location = location;
 	}
 
-	public byte Location { get; }
+	public uint Location { get; }
 
 	public OpCode OpCode => OpCodes.Ldloc_S;
 
-	public byte[] GetBytes() => [0x11, Location];
+	public byte[] GetBytes() => [0x11, (byte)Location];
 
 	public string GetCIL(CILFactory factory, ICILMethod method) => $"ldloc.s {Location} // {method.GetLocalVariableTypes()[Location]}";
     

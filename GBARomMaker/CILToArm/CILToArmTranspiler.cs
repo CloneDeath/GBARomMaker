@@ -129,6 +129,8 @@ public class CILToArmTranspiler {
 			new LDELEM_IX(),
 			new LDELEM_REF(),
 			new LDLEN(),
+			new LDLOCA_S(),
+			new LDLOC_X(),
 			new LDSTR(factory),
 			new NEWARR(factory),
 			new NOP(),
@@ -187,26 +189,6 @@ public class CILToArmTranspiler {
 					assembly.Add(instruction.GetBytes().Length, [
 						"pop sp!, { r0 }",
 						$"str r0, [r7, #-{(location+1) * 4}] @ local { location }",
-					]);;
-					break;
-				}
-				case "ldloc.0":
-				case "ldloc.1":
-				case "ldloc.2":
-				case "ldloc.3": {
-					var location = int.Parse(opcode[6].ToString()); // ldloc.X
-					assembly.Add(instruction.GetBytes().Length, [
-						$"ldr r0, [r7, #-{(location+1) * 4}] @ local { location }",
-						"push sp!, { r0 }"
-					]);
-					break;
-				}
-				case "ldloc.s": {
-					var ldlocs = (GBARomMaker.CILParse.Instructions.LDLOC_S)instruction;
-					var location = ldlocs.Location;
-					assembly.Add(instruction.GetBytes().Length, [
-						$"ldr r0, [r7, #-{(location+1) * 4}] @ local { location }",
-						"push sp!, { r0 }"
 					]);;
 					break;
 				}
