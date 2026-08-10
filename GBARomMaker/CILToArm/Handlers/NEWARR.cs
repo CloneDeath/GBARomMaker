@@ -14,10 +14,8 @@ public class NEWARR(CILFactory factory) : ICILToArmHandler {
 		return new ArmCode([
 			"pop sp!, { r0 }",
 			$"push sp!, {{ r8 }} @ newarr {typeDefinition.FullName}",
-			"ldr r1, =4",
-			"mul r0, r0, r1",
-			"add r0, r0, #4 @ +length of array",
-			"add r8, r8, r0"
+			"str r0, [r8], #4",
+			"add r8, r8, r0, lsl #2",
 		]);
 	}
 }
