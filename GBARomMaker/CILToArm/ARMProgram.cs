@@ -14,6 +14,7 @@ public class ARMProgram : List<ARMLine> {
 	public bool IncludeSin = false;
 	public bool IncludeFloat = false;
 	public bool IncludeMGBALog = false;
+	public bool IncludeString = false;
 
 	public Queue<ICILMethod> MethodsToTranspile { get; } = new();
 	public List<string> MethodsTranspiled { get; } = new();

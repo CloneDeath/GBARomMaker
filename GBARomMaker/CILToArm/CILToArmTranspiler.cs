@@ -70,6 +70,11 @@ public class CILToArmTranspiler {
 				assembly.Add(new ARMLine(-1, header_line++, line));
 			}
 		}
+		if (assembly.IncludeString || assembly.IncludeMGBALog) {
+			foreach (var line in AsmFunctions.GetString()) {
+				assembly.Add(new ARMLine(-1, header_line++, line));
+			}
+		}
 		
 		assembly.Add(new ARMLine(-1, 1, $"ldr r8, =0x{assembly.HeapStart:X8} @ Heap Start -- WRAM External"));
 		return assembly.GetArm7Assembly();
@@ -154,6 +159,7 @@ public class CILToArmTranspiler {
 				assembly.IncludeFloat |= result.IncludeFloat;
 				assembly.IncludeSin |= result.IncludeSin;
 				assembly.IncludeMGBALog |= result.IncludeMGBALog;
+				assembly.IncludeString |= result.IncludeString;
 				continue;
 			}
 
@@ -683,6 +689,7 @@ public class CILToArmTranspiler {
 			assembly.IncludeFloat |= code.IncludeFloat;
 			assembly.IncludeSin |= code.IncludeSin;
 			assembly.IncludeMGBALog |= code.IncludeMGBALog;
+			assembly.IncludeString |= code.IncludeString;
 			return;
 		}
 

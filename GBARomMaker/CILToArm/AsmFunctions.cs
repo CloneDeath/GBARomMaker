@@ -601,4 +601,12 @@ mgba_log_i4_print_char:
 
 ").Split("\n", StringSplitOptions.RemoveEmptyEntries);
 	}
+	
+	public static string[] GetString() {
+		return @"
+gba_i32_to_string:
+
+	
+".Split("\n", StringSplitOptions.RemoveEmptyEntries);
+	}
 }
