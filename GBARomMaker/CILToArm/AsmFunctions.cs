@@ -606,6 +606,7 @@ mgba_log_i4_print_char:
 	public static string[] GetString() {
 		return (@"
 gba_i4_to_string:
+	push sp!, { lr }
 	ldr r5, =0 @ char count
 
 gba_log_i4_push_char:
@@ -620,18 +621,6 @@ gba_log_i4_push_char:
 	mov r4, r8 @ r4 will hold string address
 	str r5, [r8], #4
 
-	@ TODO should we even pad? heap is byte addressable for both r and w...
-	@ determine how much padding we need...
-	@mov r0, r5
-	@ldr r1, =4
-	@swi 0x060000 @ div
-	@cmp r1, #0
-	@beq mgba_log_i4_print_char @ fits perfectly
-	@rsb r0, r1, #4
-	@ push some 0 pads?
-	@ldr r1, =0
-	@add r5, r5, #1
-
 gba_log_i4_char_to_heap:
 	sub r5, r5, #1
 	pop sp!, { r2 }
@@ -641,6 +630,8 @@ gba_log_i4_char_to_heap:
 	
 	@ write string address to r0 and return
 	mov r0, r4
+
+	pop sp!, { lr }
 	bx lr
 	
 " + @"
@@ -676,5 +667,21 @@ gba_string_concat_return:
 	bx lr
 
 ").Split("\n", StringSplitOptions.RemoveEmptyEntries);
+	}
+
+	public static string[] GetMalloc() {
+	return @"
+gba_malloc: 
+	@ args r0 size in bytes;
+	@ return r0 allocated address
+	add r0, r0, #3
+	lsr r0, r0, #2
+	add r8, r8, r0 @ move the heap register forward
+	sub r0, r8, r0 @ get where it was, for return
+	bx lr
+	
+
+".Split("\n", StringSplitOptions.RemoveEmptyEntries);
+
 	}
 }
