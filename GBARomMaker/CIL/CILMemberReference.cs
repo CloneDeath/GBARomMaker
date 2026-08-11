@@ -47,4 +47,10 @@ public class CILMemberReference : ICILMethod {
     public bool IsNativeInvoke => throw new NotImplementedException($"For {FullName}");
     public string NativeInvokeTarget => throw new NotImplementedException($"For {FullName}");
     public ISignatureType[] GetLocalVariableTypes() => throw new NotImplementedException($"For {FullName}");
+
+	public override string ToString() {
+		var arguments = GetArgumentTypes();
+		var argsString = string.Join(", ", arguments);
+		return $"{ReturnType} {FullName}({argsString})";
+	}
 }

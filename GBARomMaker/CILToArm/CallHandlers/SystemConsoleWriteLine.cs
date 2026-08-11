@@ -5,21 +5,15 @@ using GBARomMaker.CILToArm.ControlFlow;
 
 namespace GBARomMaker.CILToArm.CallHandlers;
 
-public class SystemConsoleWriteLine(CILFactory factory) : ICallHandler {
+public class SystemConsoleWriteLine : ICallHandler {
 	public string Handles => "System.Console.WriteLine";
 
-	public ArmCode Handle(InstructionMetadata instruction) {
-		var call = (GBARomMaker.CILParse.Instructions.CALL)instruction.Instruction;
-		var method = factory.GetMethodDefinition(call.MetadataToken);
+	public ArmCode Handle(InstructionMetadata instruction, ICILMethod method) {
 		var arguments = method.GetArgumentTypes();
-
-		var argsString = string.Join(", ", arguments);
-		var methodCall = $"{method.ReturnType} {method.FullName}({argsString})";
-
 		if (arguments.Length == 1 && arguments[0].Code == SignatureTypeCode.String) {
 			return new ArmCode([
 				"pop sp!, { r0 }",
-				$"bl mgba_log_string @ {methodCall}",
+				$"bl mgba_log_string @ {method}",
 			]) {
 				IncludeMGBALog = true
 			};
@@ -28,12 +22,12 @@ public class SystemConsoleWriteLine(CILFactory factory) : ICallHandler {
 		if (arguments.Length == 1 && arguments[0].Code == SignatureTypeCode.Int32) {
 			return new ArmCode([
 				"pop sp!, { r0 }",
-				$"bl mgba_log_i4 @ {methodCall}",
+				$"bl mgba_log_i4 @ {method}",
 			]) {
 				IncludeMGBALog = true
 			};
 		}
 
-		throw new NotImplementedException($"No handler for \"{methodCall}\"");
+		throw new NotImplementedException($"No handler for \"{method}\"");
 	}
 }

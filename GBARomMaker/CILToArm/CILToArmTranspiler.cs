@@ -114,8 +114,8 @@ public class CILToArmTranspiler {
 		// Free Register 4 = r3
 		// Free Register 5 = r4
 		// Free Register 6 = r5
-		// Temporary = r6 <- NOT SAVED to stack when going between methods. Used for temporarily storing fp and ret
-		// Frame Pointer = r7
+		// Temporary	   = r6 <- NOT SAVED to stack when going between methods. Used for temporarily storing fp and ret
+		// Frame Pointer   = r7
 		// Heap Pointer    = r8 <- Temporary until we implement malloc/free
 		// Stack Pointer   = sp/r13
 		// Link Register   = lr/r14
@@ -676,15 +676,17 @@ public class CILToArmTranspiler {
 
 	private void HandleCall(InstructionMetadata instruction, ICILMethod method, ARMProgram assembly, CILFactory factory) {
 		var handlers = new List<ICallHandler> {
-			new SystemConsoleWriteLine(factory),
+			new SystemConsoleWriteLine(),
+			new SystemInt32ToString(),
 			new SystemMathFCos(),
 			new SystemMathFSin(),
-			new SystemObjectCtor(factory),
+			new SystemObjectCtor(),
+			new SystemStringConcat(),
 		};
 
 		var handler = handlers.FirstOrDefault(h => h.Handles == method.FullName);
 		if (handler != null) {
-			var code = handler.Handle(instruction);
+			var code = handler.Handle(instruction, method);
 			assembly.Add(instruction.GetBytes().Length, code.Assembly);
 			assembly.IncludeFloat |= code.IncludeFloat;
 			assembly.IncludeSin |= code.IncludeSin;

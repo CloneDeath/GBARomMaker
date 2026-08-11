@@ -571,6 +571,7 @@ mgba_log_string_loop:
 	bx lr
 "
 
+// This has some overlap of gba_i4_to_string, maybe use it?
 + @"
 mgba_log_i4:
 	ldr r4, =0x04FFF600 @ log buffer start
@@ -603,10 +604,77 @@ mgba_log_i4_print_char:
 	}
 	
 	public static string[] GetString() {
-		return @"
-gba_i32_to_string:
+		return (@"
+gba_i4_to_string:
+	ldr r5, =0 @ char count
 
+gba_log_i4_push_char:
+	add r5, r5, #1
+	ldr r1, =10
+	swi 0x060000 @ div
+	add r2, r1, #48 @ char '0'
+	push sp!, { r2 }
+	cmp r0, #0
+	bne gba_log_i4_push_char
 	
-".Split("\n", StringSplitOptions.RemoveEmptyEntries);
+	mov r4, r8 @ r4 will hold string address
+	str r5, [r8], #4
+
+	@ TODO should we even pad? heap is byte addressable for both r and w...
+	@ determine how much padding we need...
+	@mov r0, r5
+	@ldr r1, =4
+	@swi 0x060000 @ div
+	@cmp r1, #0
+	@beq mgba_log_i4_print_char @ fits perfectly
+	@rsb r0, r1, #4
+	@ push some 0 pads?
+	@ldr r1, =0
+	@add r5, r5, #1
+
+gba_log_i4_char_to_heap:
+	sub r5, r5, #1
+	pop sp!, { r2 }
+	strb r2, [r8], #1
+	cmp r5, #0
+	bne gba_log_i4_char_to_heap
+	
+	@ write string address to r0 and return
+	mov r0, r4
+	bx lr
+	
+" + @"
+gba_string_concat:
+	mov r4, r0
+	mov r5, r1
+	mov r1, r8 @ store return value
+	ldr r2, [r4], #4
+	ldr r3, [r5], #4
+	add r0, r2, r3
+	str r0, [r8], #4
+
+gba_string_concat_move_left:
+	@ move left to heap r4/r2
+	cmp r2, #0
+	beq gba_string_concat_move_right
+	sub r2, r2, #1
+	ldrb r0, [r4], #1
+	strb r0, [r8], #1
+	b gba_string_concat_move_left
+
+gba_string_concat_move_right:
+	@ move right to heap r5/r3
+	cmp r3, #0
+	beq gba_string_concat_return
+	sub r3, r3, #1
+	ldrb r0, [r5], #1
+	strb r0, [r8], #1
+	b gba_string_concat_move_right
+
+gba_string_concat_return:
+	mov r0, r1
+	bx lr
+
+").Split("\n", StringSplitOptions.RemoveEmptyEntries);
 	}
 }

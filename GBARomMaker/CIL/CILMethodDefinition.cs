@@ -74,4 +74,10 @@ public class CILMethodDefinition : ICILMethod {
 		if (reader.RemainingBytes != 0) throw new Exception($"Failed to read all {localVariableCount} local variables. {reader.RemainingBytes} bytes remain.\n\tParsed: [{string.Join(", ", types)}]");
 		return types.ToArray();
 	}
+	
+	public override string ToString() {
+		var arguments = GetArgumentTypes();
+		var argsString = string.Join(", ", arguments);
+		return $"{ReturnType} {FullName}({argsString})";
+	}
 }
