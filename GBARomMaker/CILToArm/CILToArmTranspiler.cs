@@ -115,8 +115,8 @@ public class CILToArmTranspiler {
 		// Free Register 5 = r4
 		// Free Register 6 = r5
 		// Temporary	   = r6 <- NOT SAVED to stack when going between methods. Used for temporarily storing fp and ret
-		// Frame Pointer   = r7
 		// Heap Pointer    = r8 <- Temporary until we implement malloc/free
+		// Frame Pointer   = r11/v8/fp
 		// Stack Pointer   = sp/r13
 		// Link Register   = lr/r14
 		// Program Counter = pc/r15
@@ -173,7 +173,7 @@ public class CILToArmTranspiler {
 					var argCount = method.ParameterCount + (method.IsInstance ? 1 : 0);
 					var wordsBack = (argCount - ldarg.Argument) - 1;
 					assembly.Add(instruction.GetBytes().Length, [
-						$"ldr r0, [r7, #{wordsBack * 4}] @ arg {ldarg.Argument}",
+						$"ldr r0, [fp, #{wordsBack * 4}] @ arg {ldarg.Argument}",
 						"push sp!, { r0 }"
 					]);
 					break;
@@ -185,7 +185,7 @@ public class CILToArmTranspiler {
 					var location = int.Parse(opcode[6].ToString()); // stloc.X
 					assembly.Add(instruction.GetBytes().Length, [
 						"pop sp!, { r0 }",
-						$"str r0, [r7, #-{(location+1) * 4}] @ local { location }"
+						$"str r0, [fp, #-{(location+1) * 4}] @ local { location }"
 					]);;
 					break;
 				}
@@ -194,7 +194,7 @@ public class CILToArmTranspiler {
 					var location = stlocs.Location;
 					assembly.Add(instruction.GetBytes().Length, [
 						"pop sp!, { r0 }",
-						$"str r0, [r7, #-{(location+1) * 4}] @ local { location }",
+						$"str r0, [fp, #-{(location+1) * 4}] @ local { location }",
 					]);;
 					break;
 				}
@@ -272,8 +272,8 @@ public class CILToArmTranspiler {
 					var localCount = method.GetLocalVariableTypes().Count();
 					assembly.Add(instruction.GetBytes().Length, [
 						method.HasReturnValue ? "pop sp!, { r6 } @ return value" : "nop @ no return value",
-						$"sub sp, r7, #{localCount * 4}",
-						"ldmdb sp, { r0, r1, r2, r3, r4, r7, lr }",
+						$"sub sp, fp, #{localCount * 4}",
+						"ldmdb sp, { r0, r1, r2, r3, r4, fp, lr }",
 						$"add sp, sp, #{localCount * 4}"
 					]);
 					// pop any method parameters
@@ -577,10 +577,10 @@ public class CILToArmTranspiler {
 			]);
 		}
 		assembly.Add(0, [
-			"mov r6, sp",
+			"mov ip, sp",
 			$"sub sp, sp, #{localCount * 4}",
-			"push sp!, { r0, r1, r2, r3, r4, r7, lr }",
-			"mov r7, r6"
+			"push sp!, { r0, r1, r2, r3, r4, fp, lr }",
+			"mov fp, ip"
 		]);
 	}
 

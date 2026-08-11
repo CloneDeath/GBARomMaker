@@ -12,7 +12,7 @@ public class LDLOCA_S : ICILToArmHandler {
 		var ldloc = (GBARomMaker.CILParse.Instructions.LDLOCA_S)instruction.Instruction;
 		var location = ldloc.Location;
 		return new ArmCode([
-			$"sub r0, r7, #{(location+1) * 4} @ local address { location }",
+			$"sub r0, fp, #{(location+1) * 4} @ local address { location }",
 			"push sp!, { r0 }"
 		]);
 	}

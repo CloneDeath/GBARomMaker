@@ -9,7 +9,7 @@ public abstract class Compiler_test {
 	public class Compiler_GetOperationsForAssembly_test : Compiler_test {
 		[TestCase("stmia sp!, { r0 }", new byte[] { 0x01, 0x00, 0xAD, 0xE8 })]
 		[TestCase("ldmdb sp!, { r0, r1 }", new byte[] { 0x03, 0x00, 0x3D, 0xE9 })]
-		[TestCase("ldm sp, { r0, r1, r2, r3, r4, r7, lr }", new byte[] { 0x9F, 0x40, 0x9D, 0xE8 })]
+		[TestCase("ldm sp, { r0, r1, r2, r3, r4, fp, lr }", new byte[] { 0x1F, 0x48, 0x9D, 0xE8 })]
 		[TestCase("bx lr", new byte[] { 0x1E, 0xFF, 0x2F, 0xE1 })]
 		[TestCase("swi 0x050000", new byte[] { 0x00, 0x00, 0x05, 0xEF })]
 

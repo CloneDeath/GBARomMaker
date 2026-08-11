@@ -73,6 +73,7 @@ public class TokenQueue : IEnumerable<string> {
 
 	public byte ParseRegister(string register) {
 		return register switch {
+			"fp" => 11,
 			"ip" => 12,
 			"sp" => 13,
 			"lr" => 14,
