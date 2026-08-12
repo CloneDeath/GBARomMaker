@@ -52,6 +52,9 @@ public class CILToArmTranspiler {
 			ConvertCILToASM(assembly, method);
 		}
 		
+		foreach (var line in AsmFunctions.GetMalloc()) {
+			assembly.Add(new ARMLine(-1, header_line++, line));
+		}
 		if (assembly.IncludeFloat || assembly.IncludeSin) {
 			foreach (var line in AsmFunctions.GetFloatFunctions()) {
 				assembly.Add(new ARMLine(-1, header_line++, line));
@@ -700,25 +703,28 @@ public class CILToArmTranspiler {
 				var target = GetLabelForMethod(methodRef);
 				if (methodRef.ParameterCount == 0) {
 					assembly.Add(instruction.GetBytes().Length, [
-						"push sp!, { r10 } @ push object ref onto the stack...",
-						"push sp!, { r10 } @ push it again for the 'this' param of the constructor",
-						$"add r10, r10, #{classLayout.Size}",
+						$"ldr r0, ={classLayout.Size * 4}",
+						"bl gba_malloc",
+						"push sp!, { r0 } @ push object ref onto the stack...",
+						"push sp!, { r0 } @ push it again for the 'this' param of the constructor",
 						$"bl {target}"
 					]);
-				} else if (methodRef.ParameterCount <= 5) {
+				} else if (methodRef.ParameterCount <= 9) {
 					var registers = methodRef.ParameterCount == 1 
 						? "r0"
 						: $"r0-r{methodRef.ParameterCount - 1}";
 					assembly.Add(instruction.GetBytes().Length, [
+						$"ldr r0, ={classLayout.Size * 4}",
+						"bl gba_malloc",
+						"mov ip, r0",
 						$"pop sp!, {{ {registers} }}",
-						"push sp!, { r10 } @ push object ref onto the stack...",
-						"push sp!, { r10 } @ push it again for the 'this' param of the constructor",
-						$"add r10, r10, #{classLayout.Size}",
+						"push sp!, { ip } @ push object ref onto the stack...",
+						"push sp!, { ip } @ push it again for the 'this' param of the constructor",
 						$"push sp!, {{ {registers} }}",
 						$"bl {target}"
 					]);
 				} else {
-					throw new Exception($"Only up to 5 args are supported... {metadata}");
+					throw new Exception($"Only up to 9 args are supported... {metadata}");
 				}
 
 				assembly.MethodsToTranspile.Enqueue(methodRef);

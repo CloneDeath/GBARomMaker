@@ -679,9 +679,6 @@ gba_malloc:
 	add r10, r10, r0 @ move the heap register forward
 	sub r0, r10, r0 @ get where it was, for return
 	bx lr
-	
-
 ".Split("\n", StringSplitOptions.RemoveEmptyEntries);
-
 	}
 }

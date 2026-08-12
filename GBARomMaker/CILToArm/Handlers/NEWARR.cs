@@ -12,10 +12,11 @@ public class NEWARR(CILFactory factory) : ICILToArmHandler {
 		var typeDefinition = factory.GetTypeDefinition(newarr.MetadataToken);
 		// TODO: Clear out the memory of the array...
 		return new ArmCode([
-			"pop sp!, { r0 }",
-			$"push sp!, {{ r10 }} @ newarr {typeDefinition.FullName}",
-			"str r0, [r10], #4",
-			"add r10, r10, r0, lsl #2",
+			"pop sp!, { v1 }",
+			"lsl r0, v1, #2",
+			"bl gba_malloc",
+			"str v1, [r0]",
+			"push sp!, { r0 }",
 		]);
 	}
 }
