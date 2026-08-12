@@ -76,7 +76,7 @@ public class CILToArmTranspiler {
 			}
 		}
 		
-		assembly.Add(new ARMLine(-1, 1, $"ldr r8, =0x{assembly.HeapStart:X8} @ Heap Start -- WRAM External"));
+		assembly.Add(new ARMLine(-1, 1, $"ldr r10, =0x{assembly.HeapStart:X8} @ Heap Start -- WRAM External"));
 		return assembly.GetArm7Assembly();
 	}
 
@@ -108,18 +108,15 @@ public class CILToArmTranspiler {
 			Console.WriteLine();
 		}
 
-		// Free Register 1 = r0
-		// Free Register 2 = r1
-		// Free Register 3 = r2
-		// Free Register 4 = r3
-		// Free Register 5 = r4
-		// Free Register 6 = r5
-		// Temporary	   = r6 <- NOT SAVED to stack when going between methods. Used for temporarily storing fp and ret
-		// Heap Pointer    = r8 <- Temporary until we implement malloc/free
-		// Frame Pointer   = r11/v8/fp
-		// Stack Pointer   = sp/r13
-		// Link Register   = lr/r14
-		// Program Counter = pc/r15
+		// r0-r3 = a1-a4 = Argument Registers (Volatile)
+		// r4-r8 = v1-v5 = Variable Registers (Saved)
+		// r9    = v6    = Reserved
+		// r10   = v7    = Heap Pointer (Temporary until we implement malloc/free)
+		// r11   = v8/fp = Frame Pointer (Saved)
+		// r12   = ip    = Scratch Register (Volatile)
+		// r13   = sp    = Stack Pointer (Saved)
+		// r14   = lr    = Link Register (Saved)
+		// r15   = pc    = Program Counter
 
 		var handlers = new ICILToArmHandler[] {
 			new CONV_I(),
@@ -727,9 +724,9 @@ public class CILToArmTranspiler {
 				var target = GetLabelForMethod(methodRef);
 				if (methodRef.ParameterCount == 0) {
 					assembly.Add(instruction.GetBytes().Length, [
-						"push sp!, { r8 } @ push object ref onto the stack...",
-						"push sp!, { r8 } @ push it again for the 'this' param of the constructor",
-						$"add r8, r8, #{classLayout.Size}",
+						"push sp!, { r10 } @ push object ref onto the stack...",
+						"push sp!, { r10 } @ push it again for the 'this' param of the constructor",
+						$"add r10, r10, #{classLayout.Size}",
 						$"bl {target}"
 					]);
 				} else if (methodRef.ParameterCount <= 5) {
@@ -738,9 +735,9 @@ public class CILToArmTranspiler {
 						: $"r0-r{methodRef.ParameterCount - 1}";
 					assembly.Add(instruction.GetBytes().Length, [
 						$"pop sp!, {{ {registers} }}",
-						"push sp!, { r8 } @ push object ref onto the stack...",
-						"push sp!, { r8 } @ push it again for the 'this' param of the constructor",
-						$"add r8, r8, #{classLayout.Size}",
+						"push sp!, { r10 } @ push object ref onto the stack...",
+						"push sp!, { r10 } @ push it again for the 'this' param of the constructor",
+						$"add r10, r10, #{classLayout.Size}",
 						$"push sp!, {{ {registers} }}",
 						$"bl {target}"
 					]);

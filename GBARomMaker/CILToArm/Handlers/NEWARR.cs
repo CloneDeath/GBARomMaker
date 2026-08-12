@@ -13,9 +13,9 @@ public class NEWARR(CILFactory factory) : ICILToArmHandler {
 		// TODO: Clear out the memory of the array...
 		return new ArmCode([
 			"pop sp!, { r0 }",
-			$"push sp!, {{ r8 }} @ newarr {typeDefinition.FullName}",
-			"str r0, [r8], #4",
-			"add r8, r8, r0, lsl #2",
+			$"push sp!, {{ r10 }} @ newarr {typeDefinition.FullName}",
+			"str r0, [r10], #4",
+			"add r10, r10, r0, lsl #2",
 		]);
 	}
 }

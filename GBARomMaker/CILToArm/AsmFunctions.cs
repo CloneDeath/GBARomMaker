@@ -457,15 +457,15 @@ gba_float_div_j7:
 	public static string[] GetSinFunctions() {
 return (@"
 gba_float_sin:
-	push sp!, { r9, r10, lr }
+	push sp!, { r9, r7, lr }
 	mov r9, r0 @ input
 
 	@ calculate pi / 180
 	ldr r0, =gba_float_pi
-	ldr r10, [r0]
+	ldr r7, [r0]
 	ldr r0, =180
 	bl gba_int_to_float
-	mov r1, r10
+	mov r1, r7
 	bl gba_float_div
 
 	@ input * (pi/180)
@@ -486,11 +486,11 @@ gba_float_sin:
 	ldr r2, [r1, r0, lsl #2]
 	mov r0, r2
 
-	pop sp!, { r9, r10, lr }
+	pop sp!, { r9, r7, lr }
 	bx lr
 
 gba_float_cos:
-	push sp!, { r9, r10, lr }
+	push sp!, { r9, r7, lr }
 	mov r9, r0 @ input
 	
 	@ r0 = pi/2
@@ -508,7 +508,7 @@ gba_float_cos:
 	@ get sin of x - pi/2 (=cos of x)
 	bl gba_float_sin
 	
-	pop sp!, { r9, r10, lr }
+	pop sp!, { r9, r7, lr }
 	bx lr
 " 
 + @$"
@@ -618,13 +618,13 @@ gba_log_i4_push_char:
 	cmp r0, #0
 	bne gba_log_i4_push_char
 	
-	mov r4, r8 @ r4 will hold string address
-	str r5, [r8], #4
+	mov r4, r10 @ r4 will hold string address
+	str r5, [r10], #4
 
 gba_log_i4_char_to_heap:
 	sub r5, r5, #1
 	pop sp!, { r2 }
-	strb r2, [r8], #1
+	strb r2, [r10], #1
 	cmp r5, #0
 	bne gba_log_i4_char_to_heap
 	
@@ -638,11 +638,11 @@ gba_log_i4_char_to_heap:
 gba_string_concat:
 	mov r4, r0
 	mov r5, r1
-	mov r1, r8 @ store return value
+	mov r1, r10 @ store return value
 	ldr r2, [r4], #4
 	ldr r3, [r5], #4
 	add r0, r2, r3
-	str r0, [r8], #4
+	str r0, [r10], #4
 
 gba_string_concat_move_left:
 	@ move left to heap r4/r2
@@ -650,7 +650,7 @@ gba_string_concat_move_left:
 	beq gba_string_concat_move_right
 	sub r2, r2, #1
 	ldrb r0, [r4], #1
-	strb r0, [r8], #1
+	strb r0, [r10], #1
 	b gba_string_concat_move_left
 
 gba_string_concat_move_right:
@@ -659,7 +659,7 @@ gba_string_concat_move_right:
 	beq gba_string_concat_return
 	sub r3, r3, #1
 	ldrb r0, [r5], #1
-	strb r0, [r8], #1
+	strb r0, [r10], #1
 	b gba_string_concat_move_right
 
 gba_string_concat_return:
@@ -676,8 +676,8 @@ gba_malloc:
 	@ return r0 allocated address
 	add r0, r0, #3
 	lsr r0, r0, #2
-	add r8, r8, r0 @ move the heap register forward
-	sub r0, r8, r0 @ get where it was, for return
+	add r10, r10, r0 @ move the heap register forward
+	sub r0, r10, r0 @ get where it was, for return
 	bx lr
 	
 
