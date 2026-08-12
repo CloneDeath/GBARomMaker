@@ -416,9 +416,17 @@ public class Compiler {
 			var register = tokens.DequeueRegister();
 			registerList |= (ushort)(0b1 << register);
 			next = tokens.Dequeue();
+			if (next == "-") {
+				var registerEnd = tokens.DequeueRegister();
+				if (registerEnd <= register) throw new Exception($"Invalid register range r{register}-r{registerEnd}. Line '{line}'");
+				for (var i = register; i <= registerEnd; i++) {
+					registerList |= (ushort)(0b1 << i);
+				}
+				next = tokens.Dequeue();
+			}
 			if (next == ",") continue;
 			if (next == "}") break;
-			throw new Exception("Unexpected token when reading list of registers: " + next);
+			throw new Exception($"Unexpected token when reading list of registers: '{next}'. Line '{line}'");
 		}
 		tokens.AssertEmpty();
 
