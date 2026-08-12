@@ -48,6 +48,7 @@ public abstract class Compiler_test {
 		// push is an Alias for stmdb
 		[TestCase("stmdb sp!, { r1 }", new byte[] { 0x02, 0x00, 0x2D, 0xE9 })]
 		[TestCase("push sp!, { r1 }",  new byte[] { 0x02, 0x00, 0x2D, 0xE9 })]
+		[TestCase("push sp!, { v1-v5, fp, lr }",  new byte[] { 0xF0, 0x49, 0x2D, 0xE9 })]
 
 		// ALU
 		[TestCase("orr r0, r1, r2", new byte[] { 0x02, 0x00, 0x81, 0xE1 })]

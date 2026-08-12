@@ -137,6 +137,7 @@ public class CILToArmTranspiler {
 			new NEWARR(factory),
 			new NOP(),
 			new POP(),
+			new RET(method),
 			new SHL(),
 			new STELEM_IX(),
 			new STELEM_REF(),
@@ -263,31 +264,6 @@ public class CILToArmTranspiler {
 				}
 				case "stsfld": {
 					HandleStoreStaticFieldInstruction(instruction, assembly, method);
-					break;
-				}
-				case "ret": {
-					var localCount = method.GetLocalVariableTypes().Count();
-					assembly.Add(instruction.GetBytes().Length, [
-						method.HasReturnValue ? "pop sp!, { r6 } @ return value" : "nop @ no return value",
-						$"sub sp, fp, #{localCount * 4}",
-						"ldmdb sp, { r0, r1, r2, r3, r4, fp, lr }",
-						$"add sp, sp, #{localCount * 4}"
-					]);
-					// pop any method parameters
-					if (method.ParameterCount > 0 || method.IsInstance) {
-						var argsToPop = (method.IsInstance ? 1 : 0) + method.ParameterCount;
-						assembly.Add(0, [
-							$"add sp, sp, #{argsToPop * 4} @ this: { method.IsInstance }; param count: {method.ParameterCount}"
-						]);
-					}
-					if (method.HasReturnValue) {
-						assembly.Add(0, [
-							"push sp!, { r6 }",
-						]);
-					}
-					assembly.Add(0, [
-						"bx lr"
-					]);
 					break;
 				}
 				case "ceq": {
@@ -576,7 +552,7 @@ public class CILToArmTranspiler {
 		assembly.Add(0, [
 			"mov ip, sp",
 			$"sub sp, sp, #{localCount * 4}",
-			"push sp!, { r0, r1, r2, r3, r4, fp, lr }",
+			"push sp!, { v1-v5, fp, lr }",
 			"mov fp, ip"
 		]);
 	}
