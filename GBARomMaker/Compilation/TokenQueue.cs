@@ -72,13 +72,25 @@ public class TokenQueue : IEnumerable<string> {
 	}
 
 	public byte ParseRegister(string register) {
+		if (register.StartsWith("r") && byte.TryParse(register.Substring(1), out var r) && r >= 0 && r <= 15) {
+			return r;
+		}
+
+		if (register.StartsWith("a") && byte.TryParse(register.Substring(1), out var a) && a >= 1 && a <= 4) {
+			return (byte)(a - 1);
+		}
+		
+		if (register.StartsWith("v") && byte.TryParse(register.Substring(1), out var v) && v >= 1 && v <= 8) {
+			return (byte)(v + 3);
+		}
+
 		return register switch {
 			"fp" => 11,
 			"ip" => 12,
 			"sp" => 13,
 			"lr" => 14,
 			"pc" => 15,
-			_ => byte.TryParse(register.Substring(1), out var r) ? r : throw new Exception($"Failed to parse {register} as a register. Line '{_line}'")
+			_ => throw new Exception($"Failed to parse {register} as a register. Line '{_line}'")
 		};
 	}
 
