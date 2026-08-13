@@ -7,7 +7,7 @@ namespace GBARomMaker.CILToArm;
 public static class AsmFunctions {
 	public static string[] GetFloatFunctions() {
 		return @"
-gba_float_subtract:
+gba_float_sub:
 	eor     r1, r1, #0x80000000 
 
 gba_float_add:
@@ -516,7 +516,7 @@ gba_float_cos:
 
 	@ sub input - pi/2
 	mov r1, v1
-	bl gba_float_subtract
+	bl gba_float_sub
 
 	@ get sin of x - pi/2 (=cos of x)
 	bl gba_float_sin

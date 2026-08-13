@@ -122,11 +122,13 @@ public class CILToArmTranspiler {
 		// r15   = pc    = Program Counter
 
 		var handlers = new ICILToArmHandler[] {
+			new ADD(),
 			new CONV_I(),
 			new CONV_R4(),
 			new CONV_U1(),
 			new CONV_U2(),
 			new DUP(),
+			new LDARG_X(method),
 			new LDC_I4(),
 			new LDC_I4_S(),
 			new LDC_I4_X(),
@@ -144,6 +146,7 @@ public class CILToArmTranspiler {
 			new SHL(),
 			new STELEM_IX(),
 			new STELEM_REF(),
+			new SUB(),
 		};
 
 		foreach (var instructionWithMetadata in instructions.Instructions) {
@@ -166,19 +169,6 @@ public class CILToArmTranspiler {
 
 			var opcode = instruction.OpCode.Name;
 			switch (opcode) {
-				case "ldarg.0":
-				case "ldarg.1":
-				case "ldarg.2":
-				case "ldarg.3": {
-					var ldarg = (GBARomMaker.CILParse.Instructions.LDARG)instruction;
-					var argCount = method.ParameterCount + (method.IsInstance ? 1 : 0);
-					var wordsBack = (argCount - ldarg.Argument) - 1;
-					assembly.Add(instruction.GetBytes().Length, [
-						$"ldr r0, [fp, #{wordsBack * 4}] @ arg {ldarg.Argument}",
-						"push sp!, { r0 }"
-					]);
-					break;
-				}
 				case "stloc.0":
 				case "stloc.1":
 				case "stloc.2":
@@ -377,48 +367,6 @@ public class CILToArmTranspiler {
 					]);
 					var target = assembly.Offset + brf.Target;
 					assembly.AddLabel(target, label);
-					break;
-				}
-				case "add": {
-					var relevantStack = instructionWithMetadata.StackTypes?.Take(2).ToList() ?? throw new InvalidOperationException($"Stack not deep enough for an add! {instructionWithMetadata}");
-					var stackTypeA = relevantStack[0].Code;
-					var stackTypeB = relevantStack[1].Code;
-	
-					var stackTypeAIsInt32Compatible = stackTypeA == SignatureTypeCode.Int32
-						|| stackTypeA == SignatureTypeCode.Pointer
-						|| stackTypeA == SignatureTypeCode.Byte;
-
-					var stackTypeBIsInt32Compatible = stackTypeB == SignatureTypeCode.Int32
-						|| stackTypeB == SignatureTypeCode.Pointer
-						|| stackTypeB == SignatureTypeCode.Byte;
-
-					// see Table III.2: Binary Numeric Operations
-					if (stackTypeAIsInt32Compatible && stackTypeBIsInt32Compatible) {
-						assembly.Add(instruction.GetBytes().Length, [
-							$"pop sp!, {{ r1, r2 }} @ <{stackTypeA}, {stackTypeB}>",
-							"add r0,r1,r2",
-							"push sp!, { r0 }"
-						]);
-					} else if (stackTypeAIsInt32Compatible && stackTypeB == SignatureTypeCode.Single) {
-						assembly.IncludeFloat = true;
-						assembly.Add(instruction.GetBytes().Length, [
-							$"pop sp!, {{ r0, r1 }} @ <{stackTypeA}, {stackTypeB}>",
-							"push sp!, { r1 }",
-							"bl gba_int_to_float",
-							"pop sp!, { r1 }",
-							"bl gba_float_add",
-							"push sp!, { r0 }"
-						]);
-					} else if (stackTypeA == SignatureTypeCode.Single && stackTypeB == SignatureTypeCode.Single) {
-						assembly.IncludeFloat = true;
-						assembly.Add(instruction.GetBytes().Length, [
-							$"pop sp!, {{ r0, r1 }} @ <{stackTypeA}, {stackTypeB}>",
-							"bl gba_float_add",
-							"push sp!, { r0 }"
-						]);
-					} else {
-						throw new NotImplementedException($"CIL 'add' not supported for types {stackTypeA} + {stackTypeB}. {instructionWithMetadata}");
-					}
 					break;
 				}
 				case "and": {
