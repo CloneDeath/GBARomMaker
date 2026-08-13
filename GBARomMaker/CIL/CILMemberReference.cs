@@ -36,7 +36,7 @@ public class CILMemberReference : ICILMethod {
     }
 	public string Name => _metadata.GetString(_self.Name);
 	public string FullName => $"{Parent.Namespace}.{Parent.Name}.{Name}";
-	public byte[] BodyBytes => throw new NotImplementedException($"For {FullName}");
+	public byte[] BodyBytes => throw new NotImplementedException($"Reference For {FullName}");
 	public bool IsInstance => _signature.IsInstance;
     public int ParameterCount => _signature.ParameterCount;
 	public ISignatureType ReturnType => _signature.ReturnType;
@@ -44,9 +44,9 @@ public class CILMemberReference : ICILMethod {
 	public ISignatureType[] GetArgumentTypes() => _signature.ArgumentTypes;
 
 	public MemberReferenceKind Kind => _self.GetKind();
-    public bool IsNativeInvoke => throw new NotImplementedException($"For {FullName}");
-    public string NativeInvokeTarget => throw new NotImplementedException($"For {FullName}");
-    public ISignatureType[] GetLocalVariableTypes() => throw new NotImplementedException($"For {FullName}");
+    public bool IsNativeInvoke => throw new NotImplementedException($"Reference For {FullName}");
+    public string NativeInvokeTarget => throw new NotImplementedException($"Reference For {FullName}");
+    public ISignatureType[] GetLocalVariableTypes() => throw new NotImplementedException($"Reference For {FullName}");
 
 	public override string ToString() {
 		var arguments = GetArgumentTypes();
