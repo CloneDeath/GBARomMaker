@@ -9,32 +9,40 @@ unsafe {
 		ScreenDisplayOBJ = true
 	});
 
-	Sprite[] sprites = new Sprite[5];
+	Sprite[] sprites = new Sprite[30];
 	for (byte i = 0; i < sprites.Length; i++) {
-		byte palletIndex = (byte)(i + 1);
-		Palette.SetObject(0, palletIndex, ColorFromHSV(i * (360f / sprites.Length), 1, 1));
+		byte colorIndex = (byte)((i % 15) + 1);
+		byte paletteIndex = (byte)(i / 15);
+		Palette.SetObject(paletteIndex, colorIndex, ColorFromHSV(i * (360f / sprites.Length), 1, 1));
 
 		ushort tileIndex = (ushort)(512 + i);
 		for (byte y = 0; y < 8; y++) {
 		for (byte x = 0; x < 8; x++) {
-			CharacterData.SetColor(tileIndex, x, y, palletIndex);
+			CharacterData.SetColor(tileIndex, x, y, colorIndex);
 		}
 		}
-		Console.WriteLine("data:");
-		Console.WriteLine(palletIndex);
-		Console.WriteLine(tileIndex);
 		sprites[i] = new Sprite(i) {
 			TileIndex = tileIndex,
 			X = (byte)(i * 8),
-			Y = 76
+			Y = 76,
+			PaletteIndex = paletteIndex
 		};
 	}
 	
-	Console.WriteLine(sprites.Length);
-	Console.WriteLine(sprites[0].TileIndex);
-	Console.WriteLine(sprites[0].X);
-	Console.WriteLine(sprites[0].Y);
+	var circles = 0f;
 	while(true) {
+		circles += 1/60f;
+		if (circles >= 2) {
+			circles -= 1;
+		}
+		for (var i = 0; i < sprites.Length; i++) {
+			var offset = ((float)i)/sprites.Length;
+			if (circles < offset) {
+				sprites[i].Y = 76;
+			} else {
+				sprites[i].Y = (byte)(50 * MathF.Sin((circles - offset) * MathF.PI));
+			}
+		}
 		Interrupt.WaitVBlank();
 	};
 }

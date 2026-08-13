@@ -45,4 +45,16 @@ public unsafe class Sprite {
     		current[2] = existing;
 		}
 	}
+
+	public byte PaletteIndex {
+		get {
+			return (byte)((current[2] >> 12) & 0xF);
+		}
+		set {
+			var existing = current[2];
+			existing &= 0x0FFF;
+			existing |= (ushort)((value & 0xF) << 12);
+    		current[2] = existing;
+		}
+	}
 }

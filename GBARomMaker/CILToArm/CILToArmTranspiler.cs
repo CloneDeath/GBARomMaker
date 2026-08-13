@@ -123,6 +123,9 @@ public class CILToArmTranspiler {
 
 		var handlers = new ICILToArmHandler[] {
 			new ADD(),
+			new CEQ(),
+			new CGT(),
+			new CLT(),
 			new CONV_I(),
 			new CONV_R4(),
 			new CONV_U1(),
@@ -232,36 +235,6 @@ public class CILToArmTranspiler {
 				}
 				case "stsfld": {
 					HandleStoreStaticFieldInstruction(instruction, assembly, method);
-					break;
-				}
-				case "ceq": {
-					assembly.Add(instruction.GetBytes().Length, [
-						"pop sp!, { r0, r1 }",
-						"cmp r0, r1",
-						"moveq r0, #1",
-						"movne r0, #0",
-						"push sp!, { r0 }"
-					]);
-					break;
-				}
-				case "cgt": {
-					assembly.Add(instruction.GetBytes().Length, [
-						"pop sp!, { r0, r1 }",
-						"cmp r1, r0",
-						"movgt r0, #1",
-						"movle r0, #0",
-						"push sp!, { r0 }"
-					]);
-					break;
-				}
-				case "clt": {
-					assembly.Add(instruction.GetBytes().Length, [
-						"pop sp!, { r0, r1 }",
-						"cmp r1, r0",
-						"movlt r0, #1",
-						"movge r0, #0",
-						"push sp!, { r0 }"
-					]);
 					break;
 				}
 				case "call": {
