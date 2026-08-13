@@ -9,4 +9,4 @@ dotnet "GBARomMaker/bin/Debug/net10.0/GBARomMaker.dll" "Examples/04-ColorFill/bi
 dotnet "GBARomMaker/bin/Debug/net10.0/GBARomMaker.dll" "Examples/05-ColoredSprites/bin/Debug/net10.0/ColoredSprites.dll" "Examples/05-ColoredSprites.gba"
 dotnet "GBARomMaker/bin/Debug/net10.0/GBARomMaker.dll" "Examples/06-ConsoleWrite/bin/Debug/net10.0/ConsoleWrite.dll" "Examples/06-ConsoleWrite.gba"
 dotnet "GBARomMaker/bin/Debug/net10.0/GBARomMaker.dll" "Examples/07-SpriteArray/bin/Debug/net10.0/SpriteArray.dll" "Examples/07-SpriteArray.gba"
-dotnet "GBARomMaker/bin/Debug/net10.0/GBARomMaker.dll" "Examples/08-Platformer/bin/Debug/net10.0/Platformer.dll" "Examples/08-Platformer.gba" # --show-cil --show-arm
+dotnet "GBARomMaker/bin/Debug/net10.0/GBARomMaker.dll" "Examples/08-Input/bin/Debug/net10.0/Input.dll" "Examples/08-Input.gba" # --show-cil --show-arm
