@@ -5,7 +5,7 @@ using System.Collections.Generic;
 
 namespace GBARomMaker.CILParse.Instructions;
 
-public class STLOC : CILInstruction {
+public class STLOC : ILocationInstruction {
 	public static CILInstructionDefinition[] Definitions = [
 		new(0x13, 1, (args) => new STLOC_S(args[0])), // stloc.s
 		new(0x0A, 0, (_) => new STLOC(0)), // stloc.0
@@ -52,14 +52,14 @@ public class STLOC : CILInstruction {
 	public int? BranchTarget => null;
 }
 
-public class STLOC_S : CILInstruction {
+public class STLOC_S : ILocationInstruction {
 	public STLOC_S(byte location) {
 		Location = location;
 	}
 
-	public byte Location { get; }
+	public uint Location { get; }
 	public OpCode OpCode => OpCodes.Stloc_S;
-	public byte[] GetBytes() => [0x13, Location];
+	public byte[] GetBytes() => [0x13, (byte)Location];
 	public string GetCIL(CILFactory factory, ICILMethod method) => $"stloc.s {Location}";
 
 	public void ModifyStack(CILFactory factory, ICILMethod method, Stack<ISignatureType> current) {

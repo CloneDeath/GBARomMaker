@@ -1,0 +1,5 @@
+namespace GBARomMaker.CILParse;
+
+public interface ILocationInstruction : CILInstruction {
+	public uint Location { get; }
+}

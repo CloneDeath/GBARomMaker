@@ -146,6 +146,7 @@ public class CILToArmTranspiler {
 			new SHL(),
 			new STELEM_IX(),
 			new STELEM_REF(),
+			new STLOC_X(),
 			new SUB(),
 		};
 
@@ -169,26 +170,6 @@ public class CILToArmTranspiler {
 
 			var opcode = instruction.OpCode.Name;
 			switch (opcode) {
-				case "stloc.0":
-				case "stloc.1":
-				case "stloc.2":
-				case "stloc.3": {
-					var location = int.Parse(opcode[6].ToString()); // stloc.X
-					assembly.Add(instruction.GetBytes().Length, [
-						"pop sp!, { r0 }",
-						$"str r0, [fp, #-{(location+1) * 4}] @ local { location }"
-					]);;
-					break;
-				}
-				case "stloc.s": {
-					var stlocs = (GBARomMaker.CILParse.Instructions.STLOC_S)instruction;
-					var location = stlocs.Location;
-					assembly.Add(instruction.GetBytes().Length, [
-						"pop sp!, { r0 }",
-						$"str r0, [fp, #-{(location+1) * 4}] @ local { location }",
-					]);;
-					break;
-				}
 				case "ldind.u2": {
 					assembly.Add(instruction.GetBytes().Length, [
 						"pop sp!, { r0 }",

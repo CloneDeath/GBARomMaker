@@ -13,7 +13,7 @@ public class LDLOC_X : ICILToArmHandler {
 	];
 
 	public ArmCode Handle(InstructionMetadata instruction) {
-		var ldloc = (GBARomMaker.CILParse.Instructions.ILDLOC)instruction.Instruction;
+		var ldloc = (GBARomMaker.CILParse.ILocationInstruction)instruction.Instruction;
 		var location = ldloc.Location;
 		return new ArmCode([
 			$"ldr r0, [fp, #-{(location+1) * 4}] @ local { location }",
