@@ -60,7 +60,9 @@ public class CILParser {
 	public static readonly List<CILInstructionDefinition> FEInstructions = new CILInstructionDefinition[][] {
 		[CEQ.Definition],
 		[CGT.Definition],
+		[CGT_UN.Definition],
 		[CLT.Definition],
+		[CLT_UN.Definition],
 	}.SelectMany(d => d).ToList();
 
 	public CILInstruction[] GetInstructions(byte[] data) {
