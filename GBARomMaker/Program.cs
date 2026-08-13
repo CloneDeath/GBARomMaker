@@ -41,32 +41,6 @@ public static class Program {
 		newFile.Content = machineCode.ToBytes();
 		Directory.CreateDirectory(Path.GetDirectoryName(outputRom)!);
 		File.WriteAllBytes(outputRom, newFile.ToBytes());
-
-		//foreach (TypeDefinitionHandle typeHandle in metadata.TypeDefinitions)
-		//{
-		//	TypeDefinition type = metadata.GetTypeDefinition(typeHandle);
-
-		//	var namespaceName = metadata.GetString(type.Namespace);
-		//	var typeName = metadata.GetString(type.Name);
-
-		//	Console.WriteLine($"Type: {namespaceName}.{typeName}");
-		//	foreach (MethodDefinitionHandle methodHandle in type.GetMethods())
-		//	{
-		//		MethodDefinition method = metadata.GetMethodDefinition(methodHandle);
-		//		var methodName = metadata.GetString(method.Name);
-		//		Console.WriteLine($"  Method: {methodName}");
-
-		//		if (method.RelativeVirtualAddress == 0)
-		//			continue; // Abstract, extern, etc.
-
-		//		MethodBodyBlock body = peReader.GetMethodBody(method.RelativeVirtualAddress);
-
-		//		byte[] ilBytes = body.GetILBytes().ToArray();
-
-		//		Console.WriteLine($"    IL: {string.Join(" ", ilBytes.Select(b => $"{b:X2}"))}");
-		//	}
-		//}
-
 		return 0;
 	}
 
