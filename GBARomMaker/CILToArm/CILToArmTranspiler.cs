@@ -135,6 +135,7 @@ public class CILToArmTranspiler {
 			new LDC_R4(),
 			new LDELEM_IX(),
 			new LDELEM_REF(),
+			new LDIND_U2(),
 			new LDLEN(),
 			new LDLOCA_S(),
 			new LDLOC_X(),
@@ -144,6 +145,7 @@ public class CILToArmTranspiler {
 			new POP(),
 			new RET(method),
 			new SHL(),
+			new STARG_S(method),
 			new STELEM_IX(),
 			new STELEM_REF(),
 			new STLOC_X(),
@@ -170,14 +172,6 @@ public class CILToArmTranspiler {
 
 			var opcode = instruction.OpCode.Name;
 			switch (opcode) {
-				case "ldind.u2": {
-					assembly.Add(instruction.GetBytes().Length, [
-						"pop sp!, { r0 }",
-						"ldrh r1, [r0]",
-						"push sp!, { r1 }",
-					]);
-					break;
-				}
 				case "stind.i1": {
 					// If we're not in byte-addressable memory, then read-modify-write a short instead
 					var end = "byte_store_" + assembly.JumpCount++;
