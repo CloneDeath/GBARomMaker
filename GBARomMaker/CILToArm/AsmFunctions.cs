@@ -14,8 +14,8 @@ gba_float_add:
 	lsls    r2, r0, #1
 	lslsne  r3, r1, #1
 	teqne   r2, r3
-	mvnsne  r4, r2, asr #24
-	mvnsne  r4, r3, asr #24
+	mvnsne  ip, r2, asr #24
+	mvnsne  ip, r3, asr #24
 	beq     gba_float_add_j1
 	lsr     r2, r2, #24
 	rsbs    r3, r2, r3, lsr #24
@@ -67,7 +67,7 @@ gba_float_add_j4:
 	subs    r2, r2, #1
 	cmpcs   r0, #0x800000
 	bcs     gba_float_add_j5
-	lsrs    r4, r0, #12
+	lsrs    ip, r0, #12
 	lsleq   r0, r0, #12
 	subeq   r2, r2, #12
 	tst     r0, #0xff0000
@@ -96,8 +96,8 @@ gba_float_add_j2:
 	b       gba_float_add_j7
 gba_float_add_j1:
 	lsl     r3, r1, #1
-	mvns    r4, r2, asr #24
-	mvnsne  r4, r3, asr #24
+	mvns    ip, r2, asr #24
+	mvnsne  ip, r3, asr #24
 	beq     gba_float_add_j8
 	teq     r2, r3
 	beq     gba_float_add_j9
@@ -175,7 +175,7 @@ gba_int_to_float:
 	ands	r3, r0, #0x80000000
 	rsbmi	r0, r0, #0
 gba_int_to_float_j0:
-	movs	r4, r0
+	movs	ip, r0
 	bxeq	lr
 	orr	r3, r3, #0x4b000000
 	mov	r1, r0
@@ -196,8 +196,8 @@ gba_long_to_float:
 	rsbs	r0, r0, #0
 	rsc	r1, r1, #0
 gba_long_to_float_j1:
-	movs	r4, r1
-	moveq	r4, r0
+	movs	ip, r1
+	moveq	ip, r0
 	moveq	r1, r0
 	moveq	r0, #0
 	orr	r3, r3, #0x5b000000
@@ -205,47 +205,47 @@ gba_long_to_float_j1:
 gba_long_to_float_j0:
 	sub	r3, r3, #0x800000
 	mov	r2, #23
-	cmp	r4, #0x10000
-	lsrcs	r4, r4, #16
+	cmp	ip, #0x10000
+	lsrcs	ip, ip, #16
 	subcs	r2, r2, #16
-	cmp	r4, #0x100
-	lsrcs	r4, r4, #8
+	cmp	ip, #0x100
+	lsrcs	ip, ip, #8
 	subcs	r2, r2, #8
-	cmp	r4, #16
-	lsrcs	r4, r4, #4
+	cmp	ip, #16
+	lsrcs	ip, ip, #4
 	subcs	r2, r2, #4
-	cmp	r4, #4
+	cmp	ip, #4
 	subcs	r2, r2, #2
-	subcc	r2, r2, r4, lsr #1
-	subs	r2, r2, r4, lsr #3
+	subcc	r2, r2, ip, lsr #1
+	subs	r2, r2, ip, lsr #3
 	sub	r3, r3, r2, lsl #23
 	blt	gba_long_to_float_j2
 	add	r3, r3, r1, lsl r2
-	lsl	r4, r0, r2
+	lsl	ip, r0, r2
 	rsb	r2, r2, #32
-	cmp	r4, #0x80000000
+	cmp	ip, #0x80000000
 	adc	r0, r3, r0, lsr r2
 	biceq	r0, r0, #1
 	bx	lr
 gba_long_to_float_j2:
 	add	r2, r2, #32
-	lsl	r4, r1, r2
+	lsl	ip, r1, r2
 	rsb	r2, r2, #32
-	orrs	r0, r0, r4, lsl #1
+	orrs	r0, r0, ip, lsl #1
 	adc	r0, r3, r1, lsr r2
-	biceq	r0, r0, r4, lsr #31
+	biceq	r0, r0, ip, lsr #31
 	bx	lr
 
 gba_float_mul:
-	mov     r4, #0xff
-	ands    r2, r4, r0, lsr #23
-	andsne  r3, r4, r1, lsr #23
-	teqne   r2, r4
-	teqne   r3, r4
+	mov     ip, #0xff
+	ands    r2, ip, r0, lsr #23
+	andsne  r3, ip, r1, lsr #23
+	teqne   r2, ip
+	teqne   r3, ip
 	beq     gba_float_mul_j0
 gba_float_mul_j6:
 	add     r2, r2, r3
-	eor     r4, r0, r1
+	eor     ip, r0, r1
 	lsls    r0, r0, #9
 	lslsne  r1, r1, #9
 	beq     gba_float_mul_j1
@@ -253,7 +253,7 @@ gba_float_mul_j6:
 	orr     r0, r3, r0, lsr #5
 	orr     r1, r3, r1, lsr #5
 	umull   r3, r1, r0, r1
-	and     r0, r4, #0x80000000
+	and     r0, ip, #0x80000000
 	cmp     r1, #0x800000
 	lslcc   r1, r1, #1
 	orrcc   r1, r1, r3, lsr #31
@@ -268,9 +268,9 @@ gba_float_mul_j6:
 	bx      lr
 gba_float_mul_j1:
 	teq     r0, #0
-	and     r4, r4, #0x80000000
+	and     ip, ip, #0x80000000
 	lsleq   r1, r1, #9
-	orr     r0, r4, r0, lsr #9
+	orr     r0, ip, r0, lsr #9
 	orr     r0, r0, r1, lsr #9
 	subs    r2, r2, #0x7f
 	rsbsgt  r3, r2, #0xff
@@ -288,37 +288,37 @@ gba_float_mul_j2:
 	lsls    r1, r0, #1
 	lsr     r1, r1, r2
 	rsb     r2, r2, #32
-	lsl     r4, r0, r2
+	lsl     ip, r0, r2
 	rrxs    r0, r1
 	adc     r0, r0, #0
-	orrs    r3, r3, r4, lsl #1
-	biceq   r0, r0, r4, lsr #31
+	orrs    r3, r3, ip, lsl #1
+	biceq   r0, r0, ip, lsr #31
 	bx      lr
 gba_float_mul_j8:
 	teq     r2, #0
-	and     r4, r0, #0x80000000
+	and     ip, r0, #0x80000000
 gba_float_mul_j4:
 	lsleq   r0, r0, #1
 	tsteq   r0, #8388608    @ 0x800000
 	subeq   r2, r2, #1
 	beq     gba_float_mul_j4
-	orr     r0, r0, r4
+	orr     r0, r0, ip
 	teq     r3, #0
-	and     r4, r1, #0x80000000
+	and     ip, r1, #0x80000000
 gba_float_mul_j5:
 	lsleq   r1, r1, #1
 	tsteq   r1, #8388608    @ 0x800000
 	subeq   r3, r3, #1
 	beq     gba_float_mul_j5
-	orr     r1, r1, r4
+	orr     r1, r1, ip
 	b       gba_float_mul_j6
 gba_float_mul_j0:
-	and     r3, r4, r1, lsr #23
-	teq     r2, r4
-	teqne   r3, r4
+	and     r3, ip, r1, lsr #23
+	teq     r2, ip
+	teqne   r3, ip
 	beq     gba_float_mul_j7
-	bics    r4, r0, #0x80000000
-	bicsne  r4, r1, #0x80000000
+	bics    ip, r0, #0x80000000
+	bicsne  ip, r1, #0x80000000
 	bne     gba_float_mul_j8
 gba_float_mul_j12:
 	eor     r0, r0, r1
@@ -331,12 +331,12 @@ gba_float_mul_j7:
 	teqne   r1, #0
 	teqne   r1, #0x80000000
 	beq     gba_float_mul_j9
-	teq     r2, r4
+	teq     r2, ip
 	bne     gba_float_mul_j10
 	lsls    r2, r0, #9
 	bne     gba_float_mul_j9
 gba_float_mul_j10:
-	teq     r3, r4
+	teq     r3, ip
 	bne     gba_float_mul_j11
 	lsls    r3, r1, #9
 	movne   r0, r1
@@ -354,41 +354,41 @@ gba_float_mul_j9:
 	bx      lr
 
 gba_float_div:
-	mov     r4, #0xff
-	ands    r2, r4, r0, lsr #23
-	andsne  r3, r4, r1, lsr #23
-	teqne   r2, r4
-	teqne   r3, r4
+	mov     ip, #0xff
+	ands    r2, ip, r0, lsr #23
+	andsne  r3, ip, r1, lsr #23
+	teqne   r2, ip
+	teqne   r3, ip
 	beq     gba_float_div_j0
 gba_float_div_j5:
 	sub     r2, r2, r3
-	eor     r4, r0, r1
+	eor     ip, r0, r1
 	lsls    r1, r1, #9
 	lsl     r0, r0, #9
 	beq     gba_float_div_j2
 	mov     r3, #0x10000000
 	orr     r1, r3, r1, lsr #4
 	orr     r3, r3, r0, lsr #4
-	and     r0, r4, #0x80000000
+	and     r0, ip, #0x80000000
 	cmp     r3, r1
 	lslcc   r3, r3, #1
 	adc     r2, r2, #0x7d
-	mov     r4, #0x800000
+	mov     ip, #0x800000
 gba_float_div_j1:
 	cmp     r3, r1
 	subcs   r3, r3, r1
-	orrcs   r0, r0, r4
+	orrcs   r0, r0, ip
 	cmp     r3, r1, lsr #1
 	subcs   r3, r3, r1, lsr #1
-	orrcs   r0, r0, r4, lsr #1
+	orrcs   r0, r0, ip, lsr #1
 	cmp     r3, r1, lsr #2
 	subcs   r3, r3, r1, lsr #2
-	orrcs   r0, r0, r4, lsr #2
+	orrcs   r0, r0, ip, lsr #2
 	cmp     r3, r1, lsr #3
 	subcs   r3, r3, r1, lsr #3
-	orrcs   r0, r0, r4, lsr #3
+	orrcs   r0, r0, ip, lsr #3
 	lsls    r3, r3, #4
-	lsrsne  r4, r4, #4
+	lsrsne  ip, ip, #4
 	bne     gba_float_div_j1
 	cmp     r2, #0xfd
 	bhi     gba_float_mul_j2
@@ -397,8 +397,8 @@ gba_float_div_j1:
 	biceq   r0, r0, #1
 	bx      lr
 gba_float_div_j2:
-	and     r4, r4, #0x80000000
-	orr     r0, r4, r0, lsr #9
+	and     ip, ip, #0x80000000
+	orr     r0, ip, r0, lsr #9
 	adds    r2, r2, #0x7f
 	rsbsgt  r3, r2, #0xff
 	orrgt   r0, r0, r2, lsl #23
@@ -409,42 +409,42 @@ gba_float_div_j2:
 	b       gba_float_mul_j2
 gba_float_div_j8:
 	teq     r2, #0
-	and     r4, r0, #0x80000000
+	and     ip, r0, #0x80000000
 gba_float_div_j3:
 	lsleq   r0, r0, #1
 	tsteq   r0, #0x800000
 	subeq   r2, r2, #1
 	beq     gba_float_div_j3
-	orr     r0, r0, r4
+	orr     r0, r0, ip
 	teq     r3, #0
-	and     r4, r1, #0x80000000
+	and     ip, r1, #0x80000000
 gba_float_div_j4:
 	lsleq   r1, r1, #1
 	tsteq   r1, #0x800000
 	subeq   r3, r3, #1
 	beq     gba_float_div_j4
-	orr     r1, r1, r4
+	orr     r1, r1, ip
 	b       gba_float_div_j5
 gba_float_div_j0:
-	and     r3, r4, r1, lsr #23
-	teq     r2, r4
+	and     r3, ip, r1, lsr #23
+	teq     r2, ip
 	bne     gba_float_div_j6
 	lsls    r2, r0, #9
 	bne     gba_float_mul_j9
-	teq     r3, r4
+	teq     r3, ip
 	bne     gba_float_mul_j11
 	mov     r0, r1
 	b       gba_float_mul_j9
 gba_float_div_j6:
-	teq     r3, r4
+	teq     r3, ip
 	bne     gba_float_div_j7
 	lsls    r3, r1, #9
 	beq     gba_float_mul_j12
 	mov     r0, r1
 	b       gba_float_mul_j9
 gba_float_div_j7:
-	bics    r4, r0, #0x80000000
-	bicsne  r4, r1, #0x80000000
+	bics    ip, r0, #0x80000000
+	bicsne  ip, r1, #0x80000000
 	bne     gba_float_div_j8
 	bics    r2, r0, #0x80000000
 	bne     gba_float_mul_j11
@@ -457,20 +457,27 @@ gba_float_div_j7:
 	public static string[] GetSinFunctions() {
 return (@"
 gba_float_sin:
-	push sp!, { r9, r7, lr }
-	mov r9, r0 @ input
+	@ in:
+	@   a1 = radians
+	@ out:
+	@   a1 = sin(r)
+	@ locals:
+	@   v1 = radians
+	@   v2 = math storage
+	push sp!, { v1, v2, lr }
+	mov v1, r0 @ input
 
 	@ calculate pi / 180
 	ldr r0, =gba_float_pi
-	ldr r7, [r0]
+	ldr v2, [r0]
 	ldr r0, =180
 	bl gba_int_to_float
-	mov r1, r7
+	mov r1, v2
 	bl gba_float_div
 
 	@ input * (pi/180)
 	mov r1, r0
-	mov r0, r9
+	mov r0, v1
 	bl gba_float_mul
 	bl gba_float_to_int
 
@@ -486,12 +493,18 @@ gba_float_sin:
 	ldr r2, [r1, r0, lsl #2]
 	mov r0, r2
 
-	pop sp!, { r9, r7, lr }
+	pop sp!, { v1, v2, lr }
 	bx lr
 
 gba_float_cos:
-	push sp!, { r9, r7, lr }
-	mov r9, r0 @ input
+	@ in:
+	@   a1 = radians
+	@ out:
+	@   a1 = cos(r)
+	@ locals:
+	@   v1 = radians
+	push sp!, { v1, lr }
+	mov v1, r0 @ input
 	
 	@ r0 = pi/2
 	ldr r0, =2
@@ -501,14 +514,14 @@ gba_float_cos:
 	ldr r0, [r2]
 	bl gba_float_div
 
-	@ add input - pi/2
-	mov r1, r9
+	@ sub input - pi/2
+	mov r1, v1
 	bl gba_float_subtract
 
 	@ get sin of x - pi/2 (=cos of x)
 	bl gba_float_sin
 	
-	pop sp!, { r9, r7, lr }
+	pop sp!, { v1, lr }
 	bx lr
 " 
 + @$"
