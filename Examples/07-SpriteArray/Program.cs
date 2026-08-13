@@ -31,7 +31,7 @@ unsafe {
 	
 	var circles = 0f;
 	while(true) {
-		circles += 1/60f;
+		circles += 0.5f/60f;
 		if (circles >= 2) {
 			circles -= 1;
 		}
@@ -40,7 +40,7 @@ unsafe {
 			if (circles < offset) {
 				sprites[i].Y = 76;
 			} else {
-				sprites[i].Y = (byte)(50 * MathF.Sin((circles - offset) * MathF.PI));
+				sprites[i].Y = (byte)(50 * MathF.Sin((circles - offset) * MathF.PI * 2) + 76);
 			}
 		}
 		Interrupt.WaitVBlank();
