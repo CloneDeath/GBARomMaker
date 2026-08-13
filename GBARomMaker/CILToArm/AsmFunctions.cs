@@ -555,11 +555,13 @@ gba_irq_handler:
 		// DEBUG 0x104
 		return (@"
 mgba_log_string:
-	ldr r1, [r0], #4 @ string length
+	@ in:
+	@   a1 = string address
+	ldr r1, [a1], #4 @ string length
 	ldr r3, =0x04FFF600 @ log buffer start
 
 mgba_log_string_loop:
-	ldr r2, [r0], #4
+	ldr r2, [a1], #4
 	str r2, [r3], #4
 	subs r1, r1, #4
 	bgt mgba_log_string_loop
@@ -571,33 +573,16 @@ mgba_log_string_loop:
 	bx lr
 "
 
-// This has some overlap of gba_i4_to_string, maybe use it?
 + @"
 mgba_log_i4:
-	ldr r4, =0x04FFF600 @ log buffer start
-	ldr r5, =0 @ char count
-
-mgba_log_i4_push_char:
-	add r5, r5, #1
-	ldr r1, =10
-	swi 0x060000 @ div
-	add r2, r1, #48 @ char '0'
-	push sp!, { r2 }
-	cmp r0, #0
-	bne mgba_log_i4_push_char
-
-mgba_log_i4_print_char:
-	sub r5, r5, #1
-	pop sp!, { r2 }
-	strb r2, [r4], #1
-	cmp r5, #0
-	bne mgba_log_i4_print_char
+	@ in:
+	@   a1 = string
+	push sp!, { lr }
 	
-	@ send log
-	ldr r0, =0x04FFF700
-	ldr r1, =0x0104
-	strh r1, [r0]
+	bl gba_i4_to_string
+	bl mgba_log_string
 	
+	pop sp!, { lr }
 	bx lr
 
 ").Split("\n", StringSplitOptions.RemoveEmptyEntries);
@@ -606,11 +591,16 @@ mgba_log_i4_print_char:
 	public static string[] GetString() {
 		return (@"
 gba_i4_to_string:
-	push sp!, { lr }
-	ldr r5, =0 @ char count
+	@ in a1 = value
+	@ out a1 = string address
+	@ locals:
+	@  v1 = char count
+	@  v2 = string address
+	push sp!, { v1, v2, lr }
+	ldr v1, =0
 
 gba_log_i4_push_char:
-	add r5, r5, #1
+	add v1, v1, #1
 	ldr r1, =10
 	swi 0x060000 @ div
 	add r2, r1, #48 @ char '0'
@@ -618,52 +608,68 @@ gba_log_i4_push_char:
 	cmp r0, #0
 	bne gba_log_i4_push_char
 	
-	mov r4, r10 @ r4 will hold string address
-	str r5, [r10], #4
+	mov r0, v1
+	bl gba_malloc
+	mov v2, r0
+	str v1, [r0], #4
 
 gba_log_i4_char_to_heap:
-	sub r5, r5, #1
+	sub v1, v1, #1
 	pop sp!, { r2 }
-	strb r2, [r10], #1
-	cmp r5, #0
+	strb r2, [r0], #1
+	cmp v1, #0
 	bne gba_log_i4_char_to_heap
 	
 	@ write string address to r0 and return
-	mov r0, r4
-
-	pop sp!, { lr }
+	mov r0, v2
+	pop sp!, { v1, v2, lr }
 	bx lr
 	
 " + @"
 gba_string_concat:
-	mov r4, r0
-	mov r5, r1
-	mov r1, r10 @ store return value
-	ldr r2, [r4], #4
-	ldr r3, [r5], #4
-	add r0, r2, r3
-	str r0, [r10], #4
+	@ in:
+	@   a1 = left
+	@   a2 = right
+	@ out:
+	@   a1 = left + right
+	@ locals:
+	@   v1 = left ptr
+	@   v2 = left length
+	@   v3 = right ptr
+	@   v4 = right length
+	@   v5 = left + right address
+	push sp!, { v1, v2, v3, v4, v5, lr }
+	mov v1, a1
+	ldr v2, [v1], #4
+	mov v3, a2
+	ldr v4, [v3], #4
+	add r0, v2, v4
+	bl gba_malloc
+	mov v5, r0 @ store return value
+	add r1, v2, v4 @ recalculate length
+	str r1, [r0], #4
 
 gba_string_concat_move_left:
-	@ move left to heap r4/r2
-	cmp r2, #0
+	@ move left to heap v1/v2
+	cmp v2, #0
 	beq gba_string_concat_move_right
-	sub r2, r2, #1
-	ldrb r0, [r4], #1
-	strb r0, [r10], #1
+	sub v2, v2, #1
+	ldrb r1, [v1], #1
+	strb r1, [r0], #1
 	b gba_string_concat_move_left
 
 gba_string_concat_move_right:
-	@ move right to heap r5/r3
-	cmp r3, #0
+	@ move right to heap v3/v4
+	cmp v4, #0
 	beq gba_string_concat_return
-	sub r3, r3, #1
-	ldrb r0, [r5], #1
-	strb r0, [r10], #1
+	sub v4, v4, #1
+	ldrb r1, [v3], #1
+	strb r1, [r0], #1
 	b gba_string_concat_move_right
 
 gba_string_concat_return:
-	mov r0, r1
+	mov r0, v5
+	pop sp!, { v1, v2, v3, v4, v5, lr }
 	bx lr
 
 ").Split("\n", StringSplitOptions.RemoveEmptyEntries);
