@@ -576,6 +576,7 @@ public class CILToArmTranspiler {
 	private void HandleCall(InstructionMetadata instruction, ICILMethod method, ARMProgram assembly, CILFactory factory) {
 		var handlers = new List<ICallHandler> {
 			new SystemConsoleWriteLine(),
+			new SystemConvertToByte(),
 			new SystemConvertToInt32(),
 			new SystemInt32ToString(),
 			new SystemMathFCos(),
@@ -662,6 +663,11 @@ public class CILToArmTranspiler {
 	}
 
 	private string GetLabelForMethod(ICILMethod method) {
-		return $"method_{method.FullName}".Replace(".", "_").Replace("<", "_").Replace(">", "_").Replace("$", "_");
+		return $"method_{method.FullName}"
+			.Replace(".", "_")
+			.Replace("<", "_")
+			.Replace(">", "_")
+			.Replace("$", "_")
+			.Replace("|", "_");
 	}
 }
