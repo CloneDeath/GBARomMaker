@@ -9,10 +9,10 @@ unsafe {
 		ScreenDisplayOBJ = true
 	});
 
-	Sprite[] sprites = new Sprite[30];
+	Sprite[] sprites = new Sprite[5];
 	for (byte i = 0; i < sprites.Length; i++) {
 		byte palletIndex = (byte)(i + 1);
-		Palette.SetObject(0, palletIndex, new Color { Red = 31 });
+		Palette.SetObject(0, palletIndex, ColorFromHSV(i * (360f / sprites.Length), 1, 1));
 
 		ushort tileIndex = (ushort)(512 + i);
 		for (byte y = 0; y < 8; y++) {
@@ -39,8 +39,7 @@ unsafe {
 	};
 }
 
-static Color ColorFromHSV(float hue, float saturation, float value)
-{
+static Color ColorFromHSV(float hue, float saturation, float value) {
     int hi = Convert.ToInt32(MathF.Floor(hue / 60)) % 6;
     float f = hue / 60 - MathF.Floor(hue / 60);
 
