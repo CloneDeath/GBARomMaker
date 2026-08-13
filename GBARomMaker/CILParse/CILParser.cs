@@ -47,12 +47,14 @@ public class CILParser {
 		[REM.Definition],
 		[RET.Definition],
 		[SHL.Definition],
+		[STARG_S.Definition],
 		STELEM_IX.Definitions,
 		[STELEM_REF.Definition],
 		[STFLD.Definition],
 		STIND_IX.Definitions,
 		STLOC.Definitions,
 		[STSFLD.Definition],
+		[SUB.Definition],
 	}.SelectMany(d => d).ToList();
 	
 	public static readonly List<CILInstructionDefinition> FEInstructions = new CILInstructionDefinition[][] {
