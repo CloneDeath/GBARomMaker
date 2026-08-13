@@ -31,6 +31,17 @@ public class CGT : ICILToArmHandler {
 				"movle r0, #0",
 				"push sp!, { r0 }"
 			]);
+		} else if (stackTypeA == SignatureTypeCode.Single && stackTypeB == SignatureTypeCode.Single) {
+			return new ArmCode([
+				$"pop sp!, {{ r1, r2 }} @ <{stackTypeB}, {stackTypeA}>",
+				"mov r0, r2",
+				"bl gba_float_sub",
+				"lsr r0, r0, #31",
+				"eor r0, r0, #1",
+				"push sp!, { r0 }"
+			]){
+				IncludeFloat = true
+			};
 		} else {
 			throw new NotImplementedException($"CIL 'cgt' not supported for types {stackTypeA} > {stackTypeB}. {instruction}");
 		}
