@@ -622,6 +622,7 @@ gba_log_i4_push_char:
 	bne gba_log_i4_push_char
 	
 	mov r0, v1
+	add r0, r0, #4 @ length of string
 	bl gba_malloc
 	mov v2, r0
 	str v1, [r0], #4
@@ -657,6 +658,7 @@ gba_string_concat:
 	mov v3, a2
 	ldr v4, [v3], #4
 	add r0, v2, v4
+	add r0, r0, #4 @ length of string
 	bl gba_malloc
 	mov v5, r0 @ store return value
 	add r1, v2, v4 @ recalculate length
@@ -694,7 +696,7 @@ gba_malloc:
 	@ args r0 size in bytes;
 	@ return r0 allocated address
 	add r0, r0, #3
-	lsr r0, r0, #2
+	bic r0, r0, #3
 	add r10, r10, r0 @ move the heap register forward
 	sub r0, r10, r0 @ get where it was, for return
 	bx lr

@@ -14,6 +14,7 @@ public class NEWARR(CILFactory factory) : ICILToArmHandler {
 		return new ArmCode([
 			"pop sp!, { v1 }",
 			"lsl r0, v1, #2",
+			"add r0, r0, #4 @ array length",
 			"bl gba_malloc",
 			"str v1, [r0]",
 			"push sp!, { r0 }",
