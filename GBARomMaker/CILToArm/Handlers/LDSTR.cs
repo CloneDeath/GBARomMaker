@@ -15,8 +15,9 @@ public class LDSTR(CILFactory factory) : ICILToArmHandler {
 
 		var ascii = Encoding.ASCII.GetBytes(str);
 		var code = new List<string> {
-			$"ldr v1, ={4 + ascii.Length} @ size(4) + strlen \"{Encoding.ASCII.GetString(ascii)}\"",
+			$"ldr v1, ={ascii.Length} @ strlen \"{Encoding.ASCII.GetString(ascii)}\"",
 			"mov r0, v1",
+			"add r0, r0, #4 @ length of array",
 			"bl gba_malloc",
 			"push sp!, { r0 }",
 			"str v1, [r0], #4",
