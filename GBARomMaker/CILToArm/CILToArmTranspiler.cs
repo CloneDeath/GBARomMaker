@@ -653,8 +653,10 @@ public class CILToArmTranspiler {
 	private void HandleCall(InstructionMetadata instruction, ICILMethod method, ARMProgram assembly, CILFactory factory) {
 		var handlers = new List<ICallHandler> {
 			new SystemConsoleWriteLine(),
+			new SystemConvertToInt32(),
 			new SystemInt32ToString(),
 			new SystemMathFCos(),
+			new SystemMathFFloor(),
 			new SystemMathFSin(),
 			new SystemObjectCtor(),
 			new SystemStringConcat(),
