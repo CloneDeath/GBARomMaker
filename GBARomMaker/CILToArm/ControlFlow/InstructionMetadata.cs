@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Emit;
-using System.Reflection.Metadata;
 using GBARomMaker.CIL;
 using GBARomMaker.CILParse;
 

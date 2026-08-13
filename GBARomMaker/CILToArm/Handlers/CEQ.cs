@@ -1,7 +1,6 @@
 using System;
 using System.Linq;
 using System.Reflection.Emit;
-using System.Reflection.Metadata;
 using GBARomMaker.CILToArm.ControlFlow;
 
 namespace GBARomMaker.CILToArm.Handlers;
@@ -10,20 +9,11 @@ public class CEQ : ICILToArmHandler {
 	public OpCode[] Handles => [OpCodes.Ceq];
 
 	public ArmCode Handle(InstructionMetadata instruction) {
-		var relevantStack = instruction.StackTypes?.Take(2).ToList() ?? throw new InvalidOperationException($"Stack not deep enough for a sub! {instruction}");
-		// A - B
-		var stackTypeA = relevantStack[1].Code;
-		var stackTypeB = relevantStack[0].Code;
+		var relevantStack = instruction.StackTypes?.Take(2).ToList() ?? throw new InvalidOperationException($"Stack not deep enough for a ceq! {instruction}");
+		var stackTypeA = relevantStack[1];
+		var stackTypeB = relevantStack[0];
 	
-		var stackTypeAIsInt32Compatible = stackTypeA == SignatureTypeCode.Int32
-			|| stackTypeA == SignatureTypeCode.Pointer
-			|| stackTypeA == SignatureTypeCode.Byte;
-
-		var stackTypeBIsInt32Compatible = stackTypeB == SignatureTypeCode.Int32
-			|| stackTypeB == SignatureTypeCode.Pointer
-			|| stackTypeB == SignatureTypeCode.Byte;
-
-		if (stackTypeAIsInt32Compatible && stackTypeBIsInt32Compatible) {
+		if (stackTypeA.IsInt32Compatible() && stackTypeB.IsInt32Compatible()) {
 			return new ArmCode([
 				"pop sp!, { r0, r1 }",
 				"cmp r0, r1",

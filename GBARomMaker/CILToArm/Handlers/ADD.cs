@@ -1,7 +1,6 @@
 using System;
 using System.Linq;
 using System.Reflection.Emit;
-using System.Reflection.Metadata;
 using GBARomMaker.CILToArm.ControlFlow;
 
 namespace GBARomMaker.CILToArm.Handlers;
@@ -11,27 +10,19 @@ public class ADD : ICILToArmHandler {
 
 	public ArmCode Handle(InstructionMetadata instruction) {
 		var relevantStack = instruction.StackTypes?.Take(2).ToList() ?? throw new InvalidOperationException($"Stack not deep enough for an add! {instruction}");
-		var stackTypeA = relevantStack[0].Code;
-		var stackTypeB = relevantStack[1].Code;
-	
-		var stackTypeAIsInt32Compatible = stackTypeA == SignatureTypeCode.Int32
-			|| stackTypeA == SignatureTypeCode.Pointer
-			|| stackTypeA == SignatureTypeCode.Byte;
-
-		var stackTypeBIsInt32Compatible = stackTypeB == SignatureTypeCode.Int32
-			|| stackTypeB == SignatureTypeCode.Pointer
-			|| stackTypeB == SignatureTypeCode.Byte;
+		var stackTypeA = relevantStack[1];
+		var stackTypeB = relevantStack[0];
 
 		// see Table III.2: Binary Numeric Operations
-		if (stackTypeAIsInt32Compatible && stackTypeBIsInt32Compatible) {
+		if (stackTypeA.IsInt32Compatible() && stackTypeB.IsInt32Compatible()) {
 			return new ArmCode([
-				$"pop sp!, {{ r1, r2 }} @ <{stackTypeA}, {stackTypeB}>",
-				"add r0,r1,r2",
+				$"pop sp!, {{ r1, r2 }} @ <{stackTypeB}, {stackTypeA}>",
+				"add r0, r1, r2",
 				"push sp!, { r0 }"
 			]);
-		} else if (stackTypeAIsInt32Compatible && stackTypeB == SignatureTypeCode.Single) {
+		} else if (stackTypeA.IsInt32Compatible() && stackTypeB.IsSingle()) {
 			return new ArmCode([
-				$"pop sp!, {{ r0, r1 }} @ <{stackTypeA}, {stackTypeB}>",
+				$"pop sp!, {{ r0, r1 }} @ <{stackTypeB}, {stackTypeA}>",
 				"push sp!, { r1 }",
 				"bl gba_int_to_float",
 				"pop sp!, { r1 }",
@@ -40,9 +31,9 @@ public class ADD : ICILToArmHandler {
 			]) {
 				IncludeFloat = true
 			};
-		} else if (stackTypeA == SignatureTypeCode.Single && stackTypeB == SignatureTypeCode.Single) {
+		} else if (stackTypeA.IsSingle() && stackTypeB.IsSingle()) {
 			return new ArmCode([
-				$"pop sp!, {{ r0, r1 }} @ <{stackTypeA}, {stackTypeB}>",
+				$"pop sp!, {{ r0, r1 }} @ <{stackTypeB}, {stackTypeA}>",
 				"bl gba_float_add",
 				"push sp!, { r0 }"
 			]) {

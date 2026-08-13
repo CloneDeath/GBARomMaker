@@ -1,7 +1,6 @@
 using System;
 using System.Linq;
 using System.Reflection.Emit;
-using System.Reflection.Metadata;
 using GBARomMaker.CILToArm.ControlFlow;
 
 namespace GBARomMaker.CILToArm.Handlers;
@@ -10,14 +9,10 @@ public class CONV_I : ICILToArmHandler {
 	public OpCode[] Handles => [OpCodes.Conv_I, OpCodes.Conv_I4];
 
 	public ArmCode Handle(InstructionMetadata instruction) {
-		var topOfStackType = instruction.StackTypes?.FirstOrDefault()?.Code ?? throw new InvalidOperationException($"Stack not deep enough for a conv.i! {instruction}");
-		var stackTypeIsInt32Compatible = topOfStackType == SignatureTypeCode.Int32
-			|| topOfStackType == SignatureTypeCode.UInt32
-			|| topOfStackType == SignatureTypeCode.Pointer
-			|| topOfStackType == SignatureTypeCode.Byte;
-		if (stackTypeIsInt32Compatible) {
+		var topOfStackType = instruction.StackTypes?.FirstOrDefault() ?? throw new InvalidOperationException($"Stack not deep enough for a conv.i! {instruction}");
+		if (topOfStackType.IsInt32Compatible()) {
 			return new ArmCode($"nop @ <{topOfStackType}> is int32 compatible");
-		} else if (topOfStackType == SignatureTypeCode.Single) {
+		} else if (topOfStackType.IsSingle()) {
 			return new ArmCode([
 				"pop sp!, { r0 }",
 				$"bl gba_float_to_int @ <{topOfStackType}> to int32",

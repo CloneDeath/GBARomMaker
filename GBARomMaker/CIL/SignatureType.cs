@@ -1,9 +1,25 @@
+using System.Linq;
 using System.Reflection.Metadata;
 
 namespace GBARomMaker.CIL;
 
 public interface ISignatureType {
 	public SignatureTypeCode Code { get; }
+
+	public bool IsInt32Compatible() {
+		return new SignatureTypeCode[] {
+			SignatureTypeCode.Int32,
+			SignatureTypeCode.UInt32,
+			SignatureTypeCode.Int16,
+			SignatureTypeCode.UInt16,
+			SignatureTypeCode.Pointer,
+			SignatureTypeCode.Byte
+		}.Contains(Code);
+	}
+
+	public bool IsSingle() {
+		return Code == SignatureTypeCode.Single;
+	}
 }
 
 public class SignatureType(SignatureTypeCode code) : ISignatureType {

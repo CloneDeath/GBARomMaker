@@ -123,6 +123,7 @@ public class CILToArmTranspiler {
 
 		var handlers = new ICILToArmHandler[] {
 			new ADD(),
+			new AND(),
 			new CEQ(),
 			new CGT(),
 			new CLT(),
@@ -317,14 +318,6 @@ public class CILToArmTranspiler {
 					assembly.AddLabel(target, label);
 					break;
 				}
-				case "and": {
-					assembly.Add(instruction.GetBytes().Length, [
-						"pop sp!, { r1, r2 }",
-						"and r0, r1, r2",
-						"push sp!, { r0 }"
-					]);
-					break;
-				}
 				case "or": {
 					assembly.Add(instruction.GetBytes().Length, [
 						"pop sp!, { r1, r2 }",
@@ -342,25 +335,17 @@ public class CILToArmTranspiler {
 					break;
 				}
 				case "mul": {
-					var relevantStack = instructionWithMetadata.StackTypes?.Take(2).ToList() ?? throw new InvalidOperationException($"Stack not deep enough for an add! {instructionWithMetadata}");
-					var stackTypeA = relevantStack[0].Code;
-					var stackTypeB = relevantStack[1].Code;
+					var relevantStack = instructionWithMetadata.StackTypes?.Take(2).ToList() ?? throw new InvalidOperationException($"Stack not deep enough for a mul! {instructionWithMetadata}");
+					var stackTypeA = relevantStack[1];
+					var stackTypeB = relevantStack[0];
 	
-					var stackTypeAIsInt32Compatible = stackTypeA == SignatureTypeCode.Int32
-						|| stackTypeA == SignatureTypeCode.Pointer
-						|| stackTypeA == SignatureTypeCode.Byte;
-
-					var stackTypeBIsInt32Compatible = stackTypeB == SignatureTypeCode.Int32
-						|| stackTypeB == SignatureTypeCode.Pointer
-						|| stackTypeB == SignatureTypeCode.Byte;
-
-					if (stackTypeAIsInt32Compatible && stackTypeBIsInt32Compatible) {
+					if (stackTypeA.IsInt32Compatible() && stackTypeB.IsInt32Compatible()) {
 						assembly.Add(instruction.GetBytes().Length, [
 							"pop sp!, { r1, r2 }",
 							"mul r0, r1, r2",
 							"push sp!, { r0 }"
 						]);
-					} else if (stackTypeA == SignatureTypeCode.Single && stackTypeB == SignatureTypeCode.Single) {
+					} else if (stackTypeA.IsSingle() && stackTypeB.IsSingle()) {
 						assembly.IncludeFloat = true;
 						assembly.Add(instruction.GetBytes().Length, [
 							"pop sp!, { r0, r1 }",
@@ -374,25 +359,17 @@ public class CILToArmTranspiler {
 				}
 				case "div": {
 					var relevantStack = instructionWithMetadata.StackTypes?.Take(2).ToList() ?? throw new InvalidOperationException($"Stack not deep enough for an add! {instructionWithMetadata}");
-					var stackTypeA = relevantStack[0].Code;
-					var stackTypeB = relevantStack[1].Code;
-	
-					var stackTypeAIsInt32Compatible = stackTypeA == SignatureTypeCode.Int32
-						|| stackTypeA == SignatureTypeCode.Pointer
-						|| stackTypeA == SignatureTypeCode.Byte;
+					var stackTypeA = relevantStack[1];
+					var stackTypeB = relevantStack[0];
 
-					var stackTypeBIsInt32Compatible = stackTypeB == SignatureTypeCode.Int32
-						|| stackTypeB == SignatureTypeCode.Pointer
-						|| stackTypeB == SignatureTypeCode.Byte;
-
-					if (stackTypeAIsInt32Compatible && stackTypeBIsInt32Compatible) {
+					if (stackTypeA.IsInt32Compatible() && stackTypeB.IsInt32Compatible()) {
 						// https://problemkaputt.de/gbatek-bios-arithmetic-functions.htm
 						assembly.Add(instruction.GetBytes().Length, [
 							"pop sp!, { r0, r1 } @ val2 (denom), val1 (number)",
 							"swi 0x070000", // using 7 instead of 6, as the number/denom are swapped
 							"push sp!, { r0 }"
 						]);
-					} else if (stackTypeA == SignatureTypeCode.Single && stackTypeB == SignatureTypeCode.Single) {
+					} else if (stackTypeA.IsSingle() && stackTypeB.IsSingle()) {
 						assembly.IncludeFloat = true;
 						assembly.Add(instruction.GetBytes().Length, [
 							"pop sp!, { r1, r2 } @ val2 (denom), val1 (number)",
@@ -406,19 +383,11 @@ public class CILToArmTranspiler {
 					break;
 				}
 				case "rem": {
-					var relevantStack = instructionWithMetadata.StackTypes?.Take(2).ToList() ?? throw new InvalidOperationException($"Stack not deep enough for an add! {instructionWithMetadata}");
-					var stackTypeA = relevantStack[0].Code;
-					var stackTypeB = relevantStack[1].Code;
-	
-					var stackTypeAIsInt32Compatible = stackTypeA == SignatureTypeCode.Int32
-						|| stackTypeA == SignatureTypeCode.Pointer
-						|| stackTypeA == SignatureTypeCode.Byte;
+					var relevantStack = instructionWithMetadata.StackTypes?.Take(2).ToList() ?? throw new InvalidOperationException($"Stack not deep enough for a rem! {instructionWithMetadata}");
+					var stackTypeA = relevantStack[1];
+					var stackTypeB = relevantStack[0];
 
-					var stackTypeBIsInt32Compatible = stackTypeB == SignatureTypeCode.Int32
-						|| stackTypeB == SignatureTypeCode.Pointer
-						|| stackTypeB == SignatureTypeCode.Byte;
-
-					if (stackTypeAIsInt32Compatible && stackTypeBIsInt32Compatible) {
+					if (stackTypeA.IsInt32Compatible() && stackTypeB.IsInt32Compatible()) {
 						// https://problemkaputt.de/gbatek-bios-arithmetic-functions.htm
 						assembly.Add(instruction.GetBytes().Length, [
 							"pop sp!, { r0, r1 } @ val2 (denom), val1 (number)",
@@ -426,7 +395,7 @@ public class CILToArmTranspiler {
 							"push sp!, { r1 }"
 						]);
 					} else {
-						throw new NotImplementedException($"CIL 'div' not supported for types {stackTypeA} / {stackTypeB}. {instructionWithMetadata}");
+						throw new NotImplementedException($"CIL 'rem' not supported for types {stackTypeA} / {stackTypeB}. {instructionWithMetadata}");
 					}
 					break;
 				}
