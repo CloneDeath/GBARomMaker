@@ -15,7 +15,7 @@ public class CILMethodDefinition : ICILMethod {
 		this._signature = factory.GetMethodSignatureBlob(method.Signature);
 	}
 
-	public CILTypeDefinition Parent => _factory.GetTypeDefinition(_method.GetDeclaringType());
+	public ICILType Parent => _factory.GetTypeDefinition(_method.GetDeclaringType());
 	public string Name => _factory.GetString(_method.Name);
 	public string FullName => $"{Parent.Namespace}.{Parent.Name}.{Name}";
 	public byte[] BodyBytes => _factory.GetMethodBody(_method.RelativeVirtualAddress).GetILBytes() ?? [];

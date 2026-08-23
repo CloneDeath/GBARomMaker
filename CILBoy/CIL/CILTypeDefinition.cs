@@ -27,4 +27,5 @@ public class CILTypeDefinition : ICILType {
 	}
 
 	public CILFieldDefinition[] InstanceFields => _self.GetFields().Select(f => _factory.GetFieldDefinition(f)).Where(f => !f.IsStatic).ToArray();
-	public CILFieldDefinition[] StaticFields => _self.GetFields().Select(f => _factory.GetFieldDefinition(f)).Where(f => f.IsStatic).ToArray();}
+	public CILFieldDefinition[] StaticFields => _self.GetFields().Select(f => _factory.GetFieldDefinition(f)).Where(f => f.IsStatic).ToArray();
+}

@@ -15,12 +15,7 @@ public class CILMemberReference : ICILMethod {
 		this._signature = factory.GetMethodSignatureBlob(self.Signature);
 	}
     
-	public ICILType Parent {
-        get {
-			return _factory.GetTypeDefinition(_self.Parent);
-        }
-    }
-
+	public ICILType Parent => _factory.GetTypeDefinition(_self.Parent);
 	public string Name => _factory.GetString(_self.Name);
 	public string FullName => $"{Parent.Namespace}.{Parent.Name}.{Name}";
 	public byte[] BodyBytes => throw new NotImplementedException($"Reference For {FullName}");
@@ -33,8 +28,10 @@ public class CILMemberReference : ICILMethod {
 	public MemberReferenceKind Kind => _self.GetKind();
     public bool IsNativeInvoke {
 		get {
-			Console.WriteLine(Parent);
-			throw new NotImplementedException($"Reference For {FullName}");
+			var definingFactory = _factory.GetAssemblyFactoryFor(((CILTypeReference)Parent).Assembly.Name);
+			var parent = definingFactory.GetTypeDefinition(Parent.FullName);
+			var method = parent.GetMethodDefinition(Name);
+			return method.IsNativeInvoke;
 		}
 	}
     public string NativeInvokeTarget => throw new NotImplementedException($"Reference For {FullName}");

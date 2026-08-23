@@ -54,12 +54,21 @@ public class ARMProgram : List<ARMLine> {
 		return instance;
 	}
 
-	public ClassLayout GetClassLayout(CILTypeDefinition type) {
+	public ClassLayout GetClassLayout(ICILType type) {
 		var existing = _classes.FirstOrDefault(c => c.FullName == type.FullName);
 		if (existing != null) return existing;
 
 		var instance = new ClassLayout(type);
 		_classes.Add(instance);
 		return instance;
+	}
+	
+	public string GetLabelForMethod(ICILMethod method) {
+		return $"method_{method.FullName}"
+			.Replace(".", "_")
+			.Replace("<", "_")
+			.Replace(">", "_")
+			.Replace("$", "_")
+			.Replace("|", "_");
 	}
 }

@@ -4,10 +4,10 @@ using CILBoy.CIL;
 namespace CILBoy.CILToArm;
 
 public class ClassLayout {
-	private CILTypeDefinition _type;
+	private ICILType _type;
 	private CILFieldDefinition[] _fields;
 
-	public ClassLayout(CILTypeDefinition type) {
+	public ClassLayout(ICILType type) {
 		_type = type;
 		_fields = type.InstanceFields;
 	}

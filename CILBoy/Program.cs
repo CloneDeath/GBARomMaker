@@ -22,9 +22,10 @@ public static class Program {
 		
 		Console.WriteLine(inputAssembly + " -> " + outputRom);
 
-		var factory = new CILAssemblyFactory(inputAssembly);
+		using var factory = new CILFactory(Path.GetDirectoryName(inputAssembly) ?? throw new Exception($"Failed to get directory for {inputAssembly}"));
+		var assemblyFactory = factory.GetAssemblyFactoryFor(Path.GetFileNameWithoutExtension(inputAssembly));
 
-		var transpiler = new CILToArmTranspiler(factory, showCil);
+		var transpiler = new CILToArmTranspiler(assemblyFactory, showCil);
 		var assembly = transpiler.Transpile();
 		if (showArm) {
 			PrintAsm(assembly);

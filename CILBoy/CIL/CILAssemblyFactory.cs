@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 using System.Reflection.PortableExecutable;
@@ -8,11 +9,16 @@ using CILBoy.CIL.Blobs;
 namespace CILBoy.CIL;
 
 public class CILAssemblyFactory : IDisposable {
+	private readonly CILFactory _factory;
 	private readonly FileStream _stream;
 	private readonly PEReader _peReader;
 	private readonly MetadataReader _metadata;
 
-	public CILAssemblyFactory(string filePath) {
+	public string AssemblyName { get; private set; }
+
+	public CILAssemblyFactory(CILFactory factory, string filePath) {
+		_factory = factory;
+		AssemblyName = Path.GetFileNameWithoutExtension(filePath);
 		_stream = File.OpenRead(filePath);
 		_peReader = new PEReader(_stream);
 		_metadata = _peReader.GetMetadataReader();
@@ -24,6 +30,12 @@ public class CILAssemblyFactory : IDisposable {
 	}
 
 	public PEHeaders PEHeaders => _peReader.PEHeaders;
+
+	public CILTypeDefinition GetTypeDefinition(string fullName) {
+		return _metadata.TypeDefinitions
+			.Select(t => GetTypeDefinition(t))
+			.First(d => d.FullName == fullName);
+	}
 
 	public CILTypeDefinition GetTypeDefinition(TypeDefinitionHandle handle) {
 		var typeDefinition = _metadata.GetTypeDefinition(handle);
@@ -111,4 +123,6 @@ public class CILAssemblyFactory : IDisposable {
 
 	public ModuleReference GetModuleReference(ModuleReferenceHandle handle) => _metadata.GetModuleReference(handle);
 	public StandaloneSignature GetStandaloneSignature(StandaloneSignatureHandle handle) => _metadata.GetStandaloneSignature(handle);
+
+	public CILAssemblyFactory GetAssemblyFactoryFor(string assembly) => _factory.GetAssemblyFactoryFor(assembly);
 }

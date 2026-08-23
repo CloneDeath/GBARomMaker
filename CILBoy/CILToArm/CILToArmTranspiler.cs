@@ -36,8 +36,9 @@ public class CILToArmTranspiler {
 			new ARMLine(-1, header_line++, "ldr r0, =0x04FFF780 @ Enable mGBA logs"),
 			new ARMLine(-1, header_line++, "ldr r1, =0xC0DE"),
 			new ARMLine(-1, header_line++, "strh r1, [r0]"),
-			new ARMLine(-1, header_line++, $"b {GetLabelForMethod(entrypoint)}"),
 		};
+		assembly.Add(new ARMLine(-1, header_line++, $"b {assembly.GetLabelForMethod(entrypoint)}"));
+
 		foreach (var line in AsmFunctions.GetIRQHandler()) {
 			assembly.Add(new ARMLine(-1, header_line++, line));
 		}
@@ -139,6 +140,7 @@ public class CILToArmTranspiler {
 			new LDLOC_X(),
 			new LDSTR(_factory),
 			new NEWARR(_factory),
+			new NEWOBJ(_factory, assembly),
 			new NOP(),
 			new POP(),
 			new RET(method),
@@ -238,10 +240,6 @@ public class CILToArmTranspiler {
 				}
 				case "callvirt": {
 					HandleCallvirtInstruction(instructionWithMetadata, assembly);
-					break;
-				}
-				case "newobj": {
-					HandleNewObjInstruction(instructionWithMetadata, assembly);
 					break;
 				}
 				case "br": {
@@ -402,7 +400,7 @@ public class CILToArmTranspiler {
 	private void DeclareMethod(ARMProgram assembly, ICILMethod method) {
 		var localCount = method.GetLocalVariableTypes().Count();
 		assembly.Add(0, [
-			$"{GetLabelForMethod(method)}:",
+			$"{assembly.GetLabelForMethod(method)}:",
 			$"@ {method.ReturnType} {method.FullName}({string.Join(", ", method.GetArgumentTypes())})",
 		]);
 		if (localCount > 0) {
@@ -446,7 +444,7 @@ public class CILToArmTranspiler {
 				$"cmp r1, #1",
 				$"ldrne r1, =1",
 				$"strne r1, [r0]",
-				$"blne {GetLabelForMethod(staticConstructor)}",
+				$"blne {assembly.GetLabelForMethod(staticConstructor)}",
 			]);
 		}
 		assembly.Add(0, [
@@ -482,7 +480,7 @@ public class CILToArmTranspiler {
 				$"cmp r1, #1",
 				$"ldrne r1, =1",
 				$"strne r1, [r0]",
-				$"blne {GetLabelForMethod(staticConstructor)}",
+				$"blne {assembly.GetLabelForMethod(staticConstructor)}",
 			]);
 		}
 		assembly.Add(0, [
@@ -536,67 +534,10 @@ public class CILToArmTranspiler {
 		}
 
 		assembly.MethodsToTranspile.Enqueue(method);
-		var target = GetLabelForMethod(method);
+		var target = assembly.GetLabelForMethod(method);
 		assembly.Add(instruction.GetBytes().Length, [
 			$"bl {target}"
 		]);
 	}
 
-	private void HandleNewObjInstruction(InstructionMetadata metadata, ARMProgram assembly) {
-		var instruction = metadata.Instruction;
-		var newobj = (CILBoy.CILParse.Instructions.NEWOBJ)instruction;
-		var handle = MetadataTokens.EntityHandle(newobj.MetadataToken);
-		switch (handle.Kind) {
-			case HandleKind.MethodDefinition: {
-				var method = _factory.GetMethodDefinition((MethodDefinitionHandle)handle);
-				if (method.Name != ".ctor") {
-					throw new Exception($"Tried to initialize an object with something that isn't a contructor: {method.FullName} -- {metadata}");
-				}
-
-				var classLayout = assembly.GetClassLayout(method.Parent);
-
-				var target = GetLabelForMethod(method);
-				if (method.ParameterCount == 0) {
-					assembly.Add(instruction.GetBytes().Length, [
-						$"ldr r0, ={classLayout.Size * 4}",
-						"bl gba_malloc",
-						"push sp!, { r0 } @ push object ref onto the stack...",
-						"push sp!, { r0 } @ push it again for the 'this' param of the constructor",
-						$"bl {target}"
-					]);
-				} else if (method.ParameterCount <= 9) {
-					var registers = method.ParameterCount == 1 
-						? "r0"
-						: $"r0-r{method.ParameterCount - 1}";
-					assembly.Add(instruction.GetBytes().Length, [
-						$"ldr r0, ={classLayout.Size * 4}",
-						"bl gba_malloc",
-						"mov ip, r0",
-						$"pop sp!, {{ {registers} }}",
-						"push sp!, { ip } @ push object ref onto the stack...",
-						"push sp!, { ip } @ push it again for the 'this' param of the constructor",
-						$"push sp!, {{ {registers} }}",
-						$"bl {target}"
-					]);
-				} else {
-					throw new Exception($"Only up to 9 args are supported... {metadata}");
-				}
-
-				assembly.MethodsToTranspile.Enqueue(method);
-				return;
-			}
-			default: {
-				throw new NotImplementedException($"New Objects for {handle.Kind} constructors not yet implemented. {metadata}");
-			}
-		}
-	}
-
-	private string GetLabelForMethod(ICILMethod method) {
-		return $"method_{method.FullName}"
-			.Replace(".", "_")
-			.Replace("<", "_")
-			.Replace(">", "_")
-			.Replace("$", "_")
-			.Replace("|", "_");
-	}
 }

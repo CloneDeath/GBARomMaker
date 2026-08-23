@@ -2,6 +2,7 @@ namespace CILBoy.CIL;
 
 public interface ICILMethod {
 	public string Name { get; }
+	public ICILType Parent { get; }
 	public string FullName { get; }
 	public byte[] BodyBytes { get; }
     public int ParameterCount { get; }

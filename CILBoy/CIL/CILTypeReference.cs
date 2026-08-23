@@ -19,6 +19,13 @@ public class CILTypeReference : ICILType {
 	public string Name => _metadata.GetString(_self.Name);
 	public string FullName => $"{Namespace}.{Name}";
 
+	public CILAssemblyReference Assembly {
+		get {
+			var assembly = _metadata.GetAssemblyReference((AssemblyReferenceHandle)_self.ResolutionScope);
+			return new CILAssemblyReference(assembly);
+		}
+	}
+
 	public CILMethodDefinition GetMethodDefinition(string name) {
 		throw new NotImplementedException();
 	}
@@ -27,4 +34,7 @@ public class CILTypeReference : ICILType {
 		var assembly = _metadata.GetAssemblyReference((AssemblyReferenceHandle)_self.ResolutionScope);
 		return $"{assembly.GetAssemblyName().Name}";
 	}
+
+	public CILFieldDefinition[] InstanceFields => throw new NotImplementedException();
+	public CILFieldDefinition[] StaticFields => throw new NotImplementedException();
 }
