@@ -1,0 +1,62 @@
+using System;
+using CILBoy.CIL;
+using System.Linq;
+using System.Reflection.Emit;
+using System.Collections.Generic;
+
+namespace CILBoy.CILParse.Instructions;
+
+public class BRTRUE : CILInstruction {
+	public static CILInstructionDefinition[] Definitions = [
+		new(0x3A, 4, (args) => new BRTRUE(BitConverter.ToInt32(args))),
+		new(0x2D, 1, (args) => new BRTRUE_S((sbyte)args[0])),
+	];
+
+	public int Target { get; set; }
+
+	public BRTRUE(int target) {
+		Target = target;
+	}
+
+	public OpCode OpCode => OpCodes.Brtrue;
+
+    public byte[] GetBytes() {
+		return new byte[]{0x3A}.Concat(BitConverter.GetBytes(Target)).ToArray();
+    }
+
+    public string GetCIL(CILAssemblyFactory factory, ICILMethod method) {
+		return "brtrue " + Target;
+    }
+
+	public void ModifyStack(CILAssemblyFactory factory, ICILMethod method, Stack<ISignatureType> current) {
+		current.Pop();
+	}
+    public bool AlwaysBranches => false;
+	public bool SometimesBranches => true;
+	public int? BranchTarget => Target;
+}
+
+public class BRTRUE_S : CILInstruction {
+	public sbyte Target { get; set; }
+
+	public BRTRUE_S(sbyte target) {
+		Target = target;
+	}
+
+	public OpCode OpCode => OpCodes.Brtrue_S;
+
+    public byte[] GetBytes() {
+		return new byte[]{ 0x2D, (byte)Target };
+    }
+
+    public string GetCIL(CILAssemblyFactory factory, ICILMethod method) {
+		return "brtrue.s " + Target;
+    }
+
+	public void ModifyStack(CILAssemblyFactory factory, ICILMethod method, Stack<ISignatureType> current) {
+		current.Pop();
+	}
+    public bool AlwaysBranches => false;
+	public bool SometimesBranches => true;
+	public int? BranchTarget => Target;
+}
