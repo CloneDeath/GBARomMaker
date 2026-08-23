@@ -1,5 +1,3 @@
-using System;
-using System.Collections.Generic;
 using System.Reflection;
 using System.Reflection.Metadata;
 using CILBoy.CIL.Blobs;
@@ -58,7 +56,7 @@ public class CILMethodDefinition : ICILMethod {
 		}
 
 		var localSignature = _factory.GetStandaloneSignature(body.LocalSignature);
-		var blob = _factory.GetMethodSignatureBlob(localSignature.Signature);
+		var blob = _factory.GetLocalSignatureBlob(localSignature.Signature);
 		return blob.ArgumentTypes;
 	}
 	
