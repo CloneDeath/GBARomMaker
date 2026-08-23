@@ -3,6 +3,7 @@ using System.IO;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 using System.Reflection.PortableExecutable;
+using CILBoy.CIL.Blobs;
 
 namespace CILBoy.CIL;
 
@@ -26,7 +27,7 @@ public class CILAssemblyFactory : IDisposable {
 
 	public CILTypeDefinition GetTypeDefinition(TypeDefinitionHandle handle) {
 		var typeDefinition = _metadata.GetTypeDefinition(handle);
-		return new CILTypeDefinition(_peReader, _metadata, typeDefinition);
+		return new CILTypeDefinition(this, typeDefinition);
 	}
 	
 	public CILTypeReference GetTypeReference(TypeReferenceHandle handle) {
@@ -58,7 +59,7 @@ public class CILAssemblyFactory : IDisposable {
 
 	public CILMethodDefinition GetMethodDefinition(MethodDefinitionHandle handle) {
 		var method = _metadata.GetMethodDefinition(handle);
-		return new CILMethodDefinition(_peReader, _metadata, method);
+		return new CILMethodDefinition(this, method);
 	}
 
 	public ICILMethod GetMethodDefinition(EntityHandle handle) {
@@ -68,7 +69,7 @@ public class CILAssemblyFactory : IDisposable {
 			}
 			case HandleKind.MemberReference: {
 				var member = _metadata.GetMemberReference((MemberReferenceHandle)handle);
-				var memberRef = new CILMemberReference(_peReader, _metadata, member);
+				var memberRef = new CILMemberReference(this, member);
 				if (memberRef.Kind != MemberReferenceKind.Method) throw new Exception($"Could not extract a Method from a member ref to a {memberRef.Kind}");
 				return memberRef;
 			}
@@ -80,12 +81,16 @@ public class CILAssemblyFactory : IDisposable {
 		}
 	}
 
+	public CILFieldDefinition GetFieldDefinition(FieldDefinitionHandle handle) {
+		var field = _metadata.GetFieldDefinition(handle);
+		return new CILFieldDefinition(this, field);
+	}
+
 	public CILFieldDefinition GetFieldDefinition(int metadataToken) {
 		var handle = MetadataTokens.EntityHandle(metadataToken);
 		switch (handle.Kind) {
 			case HandleKind.FieldDefinition: {
-				var field = _metadata.GetFieldDefinition((FieldDefinitionHandle)handle);
-				return new CILFieldDefinition(this, field);
+				return GetFieldDefinition((FieldDefinitionHandle)handle);
 			}
 			default: throw new NotImplementedException($"Could not extract field from {handle.Kind}");
 		}
@@ -98,4 +103,11 @@ public class CILAssemblyFactory : IDisposable {
 	}
 
 	public BlobReader GetBlobReader(BlobHandle handle) => _metadata.GetBlobReader(handle);
+
+	public MethodSignatureBlob GetMethodSignatureBlob(BlobHandle signature) => new MethodSignatureBlob(_metadata, signature);
+
+	public MethodBodyBlock GetMethodBody(int relativeVirtualAddress) => _peReader.GetMethodBody(relativeVirtualAddress);
+
+	public ModuleReference GetModuleReference(ModuleReferenceHandle handle) => _metadata.GetModuleReference(handle);
+	public StandaloneSignature GetStandaloneSignature(StandaloneSignatureHandle handle) => _metadata.GetStandaloneSignature(handle);
 }

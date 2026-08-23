@@ -1,46 +1,30 @@
 using System.Linq;
 using System.Reflection.Metadata;
-using System.Reflection.PortableExecutable;
 
 namespace CILBoy.CIL;
 
 public class CILTypeDefinition : ICILType {
-	private readonly PEReader _peReader;
-	private readonly MetadataReader _metadata;
+	private readonly CILAssemblyFactory _factory;
 	private readonly TypeDefinition _self;
 	
-	public CILTypeDefinition(PEReader peReader, MetadataReader metadata, TypeDefinition self) {
-		this._peReader = peReader;
-		this._metadata = metadata;
+	public CILTypeDefinition(CILAssemblyFactory factory, TypeDefinition self) {
+		this._factory = factory;
 		this._self = self;
 	}
 
-	public string Namespace => _metadata.GetString(_self.Namespace);
-	public string Name => _metadata.GetString(_self.Name);
+	public string Namespace => _factory.GetString(_self.Namespace);
+	public string Name => _factory.GetString(_self.Name);
 	public string FullName => $"{Namespace}.{Name}";
 
 
     public CILMethodDefinition? StaticConstructor => _self.GetMethods()
-		.Select(m => new CILMethodDefinition(_peReader, _metadata, _metadata.GetMethodDefinition(m)))
+		.Select(m => _factory.GetMethodDefinition(m))
 		.FirstOrDefault(m => m.IsStaticConstructor);
 
     public CILMethodDefinition GetMethodDefinition(string name) {
-		var methods = _self.GetMethods().Select(m => _metadata.GetMethodDefinition(m));
-		var method = methods.First(m => _metadata.GetString(m.Name) == name);
-		return new CILMethodDefinition(_peReader, _metadata, method);		
+		var methods = _self.GetMethods().Select(m => _factory.GetMethodDefinition(m));
+		return methods.First(m => m.Name == name);
 	}
 
-	public CILFieldDefinition[] InstanceFields {
-		get {
-			var fields = _self.GetFields().Select(f => _metadata.GetFieldDefinition(f)).Where(f => !f.Attributes.HasFlag(System.Reflection.FieldAttributes.Static));
-			return fields.Select(f => new CILFieldDefinition(_peReader, _metadata, f)).ToArray();
-		}
-	}
-
-	public CILFieldDefinition[] StaticFields {
-		get {
-			var fields = _self.GetFields().Select(f => _metadata.GetFieldDefinition(f)).Where(f => f.Attributes.HasFlag(System.Reflection.FieldAttributes.Static));
-			return fields.Select(f => new CILFieldDefinition(_peReader, _metadata, f)).ToArray();
-		}
-	}
-}
+	public CILFieldDefinition[] InstanceFields => _self.GetFields().Select(f => _factory.GetFieldDefinition(f)).Where(f => !f.IsStatic).ToArray();
+	public CILFieldDefinition[] StaticFields => _self.GetFields().Select(f => _factory.GetFieldDefinition(f)).Where(f => f.IsStatic).ToArray();}

@@ -5,21 +5,23 @@ using CILBoy.CIL.Blobs;
 namespace CILBoy.CIL;
 
 public class CILMemberReference : ICILMethod {
+	private CILAssemblyFactory _factory;
 	private readonly MemberReference _self;
 	private readonly MethodSignatureBlob _signature;
 	
 	public CILMemberReference(CILAssemblyFactory factory, MemberReference self) {
+		this._factory = factory;
 		this._self = self;
-		this._signature = new MethodSignatureBlob(metadata, self.Signature);
+		this._signature = factory.GetMethodSignatureBlob(self.Signature);
 	}
     
 	public ICILType Parent {
         get {
-			var factory = new CILAssemblyFactory(_peReader, _metadata);
-			return factory.GetTypeDefinition(_self.Parent);
+			return _factory.GetTypeDefinition(_self.Parent);
         }
     }
-	public string Name => _metadata.GetString(_self.Name);
+
+	public string Name => _factory.GetString(_self.Name);
 	public string FullName => $"{Parent.Namespace}.{Parent.Name}.{Name}";
 	public byte[] BodyBytes => throw new NotImplementedException($"Reference For {FullName}");
 	public bool IsInstance => _signature.IsInstance;

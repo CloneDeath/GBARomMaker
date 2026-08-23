@@ -24,4 +24,6 @@ public class CILFieldDefinition {
 			return signature.ReadSignatureTypeCode();
 		}
 	}
+
+	public bool IsStatic => _field.Attributes.HasFlag(System.Reflection.FieldAttributes.Static);
 }
