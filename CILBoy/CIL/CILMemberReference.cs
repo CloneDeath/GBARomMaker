@@ -18,7 +18,12 @@ public class CILMemberReference : ICILMethod {
 	public ICILType Parent => _factory.GetTypeDefinition(_self.Parent);
 	public string Name => _factory.GetString(_self.Name);
 	public string FullName => $"{Parent.Namespace}.{Parent.Name}.{Name}";
-	public byte[] BodyBytes => throw new NotImplementedException($"Reference For {FullName}");
+	public byte[] BodyBytes {
+		get {
+			var method = Parent.GetMethodDefinition(Name);
+			return method.BodyBytes;
+		}
+	}
 	public bool IsInstance => _signature.IsInstance;
     public int ParameterCount => _signature.ParameterCount;
 	public ISignatureType ReturnType => _signature.ReturnType;
@@ -28,14 +33,19 @@ public class CILMemberReference : ICILMethod {
 	public MemberReferenceKind Kind => _self.GetKind();
     public bool IsNativeInvoke {
 		get {
-			var definingFactory = _factory.GetAssemblyFactoryFor(((CILTypeReference)Parent).Assembly.Name);
-			var parent = definingFactory.GetTypeDefinition(Parent.FullName);
-			var method = parent.GetMethodDefinition(Name);
+			var method = Parent.GetMethodDefinition(Name);
 			return method.IsNativeInvoke;
 		}
 	}
-    public string NativeInvokeTarget => throw new NotImplementedException($"Reference For {FullName}");
-    public ISignatureType[] GetLocalVariableTypes() => throw new NotImplementedException($"Reference For {FullName}");
+
+	public string NativeInvokeTarget {
+		get {
+			var method = Parent.GetMethodDefinition(Name);
+			return method.NativeInvokeTarget;
+		}
+	}
+    
+	public ISignatureType[] GetLocalVariableTypes() => throw new NotImplementedException($"Reference For {FullName}");
 
 	public override string ToString() {
 		var arguments = GetArgumentTypes();

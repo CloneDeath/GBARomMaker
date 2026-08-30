@@ -42,9 +42,12 @@ public class CILAssemblyFactory : IDisposable {
 		return new CILTypeDefinition(this, typeDefinition);
 	}
 	
-	public CILTypeReference GetTypeReference(TypeReferenceHandle handle) {
-		var typeReference = _metadata.GetTypeReference(handle);
-		return new CILTypeReference(_peReader, _metadata, typeReference);
+	public ICILType GetTypeReference(TypeReferenceHandle handle) {
+		var typeReference = new CILTypeReference(_peReader, _metadata, _metadata.GetTypeReference(handle));
+		if (typeReference.Assembly.Name.StartsWith("System.")) return typeReference;
+
+		var definingFactory = _factory.GetAssemblyFactoryFor(typeReference.Assembly.Name);
+		return definingFactory.GetTypeDefinition(typeReference.FullName);
 	}
 
 	public ICILType GetTypeDefinition(EntityHandle handle) {
@@ -98,11 +101,22 @@ public class CILAssemblyFactory : IDisposable {
 		return new CILFieldDefinition(this, field);
 	}
 
+	public CILFieldDefinition GetFieldDefinition(MemberReferenceHandle handle) {
+		var member = _metadata.GetMemberReference(handle);
+		var parent = GetTypeDefinition(member.Parent);
+		var memberName = _metadata.GetString(member.Name);
+		return parent.InstanceFields.FirstOrDefault(f => f.Name == memberName)
+			?? parent.StaticFields.First(f => f.Name == memberName);
+	}
+
 	public CILFieldDefinition GetFieldDefinition(int metadataToken) {
 		var handle = MetadataTokens.EntityHandle(metadataToken);
 		switch (handle.Kind) {
 			case HandleKind.FieldDefinition: {
 				return GetFieldDefinition((FieldDefinitionHandle)handle);
+			}
+			case HandleKind.MemberReference: {
+				return GetFieldDefinition((MemberReferenceHandle)handle);
 			}
 			default: throw new NotImplementedException($"Could not extract field from {handle.Kind}");
 		}
