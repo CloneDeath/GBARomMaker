@@ -15,11 +15,11 @@ public class LDELEM_REF : CILInstruction {
 		return [0x9A];
     }
 
-    public string GetCIL(CILAssemblyFactory factory, ICILMethod method) {
+    public string GetCIL(ICILMethod method) {
 		return "ldelem.ref";
     }
     
-	public void ModifyStack(CILAssemblyFactory factory, ICILMethod method, Stack<ISignatureType> current) {
+	public void ModifyStack(ICILMethod method, Stack<ISignatureType> current) {
 		current.Pop(); // index
 		var type = current.Pop(); // array
 		if (type.Code != SignatureTypeCode.SZArray) {

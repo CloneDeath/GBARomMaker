@@ -38,11 +38,11 @@ public class LDARG : CILInstruction {
 		}];
     }
 
-    public string GetCIL(CILAssemblyFactory factory, ICILMethod method) {
+    public string GetCIL(ICILMethod method) {
 		return "ldarg." + Argument;
     }
 
-    public void ModifyStack(CILAssemblyFactory factory, ICILMethod method, Stack<ISignatureType> current) {
+    public void ModifyStack(ICILMethod method, Stack<ISignatureType> current) {
 		if (!method.IsInstance) {
 			current.Push(method.GetArgumentTypes()[Argument]);
 			return;

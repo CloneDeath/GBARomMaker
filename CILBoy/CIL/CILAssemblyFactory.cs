@@ -77,16 +77,20 @@ public class CILAssemblyFactory : IDisposable {
 		return new CILMethodDefinition(this, method);
 	}
 
+	public ICILMethod GetMethodDefinition(MemberReferenceHandle handle) {
+		var member = _metadata.GetMemberReference((MemberReferenceHandle)handle);
+		var memberRef = new CILMemberReference(this, member);
+		if (memberRef.Kind != MemberReferenceKind.Method) throw new Exception($"Could not extract a Method from a member ref to a {memberRef.Kind}");
+		return memberRef;
+	}
+
 	public ICILMethod GetMethodDefinition(EntityHandle handle) {
 		switch (handle.Kind) {
 			case HandleKind.MethodDefinition: {
 				return GetMethodDefinition((MethodDefinitionHandle)handle);
 			}
 			case HandleKind.MemberReference: {
-				var member = _metadata.GetMemberReference((MemberReferenceHandle)handle);
-				var memberRef = new CILMemberReference(this, member);
-				if (memberRef.Kind != MemberReferenceKind.Method) throw new Exception($"Could not extract a Method from a member ref to a {memberRef.Kind}");
-				return memberRef;
+				return GetMethodDefinition((MemberReferenceHandle)handle);
 			}
 			case HandleKind.MethodSpecification: {
 				var member = _metadata.GetMethodSpecification((MethodSpecificationHandle)handle);
@@ -139,4 +143,6 @@ public class CILAssemblyFactory : IDisposable {
 	public StandaloneSignature GetStandaloneSignature(StandaloneSignatureHandle handle) => _metadata.GetStandaloneSignature(handle);
 
 	public CILAssemblyFactory GetAssemblyFactoryFor(string assembly) => _factory.GetAssemblyFactoryFor(assembly);
+
+	public override string ToString() => $"{nameof(CILAssemblyFactory)}{{{AssemblyName}}}";
 }

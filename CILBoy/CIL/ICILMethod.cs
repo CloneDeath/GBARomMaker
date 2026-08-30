@@ -13,4 +13,6 @@ public interface ICILMethod {
 	public bool HasReturnValue { get; }
 	public ISignatureType[] GetArgumentTypes();
 	public ISignatureType[] GetLocalVariableTypes();
+
+	public CILAssemblyFactory Factory { get; }
 }

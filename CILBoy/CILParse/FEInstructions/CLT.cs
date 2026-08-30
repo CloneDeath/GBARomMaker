@@ -14,11 +14,11 @@ public class CLT : CILInstruction {
 		return [0xFE, 0x04];
     }
 
-    public string GetCIL(CILAssemblyFactory factory, ICILMethod method) {
+    public string GetCIL(ICILMethod method) {
 		return "clt";
     }
 
-	public void ModifyStack(CILAssemblyFactory factory, ICILMethod method, Stack<ISignatureType> current) {
+	public void ModifyStack(ICILMethod method, Stack<ISignatureType> current) {
 		current.Pop();
 		current.Pop();
 		current.Push(new SignatureType(SignatureTypeCode.Int32));

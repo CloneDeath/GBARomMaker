@@ -1,22 +1,22 @@
-using System;
 using System.Reflection.Metadata;
 using CILBoy.CIL.Blobs;
 
 namespace CILBoy.CIL;
 
 public class CILMemberReference : ICILMethod {
-	private CILAssemblyFactory _factory;
 	private readonly MemberReference _self;
 	private readonly MethodSignatureBlob _signature;
+
+	public CILAssemblyFactory Factory { get; }
 	
 	public CILMemberReference(CILAssemblyFactory factory, MemberReference self) {
-		this._factory = factory;
+		this.Factory = factory;
 		this._self = self;
 		this._signature = factory.GetMethodSignatureBlob(self.Signature);
 	}
     
-	public ICILType Parent => _factory.GetTypeDefinition(_self.Parent);
-	public string Name => _factory.GetString(_self.Name);
+	public ICILType Parent => Factory.GetTypeDefinition(_self.Parent);
+	public string Name => Factory.GetString(_self.Name);
 	public string FullName => $"{Parent.Namespace}.{Parent.Name}.{Name}";
 	public byte[] BodyBytes {
 		get {
@@ -45,7 +45,10 @@ public class CILMemberReference : ICILMethod {
 		}
 	}
     
-	public ISignatureType[] GetLocalVariableTypes() => throw new NotImplementedException($"Reference For {FullName}");
+	public ISignatureType[] GetLocalVariableTypes() {
+		var method = Parent.GetMethodDefinition(Name);
+		return method.GetLocalVariableTypes();
+	}
 
 	public override string ToString() {
 		var arguments = GetArgumentTypes();

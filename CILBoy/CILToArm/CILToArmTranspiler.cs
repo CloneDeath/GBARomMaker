@@ -93,15 +93,16 @@ public class CILToArmTranspiler {
 	public void ConvertCILToASM(ARMProgram assembly, ICILMethod method) {
 		if (assembly.MethodsTranspiled.Contains(method.FullName)) return;
 
-		var parser = new CILParser();
-		var instructions = new ControlFlowGraph(parser.GetInstructions(method.BodyBytes), _factory, method);
-
-		DeclareMethod(assembly, method);
-
 		var locals = method.GetLocalVariableTypes();
 		if (_showCil) {
 			Console.WriteLine($"{method.FullName}");
 			if (locals.Any()) Console.WriteLine($"  locals: {string.Join(", ", method.GetLocalVariableTypes())}");
+		}
+
+		var parser = new CILParser();
+		var instructions = new ControlFlowGraph(parser.GetInstructions(method.BodyBytes), method);
+		DeclareMethod(assembly, method);
+		if (_showCil) {
 			instructions.Print();
 			Console.WriteLine();
 		}

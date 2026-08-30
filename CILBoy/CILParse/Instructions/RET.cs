@@ -13,11 +13,11 @@ public class RET : CILInstruction {
 		return [0x2A];
     }
 
-    public string GetCIL(CILAssemblyFactory factory, ICILMethod method) {
+    public string GetCIL(ICILMethod method) {
 		return "ret";
     }
 
-	public void ModifyStack(CILAssemblyFactory factory, ICILMethod method, Stack<ISignatureType> current) {
+	public void ModifyStack(ICILMethod method, Stack<ISignatureType> current) {
 	}
     public bool AlwaysBranches => false;
 	public bool SometimesBranches => false;

@@ -13,11 +13,11 @@ public class SUB : CILInstruction {
 		return [0x59];
     }
 
-    public string GetCIL(CILAssemblyFactory factory, ICILMethod method) {
+    public string GetCIL(ICILMethod method) {
 		return "sub";
     }
 
-	public void ModifyStack(CILAssemblyFactory factory, ICILMethod method, Stack<ISignatureType> current) {
+	public void ModifyStack(ICILMethod method, Stack<ISignatureType> current) {
 		var type = current.Pop();
 		current.Pop();
 		current.Push(type);

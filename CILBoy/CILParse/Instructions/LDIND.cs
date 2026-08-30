@@ -41,11 +41,11 @@ public class LDIND_U : CILInstruction {
 		}];
 	}
 
-    public string GetCIL(CILAssemblyFactory factory, ICILMethod method) {
+    public string GetCIL(ICILMethod method) {
 		return $"ldind.u{Bytes}";
     }
     
-	public void ModifyStack(CILAssemblyFactory factory, ICILMethod method, Stack<ISignatureType> current) {
+	public void ModifyStack(ICILMethod method, Stack<ISignatureType> current) {
 		if (Bytes == 8) {
 			current.Push(new SignatureType(SignatureTypeCode.Int64));
 		} else {

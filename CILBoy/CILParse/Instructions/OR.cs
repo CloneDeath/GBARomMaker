@@ -14,11 +14,11 @@ public class OR : CILInstruction {
 		return [0x60];
     }
 
-    public string GetCIL(CILAssemblyFactory factory, ICILMethod method) {
+    public string GetCIL(ICILMethod method) {
 		return "or";
     }
 
-	public void ModifyStack(CILAssemblyFactory factory, ICILMethod method, Stack<ISignatureType> current) {
+	public void ModifyStack(ICILMethod method, Stack<ISignatureType> current) {
 		current.Pop();
 		current.Pop();
 		current.Push(new SignatureType(SignatureTypeCode.Int32));

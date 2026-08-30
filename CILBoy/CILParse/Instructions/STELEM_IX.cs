@@ -37,11 +37,11 @@ public class STELEM_IX : CILInstruction {
 		}];
     }
 
-    public string GetCIL(CILAssemblyFactory factory, ICILMethod method) {
+    public string GetCIL(ICILMethod method) {
 		return $"stelem.i{Bytes}";
     }
 
-	public void ModifyStack(CILAssemblyFactory factory, ICILMethod method, Stack<ISignatureType> current) {
+	public void ModifyStack(ICILMethod method, Stack<ISignatureType> current) {
 		current.Pop();
 		current.Pop();
 		current.Pop();

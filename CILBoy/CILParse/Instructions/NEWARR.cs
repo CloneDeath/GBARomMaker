@@ -22,12 +22,12 @@ public class NEWARR : CILInstruction {
 		return new byte[]{0x8D}.Concat(BitConverter.GetBytes(MetadataToken)).ToArray();
 	}
 
-	public string GetCIL(CILAssemblyFactory factory, ICILMethod method) {
-		var targetType = factory.GetTypeDefinition(MetadataToken);
+	public string GetCIL(ICILMethod method) {
+		var targetType = method.Factory.GetTypeDefinition(MetadataToken);
 		return "newarr " + targetType.FullName;
 	}
 
-    public void ModifyStack(CILAssemblyFactory factory, ICILMethod method, Stack<ISignatureType> current) {
+    public void ModifyStack(ICILMethod method, Stack<ISignatureType> current) {
 		current.Pop(); // numElems
 		// todo, figure out how to get the inner type
 		var innerType = new SignatureType(SignatureTypeCode.Object);

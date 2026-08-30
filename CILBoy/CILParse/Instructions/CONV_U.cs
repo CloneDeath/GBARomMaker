@@ -38,11 +38,11 @@ public class CONV_U : CILInstruction {
 		}];
     }
 
-    public string GetCIL(CILAssemblyFactory factory, ICILMethod method) {
+    public string GetCIL(ICILMethod method) {
 		return $"conv.u{Bytes}";
     }
 
-	public void ModifyStack(CILAssemblyFactory factory, ICILMethod method, Stack<ISignatureType> current) {
+	public void ModifyStack(ICILMethod method, Stack<ISignatureType> current) {
 		current.Pop();
 		current.Push(new SignatureType(Bytes switch {
 			1 => SignatureTypeCode.Byte,

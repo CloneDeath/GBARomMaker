@@ -13,11 +13,11 @@ public class POP : CILInstruction {
 		return [0x26];
     }
 
-    public string GetCIL(CILAssemblyFactory factory, ICILMethod method) {
+    public string GetCIL(ICILMethod method) {
 		return "pop";
     }
 
-    public void ModifyStack(CILAssemblyFactory factory, ICILMethod method, Stack<ISignatureType> current) {
+    public void ModifyStack(ICILMethod method, Stack<ISignatureType> current) {
 		current.Pop();
 	}
 

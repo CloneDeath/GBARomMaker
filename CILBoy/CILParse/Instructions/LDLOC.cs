@@ -41,11 +41,11 @@ public class LDLOC : ILocationInstruction {
 		return [opcode];
     }
 
-    public string GetCIL(CILAssemblyFactory factory, ICILMethod method) {
+    public string GetCIL(ICILMethod method) {
 		return $"ldloc.{Location} // {method.GetLocalVariableTypes()[Location]}";
     }
     
-	public void ModifyStack(CILAssemblyFactory factory, ICILMethod method, Stack<ISignatureType> current) {
+	public void ModifyStack(ICILMethod method, Stack<ISignatureType> current) {
 		current.Push(method.GetLocalVariableTypes()[Location]);
 	}
 
@@ -65,9 +65,9 @@ public class LDLOC_S : ILocationInstruction {
 
 	public byte[] GetBytes() => [0x11, (byte)Location];
 
-	public string GetCIL(CILAssemblyFactory factory, ICILMethod method) => $"ldloc.s {Location} // {method.GetLocalVariableTypes()[Location]}";
+	public string GetCIL(ICILMethod method) => $"ldloc.s {Location} // {method.GetLocalVariableTypes()[Location]}";
     
-	public void ModifyStack(CILAssemblyFactory factory, ICILMethod method, Stack<ISignatureType> current) {
+	public void ModifyStack(ICILMethod method, Stack<ISignatureType> current) {
 		current.Push(method.GetLocalVariableTypes()[Location]);
 	}
 

@@ -13,13 +13,11 @@ public class InstructionMetadata {
 	public List<InstructionMetadata> Next { get; } = new List<InstructionMetadata>();
 	public List<InstructionMetadata> Previous { get; } = new List<InstructionMetadata>();
     
-	private readonly CILAssemblyFactory _factory;
     private readonly ICILMethod _method;
 
-    public InstructionMetadata(int offset, CILInstruction instruction, CILAssemblyFactory factory, ICILMethod method) {
+    public InstructionMetadata(int offset, CILInstruction instruction, ICILMethod method) {
 		this.Offset = offset;
 		this.Instruction = instruction;
-        this._factory = factory;
         this._method = method;
     }
 
@@ -35,7 +33,7 @@ public class InstructionMetadata {
 		if (!next.Previous.Contains(this)) next.Previous.Add(this);
     }
 
-    public string GetCIL() => Instruction.GetCIL(_factory, _method);
+    public string GetCIL() => Instruction.GetCIL(_method);
 
     public int Length => GetBytes().Length;
 
@@ -43,7 +41,7 @@ public class InstructionMetadata {
 		get {
 			if (StackTypes == null) throw new System.InvalidOperationException("Stack wasn't set");
 			var stack = new Stack<ISignatureType>(StackTypes.Reverse());
-			Instruction.ModifyStack(_factory, _method, stack);
+			Instruction.ModifyStack(_method, stack);
 			return stack;
 		}
 	}

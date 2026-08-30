@@ -14,11 +14,11 @@ public class LDLEN : CILInstruction {
 		return [0x8E];
     }
 
-    public string GetCIL(CILAssemblyFactory factory, ICILMethod method) {
+    public string GetCIL(ICILMethod method) {
 		return "ldlen";
     }
     
-	public void ModifyStack(CILAssemblyFactory factory, ICILMethod method, Stack<ISignatureType> current) {
+	public void ModifyStack(ICILMethod method, Stack<ISignatureType> current) {
 		current.Pop();
 		current.Push(new SignatureType(SignatureTypeCode.UInt32));
 	}

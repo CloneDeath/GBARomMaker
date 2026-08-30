@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Emit;
-using System.Reflection.Metadata;
 using CILBoy.CIL;
 using CILBoy.CILParse;
 
@@ -12,15 +11,11 @@ public class ControlFlowGraph {
 	public IReadOnlyList<InstructionMetadata> Instructions => _instructions.ToArray();
 	private List<InstructionMetadata> _instructions = new();
 
-	private readonly CILAssemblyFactory _factory;
-
-	public ControlFlowGraph(CILInstruction[] instructions, CILAssemblyFactory factory, ICILMethod method) {
-		_factory = factory;
-
+	public ControlFlowGraph(CILInstruction[] instructions, ICILMethod method) {
 		// Populate Instructions & Lookup
 		var offset = 0;
 		foreach (var instruction in instructions) {
-			var metadata = new InstructionMetadata(offset, instruction, _factory, method);
+			var metadata = new InstructionMetadata(offset, instruction, method);
 			_instructions.Add(metadata);
 			offset += instruction.GetBytes().Length;
 		}

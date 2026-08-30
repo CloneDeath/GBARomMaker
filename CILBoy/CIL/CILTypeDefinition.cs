@@ -16,7 +16,6 @@ public class CILTypeDefinition : ICILType {
 	public string Name => _factory.GetString(_self.Name);
 	public string FullName => $"{Namespace}.{Name}";
 
-
     public CILMethodDefinition? StaticConstructor => _self.GetMethods()
 		.Select(m => _factory.GetMethodDefinition(m))
 		.FirstOrDefault(m => m.IsStaticConstructor);
@@ -28,4 +27,6 @@ public class CILTypeDefinition : ICILType {
 
 	public CILFieldDefinition[] InstanceFields => _self.GetFields().Select(f => _factory.GetFieldDefinition(f)).Where(f => !f.IsStatic).ToArray();
 	public CILFieldDefinition[] StaticFields => _self.GetFields().Select(f => _factory.GetFieldDefinition(f)).Where(f => f.IsStatic).ToArray();
+
+	public override string ToString() => $"{nameof(CILTypeDefinition)}{{{FullName}}}";
 }

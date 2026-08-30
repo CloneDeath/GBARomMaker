@@ -36,11 +36,11 @@ public class LDC_I4 : CILInstruction {
 		return new byte[] { 0x20 }.Concat(BitConverter.GetBytes(Data)).ToArray();
 	}
 
-	public string GetCIL(CILAssemblyFactory factory, ICILMethod method) {
+	public string GetCIL(ICILMethod method) {
 		return $"ldc.i4 0x{Data:X8}";
 	}
 
-    public void ModifyStack(CILAssemblyFactory factory, ICILMethod method, Stack<ISignatureType> current) {
+    public void ModifyStack(ICILMethod method, Stack<ISignatureType> current) {
 		current.Push(new SignatureType(SignatureTypeCode.Int32));
 	}
 
@@ -92,12 +92,12 @@ public class LDC_I4_X : CILInstruction {
 		}];
 	}
 
-	public string GetCIL(CILAssemblyFactory factory, ICILMethod method) {
+	public string GetCIL(ICILMethod method) {
 		var sign = Data == -1 ? "m1" : Data.ToString();
 		return $"ldc.i4.{sign}";
 	}
 
-    public void ModifyStack(CILAssemblyFactory factory, ICILMethod method, Stack<ISignatureType> current) {
+    public void ModifyStack(ICILMethod method, Stack<ISignatureType> current) {
 		current.Push(new SignatureType(SignatureTypeCode.Int32));
 	}
 
@@ -116,11 +116,11 @@ public class LDC_I4_S : CILInstruction {
 		return [0x1F, Data];
 	}
 
-	public string GetCIL(CILAssemblyFactory factory, ICILMethod method) {
+	public string GetCIL(ICILMethod method) {
 		return $"ldc.i4.s 0x{Data:X2}";
 	}
 
-    public void ModifyStack(CILAssemblyFactory factory, ICILMethod method, Stack<ISignatureType> current) {
+    public void ModifyStack(ICILMethod method, Stack<ISignatureType> current) {
 		current.Push(new SignatureType(SignatureTypeCode.Int32));
 	}
 
@@ -143,11 +143,11 @@ public class LDC_R4 : CILInstruction {
 		return new byte[] { 0x22 }.Concat(BitConverter.GetBytes(Data)).ToArray();
 	}
 
-	public string GetCIL(CILAssemblyFactory factory, ICILMethod method) {
+	public string GetCIL(ICILMethod method) {
 		return $"ldc.r4 {Data}";
 	}
 
-    public void ModifyStack(CILAssemblyFactory factory, ICILMethod method, Stack<ISignatureType> current) {
+    public void ModifyStack(ICILMethod method, Stack<ISignatureType> current) {
 		current.Push(new SignatureType(SignatureTypeCode.Single));
 	}
 
@@ -166,11 +166,11 @@ public class LDC_R8 : CILInstruction {
 		return new byte[] { 0x23 }.Concat(BitConverter.GetBytes(Data)).ToArray();
 	}
 
-	public string GetCIL(CILAssemblyFactory factory, ICILMethod method) {
+	public string GetCIL(ICILMethod method) {
 		return $"ldc.r8 {Data}";
 	}
 
-    public void ModifyStack(CILAssemblyFactory factory, ICILMethod method, Stack<ISignatureType> current) {
+    public void ModifyStack(ICILMethod method, Stack<ISignatureType> current) {
 		current.Push(new SignatureType(SignatureTypeCode.Double));
 	}
 

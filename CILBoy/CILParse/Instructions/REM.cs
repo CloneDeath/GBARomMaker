@@ -13,11 +13,11 @@ public class REM : CILInstruction {
 		return [0x5D];
     }
 
-    public string GetCIL(CILAssemblyFactory factory, ICILMethod method) {
+    public string GetCIL(ICILMethod method) {
 		return "rem";
     }
 
-	public void ModifyStack(CILAssemblyFactory factory, ICILMethod method, Stack<ISignatureType> current) {
+	public void ModifyStack(ICILMethod method, Stack<ISignatureType> current) {
 		var type = current.Pop();
 		current.Pop();
 		current.Push(type);

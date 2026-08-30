@@ -40,11 +40,11 @@ public class STLOC : ILocationInstruction {
 		return [opcode];
     }
 
-    public string GetCIL(CILAssemblyFactory factory, ICILMethod method) {
+    public string GetCIL(ICILMethod method) {
 		return "stloc." + Location;
     }
 
-	public void ModifyStack(CILAssemblyFactory factory, ICILMethod method, Stack<ISignatureType> current) {
+	public void ModifyStack(ICILMethod method, Stack<ISignatureType> current) {
 		current.Pop();
 	}
     public bool AlwaysBranches => false;
@@ -60,9 +60,9 @@ public class STLOC_S : ILocationInstruction {
 	public uint Location { get; }
 	public OpCode OpCode => OpCodes.Stloc_S;
 	public byte[] GetBytes() => [0x13, (byte)Location];
-	public string GetCIL(CILAssemblyFactory factory, ICILMethod method) => $"stloc.s {Location}";
+	public string GetCIL(ICILMethod method) => $"stloc.s {Location}";
 
-	public void ModifyStack(CILAssemblyFactory factory, ICILMethod method, Stack<ISignatureType> current) {
+	public void ModifyStack(ICILMethod method, Stack<ISignatureType> current) {
 		current.Pop();
 	}
     public bool AlwaysBranches => false;

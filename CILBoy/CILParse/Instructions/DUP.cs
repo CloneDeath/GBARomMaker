@@ -13,11 +13,11 @@ public class DUP : CILInstruction {
 		return [0x25];
     }
 
-    public string GetCIL(CILAssemblyFactory factory, ICILMethod method) {
+    public string GetCIL(ICILMethod method) {
 		return "dup";
     }
 
-    public void ModifyStack(CILAssemblyFactory factory, ICILMethod method, Stack<ISignatureType> current) {
+    public void ModifyStack(ICILMethod method, Stack<ISignatureType> current) {
 		var type = current.Peek();
 		current.Push(type);
 	}

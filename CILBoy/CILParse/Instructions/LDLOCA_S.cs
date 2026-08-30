@@ -20,11 +20,11 @@ public class LDLOCA_S : CILInstruction {
 		return [0x12, Location];
     }
 
-    public string GetCIL(CILAssemblyFactory factory, ICILMethod method) {
+    public string GetCIL(ICILMethod method) {
 		return $"ldloca.s {Location}";
     }
     
-	public void ModifyStack(CILAssemblyFactory factory, ICILMethod method, Stack<ISignatureType> current) {
+	public void ModifyStack(ICILMethod method, Stack<ISignatureType> current) {
 		current.Push(new SignatureType(SignatureTypeCode.Pointer));
 	}
 
