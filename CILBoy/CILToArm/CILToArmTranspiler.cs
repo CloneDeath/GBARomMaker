@@ -118,6 +118,7 @@ public class CILToArmTranspiler {
 		var handlers = new ICILToArmHandler[] {
 			new ADD(),
 			new AND(),
+			new BOX(),
 			new CEQ(),
 			new CGT(),
 			new CLT(),
@@ -141,6 +142,7 @@ public class CILToArmTranspiler {
 			new NEWARR(method.Factory),
 			new NEWOBJ(method.Factory, assembly),
 			new NOP(),
+			new NOT(),
 			new POP(),
 			new RET(method),
 			new SHL(),
@@ -313,14 +315,6 @@ public class CILToArmTranspiler {
 					assembly.Add(instruction.GetBytes().Length, [
 						"pop sp!, { r1, r2 }",
 						"orr r0, r1, r2",
-						"push sp!, { r0 }"
-					]);
-					break;
-				}
-				case "not": {
-					assembly.Add(instruction.GetBytes().Length, [
-						"pop sp!, { r0 }",
-						"mvn r0, r0",
 						"push sp!, { r0 }"
 					]);
 					break;
