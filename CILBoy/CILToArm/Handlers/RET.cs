@@ -6,7 +6,7 @@ using CILBoy.CILToArm.ControlFlow;
 
 namespace CILBoy.CILToArm.Handlers;
 
-public class RET(ICILMethod method) : ICILToArmHandler {
+public class RET(CILMethodDefinition method) : ICILToArmHandler {
 	public OpCode[] Handles => [OpCodes.Ret];
 
 	public ArmCode Handle(InstructionMetadata instruction) {
@@ -15,7 +15,6 @@ public class RET(ICILMethod method) : ICILToArmHandler {
 		var assembly = new List<string>();
 		if (method.HasReturnValue) {
 			assembly.Add("pop sp!, { ip } @ return value");
-
 		}
 		assembly.AddRange([
 			$"sub sp, fp, #{localCount * 4}",

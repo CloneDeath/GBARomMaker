@@ -14,11 +14,11 @@ public class CGT_UN : CILInstruction {
 		return [0xFE, 0x03];
     }
 
-    public string GetCIL(ICILMethod method) {
+    public string GetCIL(CILMethodDefinition method) {
 		return "cgt.un";
     }
 
-	public void ModifyStack(ICILMethod method, Stack<ISignatureType> current) {
+	public void ModifyStack(CILMethodDefinition method, Stack<ISignatureType> current) {
 		current.Pop();
 		current.Pop();
 		current.Push(new SignatureType(SignatureTypeCode.Int32));

@@ -19,11 +19,11 @@ public class STARG_S : CILInstruction {
 		return [0x10, Argument];
     }
 
-    public string GetCIL(ICILMethod method) {
+    public string GetCIL(CILMethodDefinition method) {
 		return $"starg.s {Argument}";
     }
     
-	public void ModifyStack(ICILMethod method, Stack<ISignatureType> current) {
+	public void ModifyStack(CILMethodDefinition method, Stack<ISignatureType> current) {
 		current.Pop();
 	}
 

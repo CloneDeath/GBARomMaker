@@ -21,12 +21,12 @@ public class STSFLD : CILInstruction {
 		return new byte[]{0x80}.Concat(BitConverter.GetBytes(MetadataToken)).ToArray();
 	}
 
-	public string GetCIL(ICILMethod method) {
+	public string GetCIL(CILMethodDefinition method) {
 		var field = method.Factory.GetFieldDefinition(MetadataToken);
 		return $"stsfld {field.FullName}";
 	}
 
-	public void ModifyStack(ICILMethod method, Stack<ISignatureType> current) {
+	public void ModifyStack(CILMethodDefinition method, Stack<ISignatureType> current) {
 		current.Pop();
 	}
     public bool AlwaysBranches => false;

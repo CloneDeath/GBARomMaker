@@ -21,12 +21,12 @@ public class CALLVIRT : CILInstruction {
 		return new byte[]{0x6F}.Concat(BitConverter.GetBytes(MetadataToken)).ToArray();
 	}
 
-	public string GetCIL(ICILMethod method) {
+	public string GetCIL(CILMethodDefinition method) {
 		var targetMethod = method.Factory.GetMethodDefinition(MetadataToken);
 		return "callvirt " + targetMethod.FullName;
 	}
 
-    public void ModifyStack(ICILMethod method, Stack<ISignatureType> current) {
+    public void ModifyStack(CILMethodDefinition method, Stack<ISignatureType> current) {
 		var targetMethod = method.Factory.GetMethodDefinition(MetadataToken);
 		var args = targetMethod.ParameterCount + (targetMethod.IsInstance ? 1 : 0);
 		for (var i = 0; i < args; i++) {

@@ -24,11 +24,11 @@ public class BRFALSE : CILInstruction {
 		return new byte[]{0x39}.Concat(BitConverter.GetBytes(Target)).ToArray();
     }
 
-    public string GetCIL(ICILMethod method) {
+    public string GetCIL(CILMethodDefinition method) {
 		return "brfalse " + Target;
     }
 
-	public void ModifyStack(ICILMethod method, Stack<ISignatureType> current) {
+	public void ModifyStack(CILMethodDefinition method, Stack<ISignatureType> current) {
 		current.Pop();
 	}
     public bool AlwaysBranches => false;
@@ -49,11 +49,11 @@ public class BRFALSE_S : CILInstruction {
 		return new byte[]{ 0x2C, (byte)Target };
     }
 
-    public string GetCIL(ICILMethod method) {
+    public string GetCIL(CILMethodDefinition method) {
 		return "brfalse.s " + Target;
     }
 	
-	public void ModifyStack(ICILMethod method, Stack<ISignatureType> current) {
+	public void ModifyStack(CILMethodDefinition method, Stack<ISignatureType> current) {
 		current.Pop();
 	}
     public bool AlwaysBranches => false;

@@ -15,16 +15,14 @@ namespace CILBoy.CILToArm;
 public record MethodToAssemble(CILMethodDefinition method);
 
 public class CILToArmTranspiler {
-	private readonly CILAssemblyFactory _factory;
 	private readonly bool _showCil;
 
-	public CILToArmTranspiler(CILAssemblyFactory factory, bool showCil) {
-		_factory = factory;
+	public CILToArmTranspiler(bool showCil) {
 		_showCil = showCil;
 	}
 
-	public string[] Transpile() {
-		var entrypoint = DetectEntryPoint();
+	public string[] Transpile(CILAssemblyFactory entrypointAssembly) {
+		var entrypoint = DetectEntryPoint(entrypointAssembly);
 
 		var header_line = 2;
 		var assembly = new ARMProgram {
@@ -81,16 +79,16 @@ public class CILToArmTranspiler {
 		return assembly.GetArm7Assembly();
 	}
 
-	private ICILMethod DetectEntryPoint() {
-		var corHeader = _factory.PEHeaders.CorHeader ?? throw new InvalidDataException("Not a managed assembly.");
+	private CILMethodDefinition DetectEntryPoint(CILAssemblyFactory entrypointAssembly) {
+		var corHeader = entrypointAssembly.PEHeaders.CorHeader ?? throw new InvalidDataException("Not a managed assembly.");
 		var entryPointToken = corHeader.EntryPointTokenOrRelativeVirtualAddress;
 		var entryPointHandle = MetadataTokens.EntityHandle(entryPointToken);
 		if (entryPointHandle.Kind != HandleKind.MethodDefinition) throw new InvalidDataException("Entry point is not a managed method.");
 
-		return _factory.GetMethodDefinition(entryPointHandle);
+		return entrypointAssembly.GetMethodDefinition(entryPointHandle).GetMethodDefinition();
 	}
 
-	public void ConvertCILToASM(ARMProgram assembly, ICILMethod method) {
+	public void ConvertCILToASM(ARMProgram assembly, CILMethodDefinition method) {
 		if (assembly.MethodsTranspiled.Contains(method.FullName)) return;
 
 		var locals = method.GetLocalVariableTypes();
@@ -139,9 +137,9 @@ public class CILToArmTranspiler {
 			new LDLEN(),
 			new LDLOCA_S(),
 			new LDLOC_X(),
-			new LDSTR(_factory),
-			new NEWARR(_factory),
-			new NEWOBJ(_factory, assembly),
+			new LDSTR(method.Factory),
+			new NEWARR(method.Factory),
+			new NEWOBJ(method.Factory, assembly),
 			new NOP(),
 			new POP(),
 			new RET(method),
@@ -220,7 +218,7 @@ public class CILToArmTranspiler {
 					break;
 				}
 				case "ldfld": {
-					HandleLoadFieldInstruction(instruction, assembly);
+					HandleLoadFieldInstruction(instruction, assembly, method);
 					break;
 				}
 				case "ldsfld": {
@@ -228,7 +226,7 @@ public class CILToArmTranspiler {
 					break;
 				}
 				case "stfld": {
-					HandleStoreFieldInstruction(instruction, assembly);
+					HandleStoreFieldInstruction(instruction, assembly, method);
 					break;
 				}
 				case "stsfld": {
@@ -236,11 +234,11 @@ public class CILToArmTranspiler {
 					break;
 				}
 				case "call": {
-					HandleCallInstruction(instructionWithMetadata, assembly);
+					HandleCallInstruction(instructionWithMetadata, assembly, method);
 					break;
 				}
 				case "callvirt": {
-					HandleCallvirtInstruction(instructionWithMetadata, assembly);
+					HandleCallvirtInstruction(instructionWithMetadata, assembly, method);
 					break;
 				}
 				case "br": {
@@ -398,7 +396,7 @@ public class CILToArmTranspiler {
 		assembly.MethodsTranspiled.Add(method.FullName);
 	}
 
-	private void DeclareMethod(ARMProgram assembly, ICILMethod method) {
+	private void DeclareMethod(ARMProgram assembly, CILMethodDefinition method) {
 		var localCount = method.GetLocalVariableTypes().Count();
 		assembly.Add(0, [
 			$"{assembly.GetLabelForMethod(method)}:",
@@ -418,9 +416,9 @@ public class CILToArmTranspiler {
 		]);
 	}
 
-	private void HandleLoadFieldInstruction(CILInstruction instruction, ARMProgram assembly) {
+	private void HandleLoadFieldInstruction(CILInstruction instruction, ARMProgram assembly, ICILMethod method) {
 		var ldfld = (CILBoy.CILParse.Instructions.LDFLD)instruction;
-		var field = _factory.GetFieldDefinition(ldfld.MetadataToken);
+		var field = method.Factory.GetFieldDefinition(ldfld.MetadataToken);
 		var classLayout = assembly.GetClassLayout(field.Parent);
 		assembly.Add(instruction.GetBytes().Length, [
 			$"pop sp!, {{ r0 }} @ {classLayout.FullName}",
@@ -431,7 +429,7 @@ public class CILToArmTranspiler {
 	
 	private void HandleLoadStaticFieldInstruction(CILInstruction instruction, ARMProgram assembly, ICILMethod method) {
 		var ldsfld = (CILBoy.CILParse.Instructions.LDSFLD)instruction;
-		var field = _factory.GetFieldDefinition(ldsfld.MetadataToken);
+		var field = method.Factory.GetFieldDefinition(ldsfld.MetadataToken);
 		
 		var staticClass = assembly.GetStaticClassLayout(field.Parent);
 		var staticConstructor = staticClass.StaticConstructor;
@@ -454,9 +452,9 @@ public class CILToArmTranspiler {
 		]);
 	}
 
-	private void HandleStoreFieldInstruction(CILInstruction instruction, ARMProgram assembly) {
+	private void HandleStoreFieldInstruction(CILInstruction instruction, ARMProgram assembly, ICILMethod method) {
 		var stfld = (CILBoy.CILParse.Instructions.STFLD)instruction;
-		var field = _factory.GetFieldDefinition(stfld.MetadataToken);
+		var field = method.Factory.GetFieldDefinition(stfld.MetadataToken);
 
 		var classLayout = assembly.GetClassLayout(field.Parent);
 		assembly.Add(instruction.GetBytes().Length, [
@@ -467,7 +465,7 @@ public class CILToArmTranspiler {
 
 	private void HandleStoreStaticFieldInstruction(CILInstruction instruction, ARMProgram assembly, ICILMethod method) {
 		var stsfld = (CILBoy.CILParse.Instructions.STSFLD)instruction;
-		var field = _factory.GetFieldDefinition(stsfld.MetadataToken);
+		var field = method.Factory.GetFieldDefinition(stsfld.MetadataToken);
 
 		var staticClass = assembly.GetStaticClassLayout(field.Parent);
 		var staticConstructor = staticClass.StaticConstructor;
@@ -490,19 +488,19 @@ public class CILToArmTranspiler {
 		]);
 	}
 
-	private void HandleCallInstruction(InstructionMetadata instruction, ARMProgram assembly) {
+	private void HandleCallInstruction(InstructionMetadata instruction, ARMProgram assembly, CILMethodDefinition method) {
 		var call = (CILBoy.CILParse.Instructions.CALL)instruction.Instruction;
-		var method = _factory.GetMethodDefinition(call.MetadataToken);
-		HandleCall(instruction, method, assembly, _factory);
+		var calledMethod = method.Factory.GetMethodDefinition(call.MetadataToken);
+		HandleCall(instruction, calledMethod, assembly);
 	}
 	
-	private void HandleCallvirtInstruction(InstructionMetadata instruction, ARMProgram assembly) {
+	private void HandleCallvirtInstruction(InstructionMetadata instruction, ARMProgram assembly, CILMethodDefinition method) {
 		var callvirt = (CILBoy.CILParse.Instructions.CALLVIRT)instruction.Instruction;
-		var method = _factory.GetMethodDefinition(callvirt.MetadataToken);
-		HandleCall(instruction, method, assembly, _factory);
+		var calledMethod = method.Factory.GetMethodDefinition(callvirt.MetadataToken);
+		HandleCall(instruction, calledMethod, assembly);
 	}
 
-	private void HandleCall(InstructionMetadata instruction, ICILMethod method, ARMProgram assembly, CILAssemblyFactory factory) {
+	private void HandleCall(InstructionMetadata instruction, ICILMethod method, ARMProgram assembly) {
 		var handlers = new List<ICallHandler> {
 			new SystemConsoleWriteLine(),
 			new SystemConvertToByte(),
@@ -526,15 +524,16 @@ public class CILToArmTranspiler {
 			return;
 		}
 
-		if (method.IsNativeInvoke) {
-			if (method.NativeInvokeTarget != "WaitVBlank") throw new Exception("Unrecognized native invoke target");
+		var definition = method.GetMethodDefinition();
+		if (definition.IsNativeInvoke) {
+			if (definition.NativeInvokeTarget != "WaitVBlank") throw new Exception("Unrecognized native invoke target");
 			assembly.Add(instruction.GetBytes().Length, [
 				"swi 0x050000 @ WaitVBlank",
 			]);
 			return;
 		}
 
-		assembly.MethodsToTranspile.Enqueue(method);
+		assembly.MethodsToTranspile.Enqueue(definition);
 		var target = assembly.GetLabelForMethod(method);
 		assembly.Add(instruction.GetBytes().Length, [
 			$"bl {target}"

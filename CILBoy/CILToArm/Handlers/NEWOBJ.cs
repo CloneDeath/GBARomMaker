@@ -12,7 +12,7 @@ public class NEWOBJ(CILAssemblyFactory factory, ARMProgram assembly) : ICILToArm
 	public ArmCode Handle(InstructionMetadata instruction) {
 		var newobj = (CILBoy.CILParse.Instructions.NEWOBJ)instruction.Instruction;
 		var handle = MetadataTokens.EntityHandle(newobj.MetadataToken);
-		var method = factory.GetMethodDefinition(handle);
+		var method = factory.GetMethodDefinition(handle).GetMethodDefinition();
 
 		if (method.Name != ".ctor") {
 			throw new Exception($"Tried to initialize an object with something that isn't a contructor: {method.FullName} -- {instruction}");

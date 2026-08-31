@@ -25,8 +25,8 @@ public static class Program {
 		using var factory = new CILFactory(Path.GetDirectoryName(inputAssembly) ?? throw new Exception($"Failed to get directory for {inputAssembly}"));
 		var assemblyFactory = factory.GetAssemblyFactoryFor(Path.GetFileNameWithoutExtension(inputAssembly));
 
-		var transpiler = new CILToArmTranspiler(assemblyFactory, showCil);
-		var assembly = transpiler.Transpile();
+		var transpiler = new CILToArmTranspiler(showCil);
+		var assembly = transpiler.Transpile(assemblyFactory);
 		if (showArm) {
 			PrintAsm(assembly);
 		}

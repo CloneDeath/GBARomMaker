@@ -13,11 +13,11 @@ public class RET : CILInstruction {
 		return [0x2A];
     }
 
-    public string GetCIL(ICILMethod method) {
+    public string GetCIL(CILMethodDefinition method) {
 		return "ret";
     }
 
-	public void ModifyStack(ICILMethod method, Stack<ISignatureType> current) {
+	public void ModifyStack(CILMethodDefinition method, Stack<ISignatureType> current) {
 	}
     public bool AlwaysBranches => false;
 	public bool SometimesBranches => false;

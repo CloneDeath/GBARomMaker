@@ -21,12 +21,12 @@ public class STFLD : CILInstruction {
 		return new byte[]{0x7D}.Concat(BitConverter.GetBytes(MetadataToken)).ToArray();
 	}
 
-	public string GetCIL(ICILMethod method) {
+	public string GetCIL(CILMethodDefinition method) {
 		var field = method.Factory.GetFieldDefinition(MetadataToken);
 		return "stfld " + field.FullName;
 	}
 
-	public void ModifyStack(ICILMethod method, Stack<ISignatureType> current) {
+	public void ModifyStack(CILMethodDefinition method, Stack<ISignatureType> current) {
 		current.Pop();
 		current.Pop();
 	}

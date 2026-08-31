@@ -16,7 +16,7 @@ public class ARMProgram : List<ARMLine> {
 	public bool IncludeMGBALog = false;
 	public bool IncludeString = false;
 
-	public Queue<ICILMethod> MethodsToTranspile { get; } = new();
+	public Queue<CILMethodDefinition> MethodsToTranspile { get; } = new();
 	public List<string> MethodsTranspiled { get; } = new();
 
 	public int HeapStart = 0x02000000;

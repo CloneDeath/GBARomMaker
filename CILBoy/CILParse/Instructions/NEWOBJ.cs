@@ -22,12 +22,12 @@ public class NEWOBJ : CILInstruction {
 		return new byte[]{0x73}.Concat(BitConverter.GetBytes(MetadataToken)).ToArray();
 	}
 
-	public string GetCIL(ICILMethod method) {
+	public string GetCIL(CILMethodDefinition method) {
 		var targetMethod = method.Factory.GetMethodDefinition(MetadataToken);
 		return "newobj " + targetMethod.FullName;
 	}
 
-    public void ModifyStack(ICILMethod method, Stack<ISignatureType> current) {
+    public void ModifyStack(CILMethodDefinition method, Stack<ISignatureType> current) {
 		var targetMethod = method.Factory.GetMethodDefinition(MetadataToken);
 		var args = targetMethod.ParameterCount;
 		for (var i = 0; i < args; i++) {

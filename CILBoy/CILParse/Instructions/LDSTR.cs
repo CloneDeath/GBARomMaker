@@ -24,12 +24,12 @@ public class LDSTR : CILInstruction {
 		return new byte[]{0x72}.Concat(BitConverter.GetBytes(MetadataToken)).ToArray();
 	}
 
-	public string GetCIL(ICILMethod method) {
+	public string GetCIL(CILMethodDefinition method) {
 		var str = method.Factory.GetUserString(MetadataToken);
 		return $"ldstr \"{str}\"";
 	}
     
-	public void ModifyStack(ICILMethod method, Stack<ISignatureType> current) {
+	public void ModifyStack(CILMethodDefinition method, Stack<ISignatureType> current) {
 		current.Push(new SignatureType(SignatureTypeCode.String));
 	}
 

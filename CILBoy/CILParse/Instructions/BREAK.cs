@@ -13,11 +13,11 @@ public class BREAK : CILInstruction {
 		return [0x01];
     }
 
-    public string GetCIL(ICILMethod method) {
+    public string GetCIL(CILMethodDefinition method) {
 		return "break";
     }
 
-	public void ModifyStack(ICILMethod method, Stack<ISignatureType> current) {
+	public void ModifyStack(CILMethodDefinition method, Stack<ISignatureType> current) {
 	}
     public bool AlwaysBranches => false;
 	public bool SometimesBranches => false;

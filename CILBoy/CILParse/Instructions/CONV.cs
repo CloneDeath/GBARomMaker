@@ -14,11 +14,11 @@ public class CONV : CILInstruction {
 		return [0xD3];
     }
 
-    public string GetCIL(ICILMethod method) {
+    public string GetCIL(CILMethodDefinition method) {
 		return "conv.i";
     }
 
-    public void ModifyStack(ICILMethod method, Stack<ISignatureType> current) {
+    public void ModifyStack(CILMethodDefinition method, Stack<ISignatureType> current) {
 		current.Pop();
 		current.Push(new SignatureType(SignatureTypeCode.Int32));
 	}

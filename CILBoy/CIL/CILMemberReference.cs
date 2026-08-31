@@ -18,12 +18,6 @@ public class CILMemberReference : ICILMethod {
 	public ICILType Parent => Factory.GetTypeDefinition(_self.Parent);
 	public string Name => Factory.GetString(_self.Name);
 	public string FullName => $"{Parent.Namespace}.{Parent.Name}.{Name}";
-	public byte[] BodyBytes {
-		get {
-			var method = Parent.GetMethodDefinition(Name);
-			return method.BodyBytes;
-		}
-	}
 	public bool IsInstance => _signature.IsInstance;
     public int ParameterCount => _signature.ParameterCount;
 	public ISignatureType ReturnType => _signature.ReturnType;
@@ -31,28 +25,12 @@ public class CILMemberReference : ICILMethod {
 	public ISignatureType[] GetArgumentTypes() => _signature.ArgumentTypes;
 
 	public MemberReferenceKind Kind => _self.GetKind();
-    public bool IsNativeInvoke {
-		get {
-			var method = Parent.GetMethodDefinition(Name);
-			return method.IsNativeInvoke;
-		}
-	}
-
-	public string NativeInvokeTarget {
-		get {
-			var method = Parent.GetMethodDefinition(Name);
-			return method.NativeInvokeTarget;
-		}
-	}
-    
-	public ISignatureType[] GetLocalVariableTypes() {
-		var method = Parent.GetMethodDefinition(Name);
-		return method.GetLocalVariableTypes();
-	}
 
 	public override string ToString() {
 		var arguments = GetArgumentTypes();
 		var argsString = string.Join(", ", arguments);
-		return $"{ReturnType} {FullName}({argsString})";
+		return $"<ref> {ReturnType} {FullName}({argsString})";
 	}
+
+	public CILMethodDefinition GetMethodDefinition() => Parent.GetMethodDefinition(Name);
 }

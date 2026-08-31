@@ -65,4 +65,6 @@ public class CILMethodDefinition : ICILMethod {
 		var argsString = string.Join(", ", arguments);
 		return $"{ReturnType} {FullName}({argsString})";
 	}
+
+	public CILMethodDefinition GetMethodDefinition() => this;
 }

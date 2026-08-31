@@ -13,11 +13,11 @@ public class DIV : CILInstruction {
 		return [0x5B];
     }
 
-    public string GetCIL(ICILMethod method) {
+    public string GetCIL(CILMethodDefinition method) {
 		return "div";
     }
 
-	public void ModifyStack(ICILMethod method, Stack<ISignatureType> current) {
+	public void ModifyStack(CILMethodDefinition method, Stack<ISignatureType> current) {
 		var type = current.Pop();
 		current.Pop();
 		current.Push(type);

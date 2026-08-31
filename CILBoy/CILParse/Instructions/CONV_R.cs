@@ -33,11 +33,11 @@ public class CONV_R : CILInstruction {
 		}];
     }
 
-    public string GetCIL(ICILMethod method) {
+    public string GetCIL(CILMethodDefinition method) {
 		return $"conv.r{Bytes}";
     }
 
-	public void ModifyStack(ICILMethod method, Stack<ISignatureType> current) {
+	public void ModifyStack(CILMethodDefinition method, Stack<ISignatureType> current) {
 		current.Pop();
 		current.Push(new SignatureType(Bytes switch {
 			4 => SignatureTypeCode.Single,

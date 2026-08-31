@@ -13,9 +13,9 @@ public class InstructionMetadata {
 	public List<InstructionMetadata> Next { get; } = new List<InstructionMetadata>();
 	public List<InstructionMetadata> Previous { get; } = new List<InstructionMetadata>();
     
-    private readonly ICILMethod _method;
+    private readonly CILMethodDefinition _method;
 
-    public InstructionMetadata(int offset, CILInstruction instruction, ICILMethod method) {
+    public InstructionMetadata(int offset, CILInstruction instruction, CILMethodDefinition method) {
 		this.Offset = offset;
 		this.Instruction = instruction;
         this._method = method;

@@ -13,11 +13,11 @@ public class STELEM_REF : CILInstruction {
 		return [0xA2];
     }
 
-    public string GetCIL(ICILMethod method) {
+    public string GetCIL(CILMethodDefinition method) {
 		return "stelem.ref";
     }
     
-	public void ModifyStack(ICILMethod method, Stack<ISignatureType> current) {
+	public void ModifyStack(CILMethodDefinition method, Stack<ISignatureType> current) {
 		current.Pop();
 		current.Pop();
 		current.Pop();

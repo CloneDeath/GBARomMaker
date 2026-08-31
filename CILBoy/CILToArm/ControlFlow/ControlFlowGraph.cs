@@ -11,7 +11,7 @@ public class ControlFlowGraph {
 	public IReadOnlyList<InstructionMetadata> Instructions => _instructions.ToArray();
 	private List<InstructionMetadata> _instructions = new();
 
-	public ControlFlowGraph(CILInstruction[] instructions, ICILMethod method) {
+	public ControlFlowGraph(CILInstruction[] instructions, CILMethodDefinition method) {
 		// Populate Instructions & Lookup
 		var offset = 0;
 		foreach (var instruction in instructions) {

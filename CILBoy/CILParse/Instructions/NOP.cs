@@ -13,11 +13,11 @@ public class NOP : CILInstruction {
 		return [0x00];
     }
 
-    public string GetCIL(ICILMethod method) {
+    public string GetCIL(CILMethodDefinition method) {
 		return "nop";
     }
     
-	public void ModifyStack(ICILMethod method, Stack<ISignatureType> current) {
+	public void ModifyStack(CILMethodDefinition method, Stack<ISignatureType> current) {
 	}
 
     public bool AlwaysBranches => false;
