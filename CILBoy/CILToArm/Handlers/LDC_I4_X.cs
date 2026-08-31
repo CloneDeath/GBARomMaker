@@ -21,7 +21,7 @@ public class LDC_I4_X : ICILToArmHandler {
 		var ldc = (CILBoy.CILParse.Instructions.LDC_I4_X)instruction.Instruction;
 		return new ArmCode([
 			$"ldr r0, =0x{ldc.Data:X2}",
-			"push sp!, { r0 }"
+			"push { r0 }"
 		]);
 	}
 }

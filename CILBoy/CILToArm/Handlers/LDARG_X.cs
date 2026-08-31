@@ -18,7 +18,7 @@ public class LDARG_X(ICILMethod method) : ICILToArmHandler {
 		var wordsBack = (argCount - ldarg.Argument) - 1;
 		return new ArmCode([
 			$"ldr r0, [fp, #{wordsBack * 4}] @ arg {ldarg.Argument}",
-			"push sp!, { r0 }"
+			"push { r0 }"
 		]);
 	}
 }

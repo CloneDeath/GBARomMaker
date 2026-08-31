@@ -9,7 +9,7 @@ public class DUP : ICILToArmHandler {
 	public ArmCode Handle(InstructionMetadata instruction) {
 		return new ArmCode([
 			"ldr r0, [sp]",
-			"push sp!, { r0 }"
+			"push { r0 }"
 		]);
 	}
 }

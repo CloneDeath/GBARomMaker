@@ -25,8 +25,8 @@ public class NEWOBJ(CILAssemblyFactory factory, ARMProgram assembly) : ICILToArm
 			return new ArmCode([
 				$"ldr r0, ={classLayout.Size * 4}",
 				"bl gba_malloc",
-				"push sp!, { r0 } @ push object ref onto the stack...",
-				"push sp!, { r0 } @ push it again for the 'this' param of the constructor",
+				"push { r0 } @ push object ref onto the stack...",
+				"push { r0 } @ push it again for the 'this' param of the constructor",
 				$"bl {target}"
 			]);
 		} else if (method.ParameterCount <= 9) {
@@ -37,10 +37,10 @@ public class NEWOBJ(CILAssemblyFactory factory, ARMProgram assembly) : ICILToArm
 				$"ldr r0, ={classLayout.Size * 4}",
 				"bl gba_malloc",
 				"mov ip, r0",
-				$"pop sp!, {{ {registers} }}",
-				"push sp!, { ip } @ push object ref onto the stack...",
-				"push sp!, { ip } @ push it again for the 'this' param of the constructor",
-				$"push sp!, {{ {registers} }}",
+				$"pop {{ {registers} }}",
+				"push { ip } @ push object ref onto the stack...",
+				"push { ip } @ push it again for the 'this' param of the constructor",
+				$"push {{ {registers} }}",
 				$"bl {target}"
 			]);
 		} else {

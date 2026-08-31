@@ -16,9 +16,9 @@ public class AND : ICILToArmHandler {
 		// see Table III.2: Binary Numeric Operations
 		if (stackTypeA.IsInt32Compatible() && stackTypeB.IsInt32Compatible()) {
 			return new ArmCode([
-				$"pop sp!, {{ r1, r2 }} @ <{stackTypeB}, {stackTypeA}>",
+				$"pop {{ r1, r2 }} @ <{stackTypeB}, {stackTypeA}>",
 				"and r0, r1, r2",
-				"push sp!, { r0 }"
+				"push { r0 }"
 			]);
 		} else {
 			throw new NotImplementedException($"CIL 'and' not supported for types {stackTypeA} & {stackTypeB}. {instruction}");

@@ -8,12 +8,12 @@ public class SystemStringConcat : ICallHandler {
 
 	public ArmCode Handle(InstructionMetadata instruction, ICILMethod method) {
 		return new ArmCode([
-			"pop sp!, { r0, r1 } @ right, left",
+			"pop { r0, r1 } @ right, left",
 			"mov r2, r0 @ swap r0, r1",
 			"mov r0, r1",
 			"mov r1, r2",
 			$"bl gba_string_concat @ { method }",
-			"push sp!, { r0 }",
+			"push { r0 }",
 		]) {
 			IncludeString = true
 		};

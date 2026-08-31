@@ -14,9 +14,9 @@ public class CONV_I : ICILToArmHandler {
 			return new ArmCode($"nop @ <{topOfStackType}> is int32 compatible");
 		} else if (topOfStackType.IsSingle()) {
 			return new ArmCode([
-				"pop sp!, { r0 }",
+				"pop { r0 }",
 				$"bl gba_float_to_int @ <{topOfStackType}> to int32",
-				"push sp!, { r0 }"
+				"push { r0 }"
 			]) {
 				IncludeFloat = true
 			};

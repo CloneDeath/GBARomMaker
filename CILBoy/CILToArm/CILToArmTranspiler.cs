@@ -177,7 +177,7 @@ public class CILToArmTranspiler {
 					// If we're not in byte-addressable memory, then read-modify-write a short instead
 					var end = "byte_store_" + assembly.JumpCount++;
 					assembly.Add(instruction.GetBytes().Length, [
-						"pop sp!, { r0, r1 } @ value, addr",
+						"pop { r0, r1 } @ value, addr",
 						"ldr r2, =0x05000000 @ VRAM Start",
 						"cmp r1, r2",
 						"strltb r0, [r1]",
@@ -207,14 +207,14 @@ public class CILToArmTranspiler {
 				}
 				case "stind.i2": {
 					assembly.Add(instruction.GetBytes().Length, [
-						"pop sp!, { r0, r1 } @ value, addr",
+						"pop { r0, r1 } @ value, addr",
 						"strh r0, [r1]"
 					]);
 					break;
 				}
 				case "stind.i4": {
 					assembly.Add(instruction.GetBytes().Length, [
-						"pop sp!, { r0, r1 } @ value, addr",
+						"pop { r0, r1 } @ value, addr",
 						"str r0, [r1]"
 					]);
 					break;
@@ -267,7 +267,7 @@ public class CILToArmTranspiler {
 					var brt = (CILBoy.CILParse.Instructions.BRTRUE)instruction;
 					var label = $"jump_{assembly.JumpCount++}";
 					assembly.Add(instruction.GetBytes().Length, [
-						"pop sp!, { r0 }",
+						"pop { r0 }",
 						"cmp r0, #0",
 						$"bne {label}"
 					]);
@@ -279,7 +279,7 @@ public class CILToArmTranspiler {
 					var brt = (CILBoy.CILParse.Instructions.BRTRUE_S)instruction;
 					var label = $"jump_{assembly.JumpCount++}";
 					assembly.Add(instruction.GetBytes().Length, [
-						"pop sp!, { r0 }",
+						"pop { r0 }",
 						"cmp r0, #0",
 						$"bne {label}"
 					]);
@@ -291,7 +291,7 @@ public class CILToArmTranspiler {
 					var brf = (CILBoy.CILParse.Instructions.BRFALSE)instruction;
 					var label = $"jump_{assembly.JumpCount++}";
 					assembly.Add(instruction.GetBytes().Length, [
-						"pop sp!, { r0 }",
+						"pop { r0 }",
 						"cmp r0, #0",
 						$"beq {label}"
 					]);
@@ -303,7 +303,7 @@ public class CILToArmTranspiler {
 					var brf = (CILBoy.CILParse.Instructions.BRFALSE_S)instruction;
 					var label = $"jump_{assembly.JumpCount++}";
 					assembly.Add(instruction.GetBytes().Length, [
-						"pop sp!, { r0 }",
+						"pop { r0 }",
 						"cmp r0, #0",
 						$"beq {label}"
 					]);
@@ -313,9 +313,9 @@ public class CILToArmTranspiler {
 				}
 				case "or": {
 					assembly.Add(instruction.GetBytes().Length, [
-						"pop sp!, { r1, r2 }",
+						"pop { r1, r2 }",
 						"orr r0, r1, r2",
-						"push sp!, { r0 }"
+						"push { r0 }"
 					]);
 					break;
 				}
@@ -326,16 +326,16 @@ public class CILToArmTranspiler {
 	
 					if (stackTypeA.IsInt32Compatible() && stackTypeB.IsInt32Compatible()) {
 						assembly.Add(instruction.GetBytes().Length, [
-							"pop sp!, { r1, r2 }",
+							"pop { r1, r2 }",
 							"mul r0, r1, r2",
-							"push sp!, { r0 }"
+							"push { r0 }"
 						]);
 					} else if (stackTypeA.IsSingle() && stackTypeB.IsSingle()) {
 						assembly.IncludeFloat = true;
 						assembly.Add(instruction.GetBytes().Length, [
-							"pop sp!, { r0, r1 }",
+							"pop { r0, r1 }",
 							"bl gba_float_mul",
-							"push sp!, { r0 }"
+							"push { r0 }"
 						]);
 					} else {
 						throw new NotImplementedException($"CIL 'mul' not supported for types {stackTypeA} * {stackTypeB}. {instructionWithMetadata}");
@@ -350,17 +350,17 @@ public class CILToArmTranspiler {
 					if (stackTypeA.IsInt32Compatible() && stackTypeB.IsInt32Compatible()) {
 						// https://problemkaputt.de/gbatek-bios-arithmetic-functions.htm
 						assembly.Add(instruction.GetBytes().Length, [
-							"pop sp!, { r0, r1 } @ val2 (denom), val1 (number)",
+							"pop { r0, r1 } @ val2 (denom), val1 (number)",
 							"swi 0x070000", // using 7 instead of 6, as the number/denom are swapped
-							"push sp!, { r0 }"
+							"push { r0 }"
 						]);
 					} else if (stackTypeA.IsSingle() && stackTypeB.IsSingle()) {
 						assembly.IncludeFloat = true;
 						assembly.Add(instruction.GetBytes().Length, [
-							"pop sp!, { r1, r2 } @ val2 (denom), val1 (number)",
+							"pop { r1, r2 } @ val2 (denom), val1 (number)",
 							"mov r0, r2",
 							"bl gba_float_div",
-							"push sp!, { r0 }"
+							"push { r0 }"
 						]);
 					} else {
 						throw new NotImplementedException($"CIL 'div' not supported for types {stackTypeA} / {stackTypeB}. {instructionWithMetadata}");
@@ -375,9 +375,9 @@ public class CILToArmTranspiler {
 					if (stackTypeA.IsInt32Compatible() && stackTypeB.IsInt32Compatible()) {
 						// https://problemkaputt.de/gbatek-bios-arithmetic-functions.htm
 						assembly.Add(instruction.GetBytes().Length, [
-							"pop sp!, { r0, r1 } @ val2 (denom), val1 (number)",
+							"pop { r0, r1 } @ val2 (denom), val1 (number)",
 							"swi 0x070000", // using 7 instead of 6, as the number/denom are swapped
-							"push sp!, { r1 }"
+							"push { r1 }"
 						]);
 					} else {
 						throw new NotImplementedException($"CIL 'rem' not supported for types {stackTypeA} / {stackTypeB}. {instructionWithMetadata}");
@@ -405,7 +405,7 @@ public class CILToArmTranspiler {
 		assembly.Add(0, [
 			"mov ip, sp",
 			$"sub sp, sp, #{localCount * 4}",
-			"push sp!, { v1-v5, fp, lr }",
+			"push { v1-v5, fp, lr }",
 			"mov fp, ip"
 		]);
 	}
@@ -415,9 +415,9 @@ public class CILToArmTranspiler {
 		var field = method.Factory.GetFieldDefinition(ldfld.MetadataToken);
 		var classLayout = assembly.GetClassLayout(field.Parent);
 		assembly.Add(instruction.GetBytes().Length, [
-			$"pop sp!, {{ r0 }} @ {classLayout.FullName}",
+			$"pop {{ r0 }} @ {classLayout.FullName}",
 			$"ldr r1, [r0, #{classLayout.GetFieldOffset(field)}] @ {field.Name}",
-			"push sp!, { r1 }"
+			"push { r1 }"
 		]);
 	}
 	
@@ -442,7 +442,7 @@ public class CILToArmTranspiler {
 		}
 		assembly.Add(0, [
 		 	$"ldr r1, [r0, #{staticClass.GetFieldOffset(field)}] @ {field.Name}",
-		 	"push sp!, { r1 }"
+		 	"push { r1 }"
 		]);
 	}
 
@@ -452,7 +452,7 @@ public class CILToArmTranspiler {
 
 		var classLayout = assembly.GetClassLayout(field.Parent);
 		assembly.Add(instruction.GetBytes().Length, [
-			"pop sp!, { r0, r1 } @ value, obj",
+			"pop { r0, r1 } @ value, obj",
 			$"str r0, [r1, #{classLayout.GetFieldOffset(field)}] @ {field.FullName}"
 		]);
 	}
@@ -477,7 +477,7 @@ public class CILToArmTranspiler {
 			]);
 		}
 		assembly.Add(0, [
-		 	"pop sp!, { r1 }",
+		 	"pop { r1 }",
 		 	$"str r1, [r0, #{staticClass.GetFieldOffset(field)}] @ {field.Name}",
 		]);
 	}

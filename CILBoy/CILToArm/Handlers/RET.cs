@@ -14,7 +14,7 @@ public class RET(CILMethodDefinition method) : ICILToArmHandler {
 
 		var assembly = new List<string>();
 		if (method.HasReturnValue) {
-			assembly.Add("pop sp!, { ip } @ return value");
+			assembly.Add("pop { ip } @ return value");
 		}
 		assembly.AddRange([
 			$"sub sp, fp, #{localCount * 4}",
@@ -27,7 +27,7 @@ public class RET(CILMethodDefinition method) : ICILToArmHandler {
 			assembly.Add($"add sp, sp, #{argsToPop * 4} @ this: { method.IsInstance }; param count: {method.ParameterCount}");
 		}
 		if (method.HasReturnValue) {
-			assembly.Add("push sp!, { ip }");
+			assembly.Add("push { ip }");
 		}
 		assembly.Add("bx lr");
 		return new ArmCode(assembly.ToArray());

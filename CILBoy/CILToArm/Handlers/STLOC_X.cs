@@ -16,7 +16,7 @@ public class STLOC_X : ICILToArmHandler {
 		var stloc = (CILBoy.CILParse.ILocationInstruction)instruction.Instruction;
 		var location = stloc.Location;
 		return new ArmCode([
-			"pop sp!, { r0 }",
+			"pop { r0 }",
 			$"str r0, [fp, #-{(location+1) * 4}] @ local { location }"
 		]);
 	}

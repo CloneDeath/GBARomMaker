@@ -8,7 +8,7 @@ public class STELEM_IX : ICILToArmHandler {
 
 	public ArmCode Handle(InstructionMetadata instruction) {
 		return new ArmCode([
-			"pop sp!, { r0, r1, r2 } @ value, index, array",
+			"pop { r0, r1, r2 } @ value, index, array",
 			"add r1, r1, #1 @ first word is array length",
 			"str r0, [r2, r1, lsl #2]"
 		]);

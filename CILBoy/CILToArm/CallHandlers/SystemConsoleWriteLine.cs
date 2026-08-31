@@ -12,7 +12,7 @@ public class SystemConsoleWriteLine : ICallHandler {
 		var arguments = method.GetArgumentTypes();
 		if (arguments.Length == 1 && arguments[0].Code == SignatureTypeCode.String) {
 			return new ArmCode([
-				"pop sp!, { r0 }",
+				"pop { r0 }",
 				$"bl mgba_log_string @ {method}",
 			]) {
 				IncludeMGBALog = true
@@ -21,7 +21,7 @@ public class SystemConsoleWriteLine : ICallHandler {
 
 		if (arguments.Length == 1 && arguments[0].Code == SignatureTypeCode.Int32) {
 			return new ArmCode([
-				"pop sp!, { r0 }",
+				"pop { r0 }",
 				$"bl mgba_log_i4 @ {method}",
 			]) {
 				IncludeMGBALog = true

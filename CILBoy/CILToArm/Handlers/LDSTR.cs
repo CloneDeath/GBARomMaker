@@ -19,7 +19,7 @@ public class LDSTR(CILAssemblyFactory factory) : ICILToArmHandler {
 			"mov r0, v1",
 			"add r0, r0, #4 @ length of array",
 			"bl gba_malloc",
-			"push sp!, { r0 }",
+			"push { r0 }",
 			"str v1, [r0], #4",
 		};
 

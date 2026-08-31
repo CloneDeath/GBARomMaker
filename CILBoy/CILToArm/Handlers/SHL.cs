@@ -8,9 +8,9 @@ public class SHL : ICILToArmHandler {
 
 	public ArmCode Handle(InstructionMetadata instruction) {
 		return new ArmCode([
-			"pop sp!, { r0, r1 } @ shiftAmount, value",
+			"pop { r0, r1 } @ shiftAmount, value",
 			"lsl r2, r1, r0",
-			"push sp!, { r2 }"
+			"push { r2 }"
 		]);
 	}
 }

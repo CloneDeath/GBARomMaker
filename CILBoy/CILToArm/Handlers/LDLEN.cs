@@ -8,9 +8,9 @@ public class LDLEN : ICILToArmHandler {
 
 	public ArmCode Handle(InstructionMetadata instruction) {
 		return new ArmCode([
-			"pop sp!, { r0 }",
+			"pop { r0 }",
 			"ldr r1, [r0, #0] @ Array.length",
-			"push sp!, { r1 }"
+			"push { r1 }"
 		]);
 	}
 }

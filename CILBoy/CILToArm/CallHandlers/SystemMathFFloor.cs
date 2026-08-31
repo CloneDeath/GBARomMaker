@@ -8,11 +8,11 @@ public class SystemMathFFloor : ICallHandler {
 
 	public ArmCode Handle(InstructionMetadata instruction, ICILMethod method) {
 		return new ArmCode([
-			"pop sp!, { r0 }",
+			"pop { r0 }",
 			$"@ call {method}",
 			"bl gba_float_to_int",
 			"bl gba_int_to_float",
-			"push sp!, { r0 }"
+			"push { r0 }"
 		]);
 	}
 }

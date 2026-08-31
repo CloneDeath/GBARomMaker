@@ -464,7 +464,7 @@ gba_float_sin:
 	@ locals:
 	@   v1 = radians
 	@   v2 = math storage
-	push sp!, { v1, v2, lr }
+	push { v1, v2, lr }
 	mov v1, r0 @ input
 
 	@ calculate pi / 180
@@ -493,7 +493,7 @@ gba_float_sin:
 	ldr r2, [r1, r0, lsl #2]
 	mov r0, r2
 
-	pop sp!, { v1, v2, lr }
+	pop { v1, v2, lr }
 	bx lr
 
 gba_float_cos:
@@ -503,7 +503,7 @@ gba_float_cos:
 	@   a1 = cos(r)
 	@ locals:
 	@   v1 = radians
-	push sp!, { v1, lr }
+	push { v1, lr }
 	mov v1, r0 @ input
 	
 	@ r0 = pi/2
@@ -521,7 +521,7 @@ gba_float_cos:
 	@ get sin of x - pi/2 (=cos of x)
 	bl gba_float_sin
 	
-	pop sp!, { v1, lr }
+	pop { v1, lr }
 	bx lr
 " 
 + @$"
@@ -590,12 +590,12 @@ mgba_log_string_loop:
 mgba_log_i4:
 	@ in:
 	@   a1 = string
-	push sp!, { lr }
+	push { lr }
 	
 	bl gba_i4_to_string
 	bl mgba_log_string
 	
-	pop sp!, { lr }
+	pop { lr }
 	bx lr
 
 ").Split("\n", StringSplitOptions.RemoveEmptyEntries);
@@ -609,7 +609,7 @@ gba_i4_to_string:
 	@ locals:
 	@  v1 = char count
 	@  v2 = string address
-	push sp!, { v1, v2, lr }
+	push { v1, v2, lr }
 	ldr v1, =0
 
 gba_log_i4_push_char:
@@ -617,7 +617,7 @@ gba_log_i4_push_char:
 	ldr r1, =10
 	swi 0x060000 @ div
 	add r2, r1, #48 @ char '0'
-	push sp!, { r2 }
+	push { r2 }
 	cmp r0, #0
 	bne gba_log_i4_push_char
 	
@@ -629,14 +629,14 @@ gba_log_i4_push_char:
 
 gba_log_i4_char_to_heap:
 	sub v1, v1, #1
-	pop sp!, { r2 }
+	pop { r2 }
 	strb r2, [r0], #1
 	cmp v1, #0
 	bne gba_log_i4_char_to_heap
 	
 	@ write string address to r0 and return
 	mov r0, v2
-	pop sp!, { v1, v2, lr }
+	pop { v1, v2, lr }
 	bx lr
 	
 " + @"
@@ -652,7 +652,7 @@ gba_string_concat:
 	@   v3 = right ptr
 	@   v4 = right length
 	@   v5 = left + right address
-	push sp!, { v1, v2, v3, v4, v5, lr }
+	push { v1, v2, v3, v4, v5, lr }
 	mov v1, a1
 	ldr v2, [v1], #4
 	mov v3, a2
@@ -684,7 +684,7 @@ gba_string_concat_move_right:
 
 gba_string_concat_return:
 	mov r0, v5
-	pop sp!, { v1, v2, v3, v4, v5, lr }
+	pop { v1, v2, v3, v4, v5, lr }
 	bx lr
 
 ").Split("\n", StringSplitOptions.RemoveEmptyEntries);

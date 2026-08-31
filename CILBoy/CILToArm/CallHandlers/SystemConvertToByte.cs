@@ -13,11 +13,11 @@ public class SystemConvertToByte : ICallHandler {
 		if (args.Length != 1) throw new NotImplementedException($"Only 1 args is implemented, {method}");
 		if (args[0].Code != SignatureTypeCode.Single) throw new NotImplementedException($"Only floats supported. {method}");
 		return new ArmCode([
-			"pop sp!, { r0 }",
+			"pop { r0 }",
 			$"@ call {method}",
 			"bl gba_float_to_int",
 			"and r0, r0, #0xFF",
-			"push sp!, { r0 }"
+			"push { r0 }"
 		]);
 	}
 }

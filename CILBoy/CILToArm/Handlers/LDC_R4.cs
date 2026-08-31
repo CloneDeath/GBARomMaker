@@ -10,7 +10,7 @@ public class LDC_R4 : ICILToArmHandler {
 		var ldcr = (CILBoy.CILParse.Instructions.LDC_R4)instruction.Instruction;
 		return new ArmCode([
 			$"ldr r0, =0x{ldcr.DataRaw:X8}",
-			"push sp!, { r0 }"
+			"push { r0 }"
 		]);
 	}
 }

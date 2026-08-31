@@ -8,9 +8,9 @@ public class LDIND_U2 : ICILToArmHandler {
 
 	public ArmCode Handle(InstructionMetadata instruction) {
 		return new ArmCode([
-			"pop sp!, { r0 }",
+			"pop { r0 }",
 			"ldrh r1, [r0]",
-			"push sp!, { r1 }",
+			"push { r1 }",
 		]);
 	}
 }

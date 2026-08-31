@@ -17,7 +17,7 @@ public class LDLOC_X : ICILToArmHandler {
 		var location = ldloc.Location;
 		return new ArmCode([
 			$"ldr r0, [fp, #-{(location+1) * 4}] @ local { location }",
-			"push sp!, { r0 }"
+			"push { r0 }"
 		]);
 	}
 }

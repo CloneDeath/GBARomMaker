@@ -16,27 +16,27 @@ public class SUB : ICILToArmHandler {
 		// see Table III.2: Binary Numeric Operations
 		if (stackTypeA.IsInt32Compatible() && stackTypeB.IsInt32Compatible()) {
 			return new ArmCode([
-				$"pop sp!, {{ r1, r2 }} @ <{stackTypeB}, {stackTypeA}>",
+				$"pop {{ r1, r2 }} @ <{stackTypeB}, {stackTypeA}>",
 				"sub r0, r2, r1",
-				"push sp!, { r0 }"
+				"push { r0 }"
 			]);
 		} else if (stackTypeA.IsInt32Compatible() && stackTypeB.IsSingle()) {
 			return new ArmCode([
-				$"pop sp!, {{ v1, v2 }} @ <{stackTypeB}, {stackTypeA}>",
+				$"pop {{ v1, v2 }} @ <{stackTypeB}, {stackTypeA}>",
 				"mov r0, v2",
 				"bl gba_int_to_float",
 				"mov r1, v1",
 				"bl gba_float_sub",
-				"push sp!, { r0 }"
+				"push { r0 }"
 			]) {
 				IncludeFloat = true
 			};
 		} else if (stackTypeA.IsSingle() && stackTypeB.IsSingle()) {
 			return new ArmCode([
-				$"pop sp!, {{ r1, r2 }} @ <{stackTypeB}, {stackTypeA}>",
+				$"pop {{ r1, r2 }} @ <{stackTypeB}, {stackTypeA}>",
 				"mov r0, r2",
 				"bl gba_float_sub",
-				"push sp!, { r0 }"
+				"push { r0 }"
 			]) {
 				IncludeFloat = true
 			};

@@ -14,7 +14,7 @@ public class STARG_S(ICILMethod method) : ICILToArmHandler {
 		var argCount = method.ParameterCount + (method.IsInstance ? 1 : 0);
 		var wordsBack = (argCount - starg.Argument) - 1;
 		return new ArmCode([
-			"pop sp!, { r0 }",
+			"pop { r0 }",
 			// this might be sacrilege to the stack...
 			$"str r0, [fp, #{wordsBack * 4}] @ arg {starg.Argument}"
 		]);

@@ -19,9 +19,9 @@ public class BOX : ICILToArmHandler {
 			return new ArmCode([
 				"ldr r0, =4",
 				"bl gba_malloc",
-				"pop sp!, { r1 }",
+				"pop { r1 }",
 				"str r1, [r0]",
-				"push sp!, { r0 }"
+				"push { r0 }"
 			]);
 		}
 

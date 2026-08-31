@@ -8,9 +8,9 @@ public class SystemMathFSin : ICallHandler {
 
 	public ArmCode Handle(InstructionMetadata instruction, ICILMethod method) {
 		return new ArmCode([
-			"pop sp!, { r0 }",
+			"pop { r0 }",
 			$"bl gba_float_sin @ { method }",
-			"push sp!, { r0 }"
+			"push { r0 }"
 		]) {
 			IncludeSin = true
 		};

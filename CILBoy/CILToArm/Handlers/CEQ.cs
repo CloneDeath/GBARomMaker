@@ -15,11 +15,11 @@ public class CEQ : ICILToArmHandler {
 	
 		if (stackTypeA.IsInt32Compatible() && stackTypeB.IsInt32Compatible()) {
 			return new ArmCode([
-				"pop sp!, { r0, r1 }",
+				"pop { r0, r1 }",
 				"cmp r0, r1",
 				"moveq r0, #1",
 				"movne r0, #0",
-				"push sp!, { r0 }"
+				"push { r0 }"
 			]);
 		} else {
 			throw new NotImplementedException($"CIL 'ceq' not supported for types {stackTypeA} == {stackTypeB}. {instruction}");
