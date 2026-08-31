@@ -499,6 +499,7 @@ public class CILToArmTranspiler {
 			new SystemConsoleWriteLine(),
 			new SystemConvertToByte(),
 			new SystemConvertToInt32(),
+			new SystemEnumHasFlag(),
 			new SystemInt32ToString(),
 			new SystemMathFCos(),
 			new SystemMathFFloor(),
