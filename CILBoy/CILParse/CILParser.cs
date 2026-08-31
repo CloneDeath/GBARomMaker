@@ -13,6 +13,7 @@ public class CILParser {
 	public static readonly List<CILInstructionDefinition> Instructions = new CILInstructionDefinition[][] {
 		[ADD.Definition],
 		[AND.Definition],
+		[BOX.Definition],
 		BR.Definitions,
 		[BREAK.Definition],
 		BRFALSE.Definitions,
