@@ -27,13 +27,10 @@ public class CILTypeReference : ICILType {
 	}
 
 	public CILMethodDefinition GetMethodDefinition(string name) {
-		throw new NotImplementedException();
+		throw new NotImplementedException($"{nameof(GetMethodDefinition)} not implemented for {FullName} -> {name}");
 	}
 
-	public override string ToString() {
-		var assembly = _metadata.GetAssemblyReference((AssemblyReferenceHandle)_self.ResolutionScope);
-		return $"{assembly.GetAssemblyName().Name}";
-	}
+	public override string ToString() => FullName;
 
 	public CILFieldDefinition[] InstanceFields => throw new NotImplementedException();
 	public CILFieldDefinition[] StaticFields => throw new NotImplementedException();

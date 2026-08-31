@@ -134,8 +134,8 @@ public class CILAssemblyFactory : IDisposable {
 
 	public BlobReader GetBlobReader(BlobHandle handle) => _metadata.GetBlobReader(handle);
 
-	public MethodSignatureBlob GetMethodSignatureBlob(BlobHandle signature) => new MethodSignatureBlob(_metadata, signature);
-	public LocalSignatureBlob GetLocalSignatureBlob(BlobHandle signature) => new LocalSignatureBlob(_metadata, signature);
+	public MethodSignatureBlob GetMethodSignatureBlob(BlobHandle signature) => new MethodSignatureBlob(this, _metadata.GetBlobReader(signature));
+	public LocalSignatureBlob GetLocalSignatureBlob(BlobHandle signature) => new LocalSignatureBlob(this, _metadata.GetBlobReader(signature));
 
 	public MethodBodyBlock GetMethodBody(int relativeVirtualAddress) => _peReader.GetMethodBody(relativeVirtualAddress);
 

@@ -27,7 +27,7 @@ public class SignatureType(SignatureTypeCode code) : ISignatureType {
 
 	public override string ToString() => $"{Code}";
 
-	public static ISignatureType Read(ref BlobReader reader) {
+	public static ISignatureType Read(CILAssemblyFactory factory, ref BlobReader reader) {
 		var type = reader.ReadSignatureTypeCode();
 		if (type == SignatureTypeCode.SZArray) {
 			var innerType = reader.ReadSignatureTypeCode();
@@ -38,9 +38,9 @@ public class SignatureType(SignatureTypeCode code) : ISignatureType {
 			return new ArraySignatureType(new SignatureType(innerType));
 		} else if (type == SignatureTypeCode.TypeHandle) {
 			// https://learn.microsoft.com/en-us/dotnet/api/system.reflection.metadata.signaturetypecode?view=net-11.0-pp
-			// todo figure out the actual of the type we just referenced
-			var skipped = reader.ReadSignatureTypeCode();
-			return new SignatureType(type);
+			var typeHandle = reader.ReadTypeHandle();
+			var typeDefinition = factory.GetTypeDefinition(typeHandle);
+			return new TypeHandleSignatureType(typeDefinition);
 		} else if (type == SignatureTypeCode.Pointer) {
 			// todo Do we need the referenced type too?
 			var skipped = reader.ReadSignatureTypeCode();
@@ -66,4 +66,12 @@ public class GenericSignatureType(int metadataToken) : ISignatureType {
 
 	public int MetadataToken => metadataToken;
 	public override string ToString() => $"{Code}<{MetadataToken}>";
+}
+
+public class TypeHandleSignatureType(ICILType innerType) : ISignatureType {
+	public SignatureTypeCode Code => SignatureTypeCode.TypeHandle;
+
+	public ICILType InnerType => innerType;
+
+	public override string ToString() => $"{Code}<{InnerType}>";
 }

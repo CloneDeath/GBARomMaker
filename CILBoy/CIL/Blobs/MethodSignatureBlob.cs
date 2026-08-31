@@ -5,8 +5,7 @@ using System.Reflection.Metadata;
 namespace CILBoy.CIL.Blobs;
 
 public class MethodSignatureBlob {
-	public MethodSignatureBlob(MetadataReader metadata, BlobHandle handle) {
-		var reader = metadata.GetBlobReader(handle);
+	public MethodSignatureBlob(CILAssemblyFactory factory, BlobReader reader) {
 		var header = reader.ReadSignatureHeader();
 		IsInstance = header.IsInstance;
 
@@ -14,11 +13,11 @@ public class MethodSignatureBlob {
 			? reader.ReadCompressedInteger()
 			: 0;
 		ParameterCount = reader.ReadCompressedInteger();
-		ReturnType = SignatureType.Read(ref reader);
+		ReturnType = SignatureType.Read(factory, ref reader);
 
 		var types = new List<ISignatureType>();
 		for (var i = 0; i < ParameterCount; i++) {
-			types.Add(SignatureType.Read(ref reader));
+			types.Add(SignatureType.Read(factory, ref reader));
 		}
 		if (reader.RemainingBytes != 0) throw new Exception($"Failed to read all bytes from signature header. {reader.RemainingBytes} bytes remain."
 			+ $"\n\tReturnType: {ReturnType}"
