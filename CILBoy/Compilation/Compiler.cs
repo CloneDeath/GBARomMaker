@@ -395,15 +395,21 @@ public class Compiler {
 		}
 		tokens.Operation.AssertEmpty();
 
-		var baseRegister = tokens.DequeueRegister();
-		next = tokens.Dequeue();
+		Byte baseRegister;
 		bool writeback = false;
-		if (next == "!") {
+		if (operation == "push" || operation == "pop") {
+			baseRegister = 13; //sp
 			writeback = true;
+		} else {
+			baseRegister = tokens.DequeueRegister();
 			next = tokens.Dequeue();
-		}
-		if (next != ",") {
-			throw new Exception($"Unexpected token: '{next}' in '{line}'");
+			if (next == "!") {
+				writeback = true;
+				next = tokens.Dequeue();
+			}
+			if (next != ",") {
+				throw new Exception($"Unexpected token: '{next}' in '{line}'");
+			}
 		}
 
 		next = tokens.Dequeue();
