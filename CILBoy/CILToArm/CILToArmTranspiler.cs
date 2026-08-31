@@ -93,7 +93,7 @@ public class CILToArmTranspiler {
 
 		var locals = method.GetLocalVariableTypes();
 		if (_showCil) {
-			Console.WriteLine($"{method.FullName}");
+			Console.WriteLine($"{method.ReturnType} {method.FullName}({string.Join(", ", method.GetArgumentTypes())})");
 			if (locals.Any()) Console.WriteLine($"  locals: {string.Join(", ", method.GetLocalVariableTypes())}");
 		}
 

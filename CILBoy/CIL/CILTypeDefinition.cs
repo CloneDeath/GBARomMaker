@@ -28,5 +28,20 @@ public class CILTypeDefinition : ICILType {
 	public CILFieldDefinition[] InstanceFields => _self.GetFields().Select(f => _factory.GetFieldDefinition(f)).Where(f => !f.IsStatic).ToArray();
 	public CILFieldDefinition[] StaticFields => _self.GetFields().Select(f => _factory.GetFieldDefinition(f)).Where(f => f.IsStatic).ToArray();
 
-	public override string ToString() => $"{nameof(CILTypeDefinition)}{{{FullName}}}";
+	public bool IsValueType {
+		get {
+			var baseType = _factory.GetTypeDefinition(_self.BaseType);
+			return baseType.FullName == "System.ValueType";
+		}
+	}
+	
+	public bool IsEnum {
+		get {
+			var baseType = _factory.GetTypeDefinition(_self.BaseType);
+			return baseType.FullName == "System.Enum";
+		}
+	}
+
+
+	public override string ToString() => FullName;
 }

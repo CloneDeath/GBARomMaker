@@ -7,4 +7,7 @@ public interface ICILType {
 	public CILMethodDefinition GetMethodDefinition(string name);
 	public CILFieldDefinition[] InstanceFields { get; }
 	public CILFieldDefinition[] StaticFields { get; }
+
+	public bool IsValueType { get; }
+	public bool IsEnum { get; }
 }

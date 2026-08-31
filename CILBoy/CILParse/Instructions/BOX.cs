@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Emit;
+using System.Reflection.Metadata;
 using CILBoy.CIL;
 
 namespace CILBoy.CILParse.Instructions;
@@ -29,7 +30,7 @@ public class BOX : CILInstruction {
     public void ModifyStack(CILMethodDefinition method, Stack<ISignatureType> current) {
 		var targetType = method.Factory.GetTypeDefinition(MetadataToken);
 		var type = current.Pop();
-		current.Push(new TypeHandleSignatureType(targetType));
+		current.Push(new SignatureType(SignatureTypeCode.Object));
 	}
 
     public bool AlwaysBranches => false;

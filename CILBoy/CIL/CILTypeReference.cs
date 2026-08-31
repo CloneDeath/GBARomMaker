@@ -34,4 +34,7 @@ public class CILTypeReference : ICILType {
 
 	public CILFieldDefinition[] InstanceFields => throw new NotImplementedException();
 	public CILFieldDefinition[] StaticFields => throw new NotImplementedException();
+
+	public bool IsValueType => FullName == "System.ValueType";
+	public bool IsEnum => FullName == "System.Enum";
 }
